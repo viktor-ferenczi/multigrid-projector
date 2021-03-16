@@ -1,5 +1,4 @@
 using System;
-using System.Text;
 using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
@@ -7,7 +6,6 @@ using Sandbox.Game.Entities;
 using Sandbox.Game.EntityComponents;
 using Sandbox.Game.Weapons;
 using Sandbox.ModAPI;
-using VRage.Utils;
 using VRageMath;
 
 namespace MultigridProjector.Patches

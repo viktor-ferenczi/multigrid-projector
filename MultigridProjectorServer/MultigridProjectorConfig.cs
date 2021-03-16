@@ -75,8 +75,7 @@ namespace MultigridProjectorServer
         {
             using (var streamReader = new StreamReader(path))
             {
-                var config = ConfigSerializer.Deserialize(streamReader) as MultigridProjectorConfig;
-                if (config == null)
+                if (!(ConfigSerializer.Deserialize(streamReader) is MultigridProjectorConfig config))
                 {
                     Log.Error($"Failed to deserialize configuration file: {path}");
                     return;

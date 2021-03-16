@@ -6,7 +6,6 @@ using MultigridProjector.Utilities;
 using Sandbox;
 using Sandbox.Game.Entities.Blocks;
 using VRage.Game.Entity.EntityComponents.Interfaces;
-using VRage.Utils;
 
 namespace MultigridProjector.Patches
 {
@@ -17,9 +16,12 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_UpdateAfterSimulation
     {
-        // ReSharper disable once InconsistentNaming
         // ReSharper disable once UnusedMember.Local
-        private static bool Prefix(MyProjectorBase __instance, IMyGameLogicComponent ___m_gameLogic)
+        private static bool Prefix(
+            // ReSharper disable once InconsistentNaming
+            MyProjectorBase __instance,
+            // ReSharper disable once InconsistentNaming
+            IMyGameLogicComponent ___m_gameLogic)
         {
             var projector = __instance;
 

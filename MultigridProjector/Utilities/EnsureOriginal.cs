@@ -115,7 +115,7 @@ namespace MultigridProjector.Utilities
                 ++i;
             }
 
-            return hash1 + (hash2 * 1566083941);
+            return hash1 + hash2 * 1566083941;
         }
     }
 }

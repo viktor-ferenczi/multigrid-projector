@@ -7,7 +7,6 @@ using MultigridProjector.Utilities;
 using ParallelTasks;
 using Sandbox.Game.Entities.Blocks;
 using VRage.Profiler;
-using VRage.Utils;
 
 namespace MultigridProjector.Logic
 {

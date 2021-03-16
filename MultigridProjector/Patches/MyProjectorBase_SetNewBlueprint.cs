@@ -6,7 +6,6 @@ using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 using VRage.Game;
-using VRage.Utils;
 
 namespace MultigridProjector.Patches
 {

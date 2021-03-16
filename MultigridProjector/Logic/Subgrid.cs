@@ -10,7 +10,6 @@ using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
 using VRage.Game;
 using VRage.Game.Entity;
-using VRage.Utils;
 using VRageMath;
 
 namespace MultigridProjector.Logic
@@ -386,6 +385,9 @@ namespace MultigridProjector.Logic
 
                 switch (state)
                 {
+                    case BlockState.Unknown:
+                        break;
+
                     case BlockState.NotBuildable:
                         if (showOnlyBuildable)
                             HideCube(projector, slimBlock);
@@ -398,6 +400,10 @@ namespace MultigridProjector.Logic
                         break;
 
                     case BlockState.BeingBuilt:
+                        HideCube(projector, slimBlock);
+                        break;
+
+                    case BlockState.FullyBuilt:
                         HideCube(projector, slimBlock);
                         break;
 
@@ -428,11 +434,8 @@ namespace MultigridProjector.Logic
                 return;
 
             var position = PreviewGrid.WorldToGridInteger(terminalBlock.SlimBlock.WorldPosition);
-            foreach (var blockGroup in GridBuilder.BlockGroups)
+            foreach (var blockGroup in GridBuilder.BlockGroups.Where(blockGroup => blockGroup.Blocks.Contains(position)))
             {
-                if (!blockGroup.Blocks.Contains(position))
-                    continue;
-
                 var newBlockGroup = MyBlockGroupExtensions.NewBlockGroup(blockGroup.Name);
                 newBlockGroup.GetBlocks().Add(terminalBlock);
                 terminalBlock.CubeGrid.AddGroup(newBlockGroup);

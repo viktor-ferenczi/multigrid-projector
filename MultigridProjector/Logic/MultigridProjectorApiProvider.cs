@@ -55,7 +55,7 @@ namespace MultigridProjector.Logic
             if (!subgrid.BlockStates.TryGetValue(position, out var blockState))
                 return BlockState.Unknown;
 
-            return (BlockState)blockState;
+            return blockState;
         }
 
         public bool GetBlockStates(Dictionary<Vector3I, BlockState> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask)
@@ -72,7 +72,7 @@ namespace MultigridProjector.Logic
                     continue;
 
                 if (full || box.Contains(position) == ContainmentType.Contains)
-                    blockStates[position] = (BlockState)blockState;
+                    blockStates[position] = blockState;
             }
 
             return true;

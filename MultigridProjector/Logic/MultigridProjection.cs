@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
-using MultigridProjector.Api;
 using MultigridProjector.Utilities;
 using MultigridProjector.Extensions;
 using Sandbox.Common.ObjectBuilders;
@@ -687,7 +686,7 @@ namespace MultigridProjector.Logic
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void FindNewlyBuiltBase(BaseConnection baseConnection)
+        private static void FindNewlyBuiltBase(BaseConnection baseConnection)
         {
             if (baseConnection.HasBuilt || baseConnection.Found == null) return;
 
@@ -718,7 +717,7 @@ namespace MultigridProjector.Logic
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void FindNewlyBuiltTop(TopConnection topConnection)
+        private static void FindNewlyBuiltTop(TopConnection topConnection)
         {
             if (topConnection.HasBuilt || topConnection.Found == null) return;
 
@@ -1061,7 +1060,7 @@ namespace MultigridProjector.Logic
                 return false;
 
             // Attach to the base
-            baseBlock.Attach(topBlock, true);
+            baseBlock.Attach(topBlock);
             return false;
         }
 

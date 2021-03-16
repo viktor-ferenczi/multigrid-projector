@@ -6,7 +6,6 @@ using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using VRage.Game.Entity;
 using VRage.Game.ObjectBuilders.Definitions.SessionComponents;
-using VRage.Utils;
 using VRageMath;
 
 namespace MultigridProjector.Patches
