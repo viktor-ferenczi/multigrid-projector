@@ -95,6 +95,7 @@
     </ItemGroup>
     <ItemGroup>
       <Content Include="metadata.mod" />
+      <Content Include="README.md" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Lib.Harmony" Version="2.0.4" />
