@@ -441,5 +441,13 @@ namespace MultigridProjector.Logic
                 terminalBlock.CubeGrid.AddGroup(newBlockGroup);
             }
         }
+
+        public bool HasBuildableBlockAtPosition(Vector3I position)
+        {
+            using (BuiltGridLock.Read())
+            {
+                return HasBuilt && BlockStates.TryGetValue(position, out var state) && state == BlockState.Buildable;
+            }
+        }
     }
 }

@@ -52,7 +52,7 @@ namespace MultigridProjectorClient.Patches
                     return;
 
                 // We use the builtBy field to pass the subgrid index
-                projection.BuildInternal(cubeBlockPosition, owner, builder, requestInstant, (int) builtBy);
+                projection.BuildInternal(cubeBlockPosition, owner, builder, requestInstant, builtBy);
             }
             catch (Exception e)
             {

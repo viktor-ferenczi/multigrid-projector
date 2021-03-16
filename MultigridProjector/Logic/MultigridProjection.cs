@@ -802,17 +802,35 @@ namespace MultigridProjector.Logic
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void BuildInternal(Vector3I previewCubeBlockPosition, long owner, long builder, bool requestInstant, int subgridIndex)
+        public void BuildInternal(Vector3I previewCubeBlockPosition, long owner, long builder, bool requestInstant, long subgridIndex)
         {
-            if (!Initialized || Projector.Closed)
+            if (!Initialized || Projector.Closed || Subgrids.Count == 0)
                 return;
 
-            // Ignore invalid subgrid index, it may arrive from clients without the multigrid client plugin installed
-            if (subgridIndex < 0 || subgridIndex >= Subgrids.Count)
+            // Negative values are reserved, ignore them
+            if (subgridIndex < 0)
                 return;
 
-            // Subgrid information required for the build
-            var subgrid = Subgrids[subgridIndex];
+            // Handle single grid projections, even if the client does not have the plugin installed
+            if (Subgrids.Count == 1)
+                subgridIndex = 0;
+
+            // Find the subgrid to build on
+            Subgrid subgrid;
+            if (subgridIndex < Subgrids.Count)
+            {
+                subgrid = Subgrids[(int) subgridIndex];
+            }
+            else
+            {
+                // The request was sent by a client without the plugin installed.
+                // They send an identityId here, which is very likely above the subgrid count.
+                // Here we attempt to guess the subgrid based on the existence of a weldable block at the given position.
+                // In some cases the result is ambiguous and the first one is picked, but this is still better than not being able to weld at all.
+                subgrid = Subgrids.Find(sg => sg.HasBuildableBlockAtPosition(previewCubeBlockPosition));
+                if (subgrid == null)
+                    return;
+            }
 
             var previewGrid = subgrid.PreviewGrid;
             if (previewGrid == null)
@@ -862,7 +880,7 @@ namespace MultigridProjector.Logic
             // Terminal blocks have their original object builders in a quick to lookup dictionary,
             // but armor blocks can just built from object builders created on demand from the preview
             MyObjectBuilder_CubeBlock blockBuilder;
-            if (TerminalBlockBuilders.TryGetValue(new BlockMinLocation(subgridIndex, previewBlock.Min), out var terminalBlockBuilder) && terminalBlockBuilder.GetId() == previewBlock.BlockDefinition.Id)
+            if (TerminalBlockBuilders.TryGetValue(new BlockMinLocation(subgrid.Index, previewBlock.Min), out var terminalBlockBuilder) && terminalBlockBuilder.GetId() == previewBlock.BlockDefinition.Id)
             {
                 // Terminal blocks with custom settings are created directly from the original blueprint
                 blockBuilder = (MyObjectBuilder_CubeBlock)terminalBlockBuilder.Clone();
