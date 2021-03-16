@@ -1,7 +1,6 @@
 .idea
 multigrid-projector.sln.DotSettings.user
-DedicatedServerBinaries
-InstalledGameBinaries
-TorchBinaries
+GameBin64
+TorchDir
 **\bin
 **\obj
