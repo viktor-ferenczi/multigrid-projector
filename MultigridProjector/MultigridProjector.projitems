@@ -1,0 +1,71 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>00201A90-78A7-4623-B273-04E581ED1EB3</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>MultigridProjector</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Api\BlockLocation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Api\BlockState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Api\IMultigridProjectorApi.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\MyMotorStatorExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\BlockMinLocation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\MultigridProjectorApiProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyCubeGrid_TestPlacementAreaCube.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPartAndAttach.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RaiseAttachedEntityChanged.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RecreateTop.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_Build.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_CanBuild.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_GetObjectBuilderCubeBlock.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_Init.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_InitFromObjectBuilder.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_OnBlockAdded.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_OnBlockRemoved.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_OnEnabledChanged.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_OnOffsetsChanged.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_Remap.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_RemoveProjection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_SetNewBlueprint.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_UpdateAfterSimulation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_UpdateProjection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_UpdateStats.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorClipboard_UpdateGridTransformations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyShipWelder_FindProjectedBlocks.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyWelder_FindProjectedBlock.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\EnsureOriginal.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\IPluginLogger.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\MultigridProjectorConfig.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\PluginLog.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\RwLock.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\RwLockDictionary.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\DictionaryExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\EnumerableExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\LinearAlgebraExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\MyBlockGroupExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\MyCubeBlockExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\MyCubeGridExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\MyMechanicalConnectionBlockBaseExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\MyObjectBuilderExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\MyProjectorBaseExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\MultigridProjection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\MultigridUpdateWork.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\ProjectionStats.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\ProjectorSubgrid.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\Subgrid.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\SubgridConnection.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="0Harmony, Version=2.0.4.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\packages\Lib.Harmony.2.0.4\lib\net472\0Harmony.dll</HintPath>
+    </Reference>
+    <Reference Include="Sandbox.Game, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
+      <HintPath>..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

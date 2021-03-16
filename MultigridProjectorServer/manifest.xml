@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<PluginManifest xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Name>Multigrid Projector</Name>
+  <Guid>d9359ba0-9a69-41c3-971d-eb5170adb97e</Guid>
+  <Repository>MultigridProjectorServer</Repository>
+  <Version>v0.1.15</Version>
+</PluginManifest>

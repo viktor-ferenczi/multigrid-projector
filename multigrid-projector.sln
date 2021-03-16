@@ -1,0 +1,24 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MultigridProjector", "MultigridProjector\MultigridProjector.shproj", "{EB280DCD-171D-4764-912F-AF7C99153BB4}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorServer", "MultigridProjectorServer\MultigridProjectorServer.csproj", "{D9359BA0-9A69-41C3-971D-EB5170ADB97E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorClient", "MultigridProjectorClient\MultigridProjectorClient.csproj", "{89F02986-D019-4044-BC94-5AF26B1B4365}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D9359BA0-9A69-41C3-971D-EB5170ADB97E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D9359BA0-9A69-41C3-971D-EB5170ADB97E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9359BA0-9A69-41C3-971D-EB5170ADB97E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D9359BA0-9A69-41C3-971D-EB5170ADB97E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89F02986-D019-4044-BC94-5AF26B1B4365}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89F02986-D019-4044-BC94-5AF26B1B4365}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89F02986-D019-4044-BC94-5AF26B1B4365}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89F02986-D019-4044-BC94-5AF26B1B4365}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
