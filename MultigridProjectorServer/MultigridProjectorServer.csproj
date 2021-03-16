@@ -104,7 +104,7 @@
     </ItemGroup>
     <ItemGroup>
       <None Include="manifest.xml">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
     <ItemGroup>
