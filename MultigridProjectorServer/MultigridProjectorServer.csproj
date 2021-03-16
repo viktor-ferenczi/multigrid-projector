@@ -103,9 +103,9 @@
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
     <ItemGroup>
-      <None Include="manifest.xml">
+      <Content Include="manifest.xml">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </None>
+      </Content>
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Lib.Harmony" Version="2.0.4" />
