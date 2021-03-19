@@ -3,7 +3,6 @@ using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
-using VRage.Utils;
 
 namespace MultigridProjector.Patches
 {
@@ -15,6 +14,7 @@ namespace MultigridProjector.Patches
     public static class MyProjectorBase_UpdateStats
     {
         // ReSharper disable once UnusedMember.Local
+        // ReSharper disable once InconsistentNaming
         private static bool Prefix(MyProjectorBase __instance)
         {
             var projector = __instance;

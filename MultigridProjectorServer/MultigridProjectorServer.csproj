@@ -34,62 +34,62 @@
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c">
-          <HintPath>..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\NLog.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\NLog.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\Sandbox.Common.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\Sandbox.Common.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.Game, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\Sandbox.Game.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\Sandbox.Game.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.Game.XmlSerializers, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\Sandbox.Game.XmlSerializers.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\Sandbox.Game.XmlSerializers.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.Graphics, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\Sandbox.Graphics.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\Sandbox.Graphics.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.RenderDirect, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\Sandbox.RenderDirect.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\Sandbox.RenderDirect.dll</HintPath>
         </Reference>
         <Reference Include="SpaceEngineers.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\SpaceEngineers.Game.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\SpaceEngineers.Game.dll</HintPath>
         </Reference>
         <Reference Include="SpaceEngineers.ObjectBuilders, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\SpaceEngineers.ObjectBuilders.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\SpaceEngineers.ObjectBuilders.dll</HintPath>
         </Reference>
         <Reference Include="System" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
         <Reference Include="System.Xml" />
         <Reference Include="Torch, Version=1.3.1.146, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\TorchBinaries\Torch.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\Torch.dll</HintPath>
         </Reference>
         <Reference Include="Torch.API, Version=1.3.1.146, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\TorchBinaries\Torch.API.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\Torch.API.dll</HintPath>
         </Reference>
         <Reference Include="Torch.Server, Version=1.3.1.146, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\TorchBinaries\Torch.Server.exe</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\Torch.Server.exe</HintPath>
         </Reference>
         <Reference Include="VRage, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\VRage.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\VRage.Game.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Game.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Input, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\VRage.Input.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Input.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Library, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\VRage.Library.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Library.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Math, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\VRage.Math.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Math.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Network, Version=1.0.53.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\VRage.Network.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Network.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Scripting, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\DedicatedServerBinaries\VRage.Scripting.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Scripting.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>
@@ -103,15 +103,17 @@
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
     <ItemGroup>
-      <None Include="manifest.xml">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+      <Content Include="manifest.xml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Lib.Harmony" Version="2.0.4" />
       <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     </ItemGroup>
     <ItemGroup>
+      <Content Include="deploy_debug.bat" />
+      <Content Include="deploy_release.bat" />
       <Content Include="README.md" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

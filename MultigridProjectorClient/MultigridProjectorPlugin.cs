@@ -5,7 +5,6 @@ using MultigridProjector.Utilities;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Plugins;
-using VRage.Utils;
 
 namespace MultigridProjectorClient
 {

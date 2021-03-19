@@ -13,7 +13,7 @@ namespace MultigridProjector.Logic
         private static MultigridProjectorApiProvider _instance;
         public static IMultigridProjectorApi Instance => _instance ?? (_instance = new MultigridProjectorApiProvider());
 
-        public string Version => "0.1.18";
+        public string Version => "0.1.19";
 
         public int GetSubgridCount(long projectorId)
         {
@@ -55,7 +55,7 @@ namespace MultigridProjector.Logic
             if (!subgrid.BlockStates.TryGetValue(position, out var blockState))
                 return BlockState.Unknown;
 
-            return (BlockState)blockState;
+            return blockState;
         }
 
         public bool GetBlockStates(Dictionary<Vector3I, BlockState> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask)
@@ -72,7 +72,7 @@ namespace MultigridProjector.Logic
                     continue;
 
                 if (full || box.Contains(position) == ContainmentType.Contains)
-                    blockStates[position] = (BlockState)blockState;
+                    blockStates[position] = blockState;
             }
 
             return true;

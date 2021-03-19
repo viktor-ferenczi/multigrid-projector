@@ -3,7 +3,6 @@ using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
-using VRage.Utils;
 
 namespace MultigridProjector.Patches
 {
@@ -24,7 +23,7 @@ namespace MultigridProjector.Patches
             try
             {
                 // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
-                if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
+                if (!MultigridProjection.TryFindProjectionByProjector(projector, out _))
                     return true;
             }
             catch (Exception e)

@@ -3,7 +3,6 @@ using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
-using VRage.Utils;
 
 namespace MultigridProjector.Patches
 {
@@ -18,6 +17,7 @@ namespace MultigridProjector.Patches
 
         // [Server]
         public static bool Prefix(
+            // ReSharper disable once InconsistentNaming
             MyMechanicalConnectionBlockBase __instance,
             long builtBy,
             bool smallToLarge,

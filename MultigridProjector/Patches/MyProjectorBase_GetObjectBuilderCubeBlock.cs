@@ -5,7 +5,6 @@ using MultigridProjector.Utilities;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using VRage.Game;
-using VRage.Utils;
 
 namespace MultigridProjector.Patches
 {
@@ -20,6 +19,7 @@ namespace MultigridProjector.Patches
         private static void Postfix(
             // ReSharper disable once InconsistentNaming
             MyProjectorBase __instance,
+            // ReSharper disable once InconsistentNaming
             MyObjectBuilder_CubeBlock __result,
             bool copy)
         {

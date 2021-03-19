@@ -114,7 +114,7 @@ namespace MultigridProjector.Extensions
             StatsDirtyFieldInfo.SetValue(projector, value);
         }
 
-        static readonly FieldInfo TotalBlocksFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_totalBlocks");
+        private static readonly FieldInfo TotalBlocksFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_totalBlocks");
         public static void SetTotalBlocks(this MyProjectorBase projector, int value)
         {
             TotalBlocksFieldInfo.SetValue(projector, value);
