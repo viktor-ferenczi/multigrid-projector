@@ -590,11 +590,13 @@ namespace MultigridProjector.Logic
 
         private void OnBuiltGridSplit(Subgrid subgrid)
         {
+            DetectAndUnregisterAnyDisconnectedGrids();
             ForceUpdateProjection();
         }
 
         private void OnBuiltGridClose(Subgrid subgrid)
         {
+            DetectAndUnregisterAnyDisconnectedGrids();
             ForceUpdateProjection();
         }
 
@@ -1256,6 +1258,7 @@ namespace MultigridProjector.Logic
                         {
                             subgrid.IsConnectedToProjector = true;
                             modified += 1;
+                            connected += 1;
                             break;
                         }
                     }
@@ -1269,6 +1272,7 @@ namespace MultigridProjector.Logic
                         {
                             subgrid.IsConnectedToProjector = true;
                             modified += 1;
+                            connected += 1;
                             break;
                         }
                     }
@@ -1277,6 +1281,12 @@ namespace MultigridProjector.Logic
                 if(modified == 0)
                     break;
             }
+        }
+
+        public void DetectAndUnregisterAnyDisconnectedGrids()
+        {
+            UpdateSubgridConnectedness();
+            UnregisterDisconnectedSubgrids();
         }
     }
 }

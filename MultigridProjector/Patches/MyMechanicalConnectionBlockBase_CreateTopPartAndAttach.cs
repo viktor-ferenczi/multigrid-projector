@@ -13,8 +13,6 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyMechanicalConnectionBlockBase_CreateTopPartAndAttach
     {
-        // private static readonly ConstructorInfo MyCubeBlockDefinitionGroupConstructor = AccessTools.Constructor(typeof(MyCubeBlockDefinitionGroup));
-
         // [Server]
         public static bool Prefix(
             // ReSharper disable once InconsistentNaming
