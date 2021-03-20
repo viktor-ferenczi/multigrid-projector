@@ -5,7 +5,5 @@ namespace MultigridProjector.Logic
         public ProjectorSubgrid(MultigridProjection projection) : base(projection, 0)
         {
         }
-
-        public override bool IsConnectedSomewhere => true;
     }
 }

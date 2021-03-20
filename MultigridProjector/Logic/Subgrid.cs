@@ -77,10 +77,12 @@ namespace MultigridProjector.Logic
         public bool HasBuilt => BuiltGrid != null;
         public MyCubeSize GridSizeEnum => PreviewGrid.GridSizeEnum;
 
-        public virtual bool IsConnectedSomewhere => BaseConnections.Values.Any(c => c.Connected) || TopConnections.Values.Any(c => c.Connected);
+        public bool IsConnectedToProjector = false;
 
         public void Dispose()
         {
+            BaseConnections.Clear();
+            TopConnections.Clear();
             UnregisterBuiltGrid(true);
         }
 
@@ -145,21 +147,24 @@ namespace MultigridProjector.Logic
                 DisconnectGridEvents();
 
                 BuiltGrid = null;
-                UpdateRequested = true;
+                UpdateRequested = false;
 
+                // Projector shutdown optimization
+                if (dispose)
+                    return;
+                
                 foreach (var baseConnection in BaseConnections.Values)
                     baseConnection.ClearBuiltBlock();
 
                 foreach (var topConnection in TopConnections.Values)
                     topConnection.ClearBuiltBlock();
-
-                // Projector shutdown optimization
-                if (dispose)
-                    return;
-
-                Stats.Clear();
             }
 
+            Stats.Clear();
+
+            foreach (var previewSlimBlock in PreviewGrid.CubeBlocks)
+                BlockStates[previewSlimBlock.Position] = BlockState.NotBuildable;
+            
             OnBuiltGridUnregistered?.Invoke(this);
         }
 
