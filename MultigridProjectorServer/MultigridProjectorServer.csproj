@@ -62,13 +62,13 @@
         <Reference Include="System.Data" />
         <Reference Include="System.Xml" />
         <Reference Include="Torch, Version=1.3.1.147, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\TorchDir\Torch.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\Torch.dll</HintPath>
         </Reference>
         <Reference Include="Torch.API, Version=1.3.1.147, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\TorchDir\Torch.API.dll</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\Torch.API.dll</HintPath>
         </Reference>
         <Reference Include="Torch.Server, Version=1.3.1.147, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\TorchDir\Torch.Server.exe</HintPath>
+          <HintPath>$(SolutionDir)\TorchDir\Torch.Server.exe</HintPath>
         </Reference>
         <Reference Include="VRage, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.dll</HintPath>
