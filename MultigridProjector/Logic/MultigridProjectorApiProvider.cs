@@ -10,8 +10,10 @@ namespace MultigridProjector.Logic
 {
     public class MultigridProjectorApiProvider: IMultigridProjectorApi
     {
-        private static MultigridProjectorApiProvider _instance;
-        public static IMultigridProjectorApi Instance => _instance ?? (_instance = new MultigridProjectorApiProvider());
+        public const long WorkshopId = 2415983416;
+
+        private static MultigridProjectorApiProvider _api;
+        public static IMultigridProjectorApi Api => _api ?? (_api = new MultigridProjectorApiProvider());
 
         public string Version => "0.1.21";
 

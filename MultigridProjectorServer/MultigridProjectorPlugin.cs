@@ -14,7 +14,7 @@ namespace MultigridProjectorServer
         public static MultigridProjectorPlugin Instance { get; private set; }
 
         // Retrieved by MultigridProjectorTorchAgent via reflection
-        public IMultigridProjectorApi Api => MultigridProjectorApiProvider.Instance;
+        public IMultigridProjectorApi Api => MultigridProjectorApiProvider.Api;
 
         // ReSharper disable once UnusedMember.Local
         // private readonly MultigridProjectorCommands _commands = new MultigridProjectorCommands();
