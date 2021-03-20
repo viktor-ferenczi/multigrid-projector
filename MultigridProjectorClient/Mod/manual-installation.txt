@@ -1,0 +1,26 @@
+= Manual Installation =
+
+1. Install the Plugin Loader if you don't have it yet:
+
+   https://steamcommunity.com/workshop/filedetails/?id=2407984968
+
+2. Copy the Multigrid_Projector.plugin file into your local Plugins folder:
+
+   C:\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\Plugins
+   
+   Please adjust the folder location accordingly.
+   
+3. Rename the file from Multigrid_Projector.plugin to Multigrid_Projector.dll
+
+4. Right click on the Multigrid_Projector.dll and open its Properties.
+   If you see an Unblock button anywhere, then you need to click that.
+   
+5. Start the game and enable Multigrid Projector from the Plugins menu.
+
+   Click on the Save button, then restart the game.
+
+For more information please see the Workshop page and please subscribe there:
+
+https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416
+   
+Enjoy!
