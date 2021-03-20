@@ -2,7 +2,7 @@ using VRageMath;
 
 namespace MultigridProjector.Api
 {
-    public readonly struct BlockLocation
+    public struct BlockLocation
     {
         public readonly int GridIndex;
         public readonly Vector3I Position;
