@@ -24,7 +24,6 @@ namespace MultigridProjector.Patches
             {
                 if (!MultigridProjection.TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out var subgrid)) return;
 
-                subgrid.UpdateRequested = true;
                 projection.ForceUpdateProjection();
             }
             catch (Exception e)

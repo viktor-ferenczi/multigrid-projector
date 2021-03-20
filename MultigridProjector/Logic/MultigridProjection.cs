@@ -369,7 +369,11 @@ namespace MultigridProjector.Logic
                 return;
 
             Clipboard.HasPreviewBBox = false;
-
+            
+            UpdateSubgridConnectedness();
+            UnregisterDisconnectedSubgrids();
+            UpdateMechanicalConnections();
+            
             AggregateStatistics();
             UpdatePreviewBlockVisuals(true);
 
@@ -383,7 +387,6 @@ namespace MultigridProjector.Logic
                 Projector.RaisePropertiesChanged();
             }
 
-            UpdateMechanicalConnections();
             DetectCompletedProjection();
         }
 
@@ -466,7 +469,7 @@ namespace MultigridProjector.Logic
                 previewGrid.PositionComp.Scale = 1f;
 
                 // Align the preview to an already built top block
-                var topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => c.Connected);
+                var topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => c.IsConnected);
                 if (topConnection != null && !topConnection.Block.CubeGrid.Closed)
                 {
                     topConnection.Preview.AlignGrid(topConnection.Block);
@@ -474,7 +477,7 @@ namespace MultigridProjector.Logic
                 }
 
                 // Align the preview to an already built base block
-                var baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => c.Connected);
+                var baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => c.IsConnected);
                 if (baseConnection != null && !baseConnection.Block.CubeGrid.Closed)
                 {
                     baseConnection.Preview.AlignGrid(baseConnection.Block);
@@ -640,6 +643,15 @@ namespace MultigridProjector.Logic
             return baseSubgrid.BaseConnections[topConnection.BaseLocation.Position];
         }
 
+        private void UnregisterDisconnectedSubgrids()
+        {
+            foreach (var subgrid in Subgrids)
+            {
+                if (subgrid.HasBuilt && !subgrid.IsConnectedToProjector)
+                    subgrid.UnregisterBuiltGrid();
+            }
+        }
+        
         private void UpdateMechanicalConnections()
         {
             foreach (var subgrid in Subgrids)
@@ -663,26 +675,24 @@ namespace MultigridProjector.Logic
 
             FindNewlyBuiltBase(baseConnection);
             FindNewlyAddedHead(baseConnection, topConnection);
-            BuildRequestedHead(baseConnection, baseSubgrid);
+            BuildMissingHead(baseConnection, baseSubgrid);
             RegisterConnectedSubgrid(baseSubgrid, baseConnection, topConnection, topSubgrid);
-
-            if (baseSubgrid.HasBuilt && !baseSubgrid.IsConnectedSomewhere)
-                baseSubgrid.UnregisterBuiltGrid();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void BuildRequestedHead(BaseConnection baseConnection, Subgrid baseSubgrid)
+        private void BuildMissingHead(BaseConnection baseConnection, Subgrid baseSubgrid)
         {
             if (!baseConnection.HasBuilt) return;
-            if (baseConnection.Connected) return;
-
-            if (!baseConnection.RequestHead)  return;
-            baseConnection.RequestHead = false;
+            if (baseConnection.IsConnected) return;
 
             // Create head of right size
             GetCounterparty(baseConnection, out var topSubgrid);
+            if (topSubgrid.HasBuilt) return;
             var smallToLarge = baseSubgrid.GridSizeEnum != topSubgrid.GridSizeEnum;
             baseConnection.Block.RecreateTop(baseConnection.Block.BuiltBy, smallToLarge);
+            
+            // Need to try again every 2 seconds, because building the top part may fail due to objects in the way 
+            ShouldUpdateProjection();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -710,10 +720,8 @@ namespace MultigridProjector.Logic
             var baseConnection = GetCounterparty(topConnection, out var baseSubgrid);
 
             FindNewlyBuiltTop(topConnection);
+            BuildMissingBase(topConnection, topSubgrid);
             RegisterConnectedSubgrid(baseSubgrid, baseConnection, topConnection, topSubgrid);
-
-            if (topSubgrid.HasBuilt && !topSubgrid.IsConnectedSomewhere)
-                topSubgrid.UnregisterBuiltGrid();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -724,6 +732,22 @@ namespace MultigridProjector.Logic
             topConnection.Block = topConnection.Found;
         }
 
+        private void BuildMissingBase(TopConnection topConnection, Subgrid topSubgrid)
+        {
+            if (!topConnection.HasBuilt) return;
+            if (topConnection.IsConnected) return;
+
+            // Create head of right size
+            GetCounterparty(topConnection, out var baseSubgrid);
+            if (baseSubgrid.HasBuilt) return;
+            var smallToLarge = baseSubgrid.GridSizeEnum != topSubgrid.GridSizeEnum;
+            // FIXME: Implement extension method RecreateBase
+            // topConnection.Block.RecreateBase(topConnection.Block.BuiltBy, smallToLarge);
+            
+            // Need to try again every 2 seconds, because building the base part may fail due to objects in the way 
+            // ShouldUpdateProjection();
+        }
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RegisterConnectedSubgrid(Subgrid baseSubgrid, BaseConnection baseConnection, TopConnection topConnection, Subgrid topSubgrid)
         {
@@ -732,7 +756,7 @@ namespace MultigridProjector.Logic
 
             var loneTopPart = topConnection.Block.CubeGrid.CubeBlocks.Count == 1;
 
-            var connected = baseConnection.Connected && baseConnection.Block.TopBlock.EntityId == topConnection.Block.EntityId;
+            var connected = baseConnection.IsConnected && baseConnection.Block.TopBlock.EntityId == topConnection.Block.EntityId;
             if (!connected && baseConnection.RequestAttach)
             {
                 baseConnection.RequestAttach = false;
@@ -755,8 +779,6 @@ namespace MultigridProjector.Logic
                 // condition cannot be fixed there. It may change with new game releases, because
                 // this was most likely due to inlining which this plugin cannot prevent.
                 RemoveHead(topConnection);
-                baseConnection.RequestHead = true;
-                baseSubgrid.UpdateRequested = true;
                 ForceUpdateProjection();
                 return;
             }
@@ -1210,6 +1232,51 @@ namespace MultigridProjector.Logic
         {
             MyGuiAudio.PlaySound(MyGuiSounds.HudUnable);
             MyHud.Notifications.Add(MySession.GetNotificationForLimitResult(limitResult));
+        }
+
+        private void UpdateSubgridConnectedness()
+        {
+            // Clear connectedness
+            foreach (var subgrid in Subgrids)
+                subgrid.IsConnectedToProjector = false;
+            
+            // Flood fill along the connected mechanical connections
+            Subgrids[0].IsConnectedToProjector = true;
+            for (var connected = 0; connected < Subgrids.Count;)
+            {
+                var modified = 0;
+                foreach (var subgrid in Subgrids)
+                {
+                    if(subgrid.IsConnectedToProjector || !subgrid.HasBuilt)
+                        continue;
+
+                    foreach (var baseConnection in subgrid.BaseConnections.Values)
+                    {
+                        if (Subgrids[baseConnection.TopLocation.GridIndex].IsConnectedToProjector && baseConnection.IsConnected)
+                        {
+                            subgrid.IsConnectedToProjector = true;
+                            modified += 1;
+                            break;
+                        }
+                    }
+                    
+                    if(subgrid.IsConnectedToProjector)
+                        continue;
+                    
+                    foreach (var topConnection in subgrid.TopConnections.Values)
+                    {
+                        if (Subgrids[topConnection.BaseLocation.GridIndex].IsConnectedToProjector && topConnection.IsConnected)
+                        {
+                            subgrid.IsConnectedToProjector = true;
+                            modified += 1;
+                            break;
+                        }
+                    }
+                }
+                
+                if(modified == 0)
+                    break;
+            }
         }
     }
 }
