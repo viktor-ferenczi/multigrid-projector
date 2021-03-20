@@ -13,6 +13,7 @@
 3. Rename the file from Multigrid_Projector.plugin to Multigrid_Projector.dll
 
 4. Right click on the Multigrid_Projector.dll and open its Properties.
+
    If you see an Unblock button anywhere, then you need to click that.
    
 5. Start the game and enable Multigrid Projector from the Plugins menu.

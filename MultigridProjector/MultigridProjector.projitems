@@ -16,6 +16,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logic\BlockMinLocation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\MultigridProjectorApiProvider.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyCubeGrid_TestPlacementAreaCube.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyGridPhysicalHierarchy_BreakLink.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPartAndAttach.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RaiseAttachedEntityChanged.cs" />

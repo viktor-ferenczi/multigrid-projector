@@ -22,9 +22,9 @@ namespace MultigridProjector.Patches
 
             try
             {
-                if (!MultigridProjection.TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out var subgrid)) return;
+                if (!MultigridProjection.TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out _)) return;
 
-                projection.ForceUpdateProjection();
+                projection.DetectAndUnregisterAnyDisconnectedGrids();
             }
             catch (Exception e)
             {

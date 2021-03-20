@@ -96,6 +96,7 @@
     <ItemGroup>
       <Content Include="deploy_debug.bat" />
       <Content Include="deploy_release.bat" />
+      <Content Include="Mod\manual-installation.txt" />
       <Content Include="Mod\metadata.mod">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
