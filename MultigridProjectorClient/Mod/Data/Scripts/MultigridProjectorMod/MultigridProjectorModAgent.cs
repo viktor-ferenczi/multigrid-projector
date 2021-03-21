@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using VRage.Game;
 using VRage.Game.ModAPI;
@@ -26,7 +27,7 @@ namespace MultigridProjector.Api
             if (!Available)
                 return 0;
 
-            var fn = (ModApiFunctions.GetSubgridCount) _api[1];
+            var fn = (Func<long, int>) _api[1];
             return fn(projectorId);
         }
 
@@ -35,7 +36,7 @@ namespace MultigridProjector.Api
             if (!Available)
                 return null;
 
-            var fn = (ModApiFunctions.GetOriginalGridBuilders) _api[2];
+            var fn = (Func<long, List<MyObjectBuilder_CubeGrid>>) _api[2];
             return fn(projectorId);
         }
 
@@ -44,7 +45,7 @@ namespace MultigridProjector.Api
             if (!Available)
                 return null;
 
-            var fn = (ModApiFunctions.GetPreviewGrid) _api[3];
+            var fn = (Func<long, int, IMyCubeGrid>) _api[3];
             return fn(projectorId, subgridIndex);
         }
 
@@ -53,7 +54,7 @@ namespace MultigridProjector.Api
             if (!Available)
                 return null;
 
-            var fn = (ModApiFunctions.GetBuiltGrid) _api[4];
+            var fn = (Func<long, int, IMyCubeGrid>) _api[4];
             return fn(projectorId, subgridIndex);
         }
 
@@ -62,7 +63,7 @@ namespace MultigridProjector.Api
             if (!Available)
                 return BlockState.Unknown;
 
-            var fn = (ModApiFunctions.GetBlockState) _api[5];
+            var fn = (Func<long, int, Vector3I, int>) _api[5];
             return (BlockState) fn(projectorId, subgridIndex, position);
         }
 
@@ -72,7 +73,7 @@ namespace MultigridProjector.Api
                 return false;
 
             var blockIntStates = new Dictionary<Vector3I, int>();
-            var fn = (ModApiFunctions.GetBlockStates) _api[6];
+            var fn = (Func<Dictionary<Vector3I, int>, long, int, BoundingBoxI, int, bool>) _api[6];
             if (!fn(blockIntStates, projectorId, subgridIndex, box, mask))
                 return false;
 
@@ -87,15 +88,15 @@ namespace MultigridProjector.Api
             if (!Available)
                 return null;
 
-            int[] gridIndices;
-            Vector3I[] basePositions;
-            Vector3I[] topPositions;
-            var fn = (ModApiFunctions.GetBaseConnections) _api[7];
-            if (!fn(projectorId, subgridIndex, out basePositions, out gridIndices, out topPositions))
+            var basePositions = new List<Vector3I>();
+            var gridIndices = new List<int>();
+            var topPositions = new List<Vector3I>();
+            var fn = (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) _api[7];
+            if (!fn(projectorId, subgridIndex, basePositions, gridIndices, topPositions))
                 return null;
 
             var baseConnections = new Dictionary<Vector3I, BlockLocation>();
-            for (var i = 0; i < gridIndices.Length; i++)
+            for (var i = 0; i < basePositions.Count; i++)
                 baseConnections[basePositions[i]] = new BlockLocation(gridIndices[i], topPositions[i]);
 
             return baseConnections;
@@ -106,15 +107,15 @@ namespace MultigridProjector.Api
             if (!Available)
                 return null;
             
-            int[] gridIndices;
-            Vector3I[] topPositions;
-            Vector3I[] basePositions;
-            var fn = (ModApiFunctions.GetTopConnections) _api[8];
-            if (!fn(projectorId, subgridIndex, out topPositions, out gridIndices, out basePositions))
+            var topPositions = new List<Vector3I>();
+            var gridIndices = new List<int>();
+            var basePositions = new List<Vector3I>();
+            var fn = (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) _api[8];
+            if (!fn(projectorId, subgridIndex, topPositions, gridIndices, basePositions))
                 return null;
 
             var topConnections = new Dictionary<Vector3I, BlockLocation>();
-            for (var i = 0; i < gridIndices.Length; i++)
+            for (var i = 0; i < topConnections.Count; i++)
                 topConnections[topPositions[i]] = new BlockLocation(gridIndices[i], basePositions[i]);
 
             return topConnections;

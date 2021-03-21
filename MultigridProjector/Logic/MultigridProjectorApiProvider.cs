@@ -118,14 +118,14 @@ namespace MultigridProjector.Logic
         public static object ModApi => _modApi ?? (_modApi = new object[]
         {
             Api.Version,
-            (ModApiFunctions.GetSubgridCount) Api.GetSubgridCount,
-            (ModApiFunctions.GetOriginalGridBuilders) Api.GetOriginalGridBuilders,
-            (ModApiFunctions.GetPreviewGrid) Api.GetPreviewGrid,
-            (ModApiFunctions.GetBuiltGrid) Api.GetBuiltGrid,
-            (ModApiFunctions.GetBlockState) ModApiGetBlockState,
-            (ModApiFunctions.GetBlockStates) ModApiGetBlockStates,
-            (ModApiFunctions.GetBaseConnections) ModApiGetBaseConnections,
-            (ModApiFunctions.GetTopConnections) ModApiGetTopConnections,
+            (Func<long, int>) Api.GetSubgridCount,
+            (Func<long, List<MyObjectBuilder_CubeGrid>>) Api.GetOriginalGridBuilders,
+            (Func<long, int, IMyCubeGrid>) Api.GetPreviewGrid,
+            (Func<long, int, IMyCubeGrid>) Api.GetBuiltGrid,
+            (Func<long, int, Vector3I, int>) ModApiGetBlockState,
+            (Func<Dictionary<Vector3I, int>, long, int, BoundingBoxI, int, bool>) ModApiGetBlockStates,
+            (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) ModApiGetBaseConnections,
+            (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) ModApiGetTopConnections,
         });
 
         private static int ModApiGetBlockState(long projectorId, int subgridIndex, Vector3I position) => (int) Api.GetBlockState(projectorId, subgridIndex, position);
@@ -141,37 +141,27 @@ namespace MultigridProjector.Logic
             return true;
         }
 
-        private static bool ModApiGetBaseConnections(long projectorId, int subgridIndex, out Vector3I[] basePositions, out int[] gridIndices, out Vector3I[] topPositions)
+        private static bool ModApiGetBaseConnections(long projectorId, int subgridIndex, List<Vector3I> basePositions, List<int> gridIndices, List<Vector3I> topPositions)
         {
             var baseConnections = Api.GetBaseConnections(projectorId, subgridIndex);
             if (baseConnections == null)
-            {
-                basePositions = null;
-                gridIndices = null;
-                topPositions = null;
                 return false;
-            }
 
-            basePositions = baseConnections.Keys.ToArray();
-            gridIndices = baseConnections.Values.Select(blockLocation => blockLocation.GridIndex).ToArray();
-            topPositions = baseConnections.Values.Select(blockLocation => blockLocation.Position).ToArray();
+            basePositions.AddRange(baseConnections.Keys);
+            gridIndices.AddRange(baseConnections.Values.Select(blockLocation => blockLocation.GridIndex));
+            topPositions.AddRange(baseConnections.Values.Select(blockLocation => blockLocation.Position));
             return true;
         }
 
-        private static bool ModApiGetTopConnections(long projectorId, int subgridIndex, out Vector3I[] topPositions, out int[] gridIndices, out Vector3I[] basePositions)
+        private static bool ModApiGetTopConnections(long projectorId, int subgridIndex, List<Vector3I> topPositions, List<int> gridIndices, List<Vector3I> basePositions)
         {
             var topConnections = Api.GetTopConnections(projectorId, subgridIndex);
             if (topConnections == null)
-            {
-                topPositions = null;
-                gridIndices = null;
-                basePositions = null;
                 return false;
-            }
 
-            topPositions = topConnections.Keys.ToArray();
-            gridIndices = topConnections.Values.Select(blockLocation => blockLocation.GridIndex).ToArray();
-            basePositions = topConnections.Values.Select(blockLocation => blockLocation.Position).ToArray();
+            topPositions.AddRange(topConnections.Keys);
+            gridIndices.AddRange(topConnections.Values.Select(blockLocation => blockLocation.GridIndex));
+            basePositions.AddRange(topConnections.Values.Select(blockLocation => blockLocation.Position));
             return true;
         }
 
