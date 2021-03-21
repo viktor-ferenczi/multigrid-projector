@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using VRage.Game.Components;
@@ -19,7 +20,7 @@ namespace MultigridProjectorMod
     {
         IMyProjector _projector;
         private MultigridProjectorModAgent _mgp;
-        private bool _noted;
+        private bool _projectorLogged;
         private List<MyObjectBuilder_CubeGrid> _gridBuilders;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
@@ -30,14 +31,14 @@ namespace MultigridProjectorMod
                 MyLog.Default.WriteLine($"MultigridProjectorMod: No projector");
                 return;
             }
-            
+
             if (_projector.Closed || !_projector.InScene || _projector.OwnerId == 0)
                 return;
 
             MyLog.Default.WriteLine($"MultigridProjectorMod: Projector {_projector.DisplayName} [{_projector.EntityId}] registered");
 
             _mgp = new MultigridProjectorModAgent();
-            
+
             Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
         }
 
@@ -57,14 +58,15 @@ namespace MultigridProjectorMod
 
         public override void UpdateBeforeSimulation100()
         {
+            if (_projector == null || _mgp == null || !_mgp.Available)
+                return;
+            
             var projectorEntityId = _projector.EntityId;
             
-            if (_mgp.Available && !_noted)
+            if (!_projectorLogged)
             {
-                MyLog.Default.WriteLine($"MultigridProjectorMod: Projector {_projector.DisplayName} [{projectorEntityId}] MGP API connection is available");
-                MyAPIGateway.Utilities.ShowMessage("MGP", $"Client plugin version {_mgp.Version}");
-                MyAPIGateway.Utilities.ShowMessage("MGP", $"Projector {_projector.DisplayName} [{projectorEntityId}] is usable with multigrid blueprints!");
-                _noted = true;
+                _projectorLogged = true;
+                LogProjector(projectorEntityId);
             }
 
             var gridBuilders = _mgp.GetOriginalGridBuilders(projectorEntityId);
@@ -73,6 +75,13 @@ namespace MultigridProjectorMod
                 _gridBuilders = gridBuilders;
                 LogBlueprintDetails(projectorEntityId, gridBuilders);
             }
+        }
+
+        private void LogProjector(long projectorEntityId)
+        {
+            MyLog.Default.WriteLine($"MultigridProjectorMod: Projector {_projector.DisplayName} [{projectorEntityId}] MGP API connection is available");
+            MyAPIGateway.Utilities.ShowMessage("MGP", $"Client plugin version {_mgp.Version}");
+            MyAPIGateway.Utilities.ShowMessage("MGP", $"Projector {_projector.DisplayName} [{projectorEntityId}] is usable with multigrid blueprints!");
         }
 
         private void LogBlueprintDetails(long projectorEntityId, List<MyObjectBuilder_CubeGrid> gridBuilders)
