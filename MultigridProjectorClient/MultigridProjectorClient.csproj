@@ -87,6 +87,8 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="Mod\Data\Scripts\MultigridProjectorMod\MultigridProjectorMod.cs" />
+        <Compile Include="Mod\Data\Scripts\MultigridProjectorMod\MultigridProjectorModAgent.cs" />
         <Compile Include="MultigridProjectorPlugin.cs" />
         <Compile Include="Patches\MyProjectorBase_BuildInternal.cs" />
         <Compile Include="Patches\MyProjectorBase_InitializeClipboard.cs" />

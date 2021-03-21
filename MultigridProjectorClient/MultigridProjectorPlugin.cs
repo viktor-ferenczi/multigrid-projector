@@ -2,6 +2,8 @@
 using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
+using Sandbox.Game.World;
+using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.Components;
 using VRage.Plugins;
@@ -22,6 +24,9 @@ namespace MultigridProjectorClient
             {
                 EnsureOriginal.VerifyAll();
                 _harmony.PatchAll();
+
+                MySession.OnLoading += OnLoadSession;
+                MySession.OnUnloading += OnUnloading;
             }
             catch (Exception e)
             {
@@ -33,9 +38,28 @@ namespace MultigridProjectorClient
 
         public void Dispose()
         {
+            MySession.OnLoading -= OnLoadSession;
+            MySession.OnUnloading -= OnUnloading;
+
             // PluginLog.Info("Unloading the Multigrid Projector Client Plugin");
             // _harmony.UnpatchAll();
+
             PluginLog.Info("Unloaded client plugin");
+        }
+
+        private void OnLoadSession()
+        {
+            MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModMessage);
+        }
+
+        private void OnUnloading()
+        {
+            MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModMessage);
+        }
+
+        private void HandleModMessage(object obj)
+        {
+            MyAPIGateway.Utilities.SendModMessage(MultigridProjectorApiProvider.ModApiResponseId , MultigridProjectorApiProvider.ModApi);
         }
 
         public void Update()
