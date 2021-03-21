@@ -9,26 +9,6 @@ using VRageMath;
 
 namespace MultigridProjector.Logic
 {
-    // Copied to MultigridProjectorModAgent
-    public static class ModApiFunctions
-    {
-        public delegate int GetSubgridCount(long projectorId);
-
-        public delegate List<MyObjectBuilder_CubeGrid> GetOriginalGridBuilders(long projectorId);
-
-        public delegate IMyCubeGrid GetPreviewGrid(long projectorId, int subgridIndex);
-
-        public delegate IMyCubeGrid GetBuiltGrid(long projectorId, int subgridIndex);
-
-        public delegate int GetBlockState(long projectorId, int subgridIndex, Vector3I position);
-
-        public delegate List<Tuple<Vector3I, int>> GetBlockStates(long projectorId, int subgridIndex, BoundingBoxI box, int mask);
-
-        public delegate Dictionary<Vector3I, Tuple<int, Vector3I>> GetBaseConnections(long projectorId, int subgridIndex);
-
-        public delegate Dictionary<Vector3I, Tuple<int, Vector3I>> GetTopConnections(long projectorId, int subgridIndex);
-    }
-
     public class MultigridProjectorApiProvider : IMultigridProjectorApi
     {
         #region PluginApi
@@ -150,32 +130,49 @@ namespace MultigridProjector.Logic
 
         private static int ModApiGetBlockState(long projectorId, int subgridIndex, Vector3I position) => (int) Api.GetBlockState(projectorId, subgridIndex, position);
 
-        private static List<Tuple<Vector3I, int>> ModApiGetBlockStates(long projectorId, int subgridIndex, BoundingBoxI box, int mask)
+        private static bool ModApiGetBlockStates(Dictionary<Vector3I, int> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask)
         {
             if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
-                return null;
+                return false;
 
-            return IterBlockStates(subgrid, box, mask)
-                .Select(pair => Tuple.Create(pair.Item1, (int) pair.Item2))
-                .ToList();
+            foreach (var (position, blockState) in IterBlockStates(subgrid, box, mask))
+                blockStates[position] = (int)blockState;
+            
+            return true;
         }
 
-        private static Dictionary<Vector3I, Tuple<int, Vector3I>> ModApiGetBaseConnections(long projectorId, int subgridIndex)
+        private static bool ModApiGetBaseConnections(long projectorId, int subgridIndex, out Vector3I[] basePositions, out int[] gridIndices, out Vector3I[] topPositions)
         {
-            var baseConnections = new Dictionary<Vector3I, Tuple<int, Vector3I>>();
-            foreach (var pair in Api.GetBaseConnections(projectorId, subgridIndex))
-                baseConnections[pair.Key] = Tuple.Create(pair.Value.GridIndex, pair.Value.Position);
+            var baseConnections = Api.GetBaseConnections(projectorId, subgridIndex);
+            if (baseConnections == null)
+            {
+                basePositions = null;
+                gridIndices = null;
+                topPositions = null;
+                return false;
+            }
 
-            return baseConnections;
+            basePositions = baseConnections.Keys.ToArray();
+            gridIndices = baseConnections.Values.Select(blockLocation => blockLocation.GridIndex).ToArray();
+            topPositions = baseConnections.Values.Select(blockLocation => blockLocation.Position).ToArray();
+            return true;
         }
 
-        private static Dictionary<Vector3I, Tuple<int, Vector3I>> ModApiGetTopConnections(long projectorId, int subgridIndex)
+        private static bool ModApiGetTopConnections(long projectorId, int subgridIndex, out Vector3I[] topPositions, out int[] gridIndices, out Vector3I[] basePositions)
         {
-            var topConnections = new Dictionary<Vector3I, Tuple<int, Vector3I>>();
-            foreach (var pair in Api.GetTopConnections(projectorId, subgridIndex))
-                topConnections[pair.Key] = Tuple.Create(pair.Value.GridIndex, pair.Value.Position);
+            var topConnections = Api.GetTopConnections(projectorId, subgridIndex);
+            if (topConnections == null)
+            {
+                topPositions = null;
+                gridIndices = null;
+                basePositions = null;
+                return false;
+            }
 
-            return topConnections;
+            topPositions = topConnections.Keys.ToArray();
+            gridIndices = topConnections.Values.Select(blockLocation => blockLocation.GridIndex).ToArray();
+            basePositions = topConnections.Values.Select(blockLocation => blockLocation.Position).ToArray();
+            return true;
         }
 
         #endregion
