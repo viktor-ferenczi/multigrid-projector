@@ -24,21 +24,21 @@ namespace MultigridProjectorMod
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
-            if (_projector.Closed || !_projector.InScene || _projector.OwnerId == 0)
-                return;
-
             _projector = Entity as IMyProjector;
             if (_projector == null)
             {
                 MyLog.Default.WriteLine($"MultigridProjectorMod: No projector");
                 return;
             }
-
-            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
+            
+            if (_projector.Closed || !_projector.InScene || _projector.OwnerId == 0)
+                return;
 
             MyLog.Default.WriteLine($"MultigridProjectorMod: Projector {_projector.DisplayName} [{_projector.EntityId}] registered");
 
             _mgp = new MultigridProjectorModAgent();
+            
+            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
         }
 
         public override void Close()
