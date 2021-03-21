@@ -7,43 +7,35 @@ using VRage.Game;
 using VRage.Game.ModAPI;
 using VRageMath;
 
-// Copied to MultigridProjectorModAgent
-using ModApiFunctions1 = System.Tuple<
-    // int GetSubgridCount(long projectorId)
-    System.Func<long, int>,
-        
-    // List<MyObjectBuilder_CubeGrid> GetOriginalGridBuilders(long projectorId)
-    System.Func<long, System.Collections.Generic.List<VRage.Game.MyObjectBuilder_CubeGrid>>,
-        
-    // IMyCubeGrid GetPreviewGrid(long projectorId, int subgridIndex)
-    System.Func<long, int, VRage.Game.ModAPI.IMyCubeGrid>,
-        
-    // IMyCubeGrid GetBuiltGrid(long projectorId, int subgridIndex)
-    System.Func<long, int, VRage.Game.ModAPI.IMyCubeGrid>
->;
-using ModApiFunctions2 = System.Tuple<
-    // BlockState GetBlockState(long projectorId, int subgridIndex, Vector3I position)
-    System.Func<long, int, VRageMath.Vector3I, int>,
-        
-    // List<Tuple<Vector3I, BlockState>> GetBlockStates(long projectorId, int subgridIndex, BoundingBoxI box, int mask)
-    System.Func<long, int, VRageMath.BoundingBoxI, int, System.Collections.Generic.List<System.Tuple<VRageMath.Vector3I, int>>>,
-        
-    // Dictionary<Vector3I, BlockLocation> GetBaseConnections(long projectorId, int subgridIndex)
-    System.Func<long, int, System.Collections.Generic.Dictionary<VRageMath.Vector3I, System.Tuple<int, VRageMath.Vector3I>>>,
-        
-    // Dictionary<Vector3I, BlockLocation> GetTopConnections(long projectorId, int subgridIndex)
-    System.Func<long, int, System.Collections.Generic.Dictionary<VRageMath.Vector3I, System.Tuple<int, VRageMath.Vector3I>>>
->;
-
 namespace MultigridProjector.Logic
 {
-    public class MultigridProjectorApiProvider: IMultigridProjectorApi
+    // Copied to MultigridProjectorModAgent
+    public static class ModApiFunctions
+    {
+        public delegate int GetSubgridCount(long projectorId);
+
+        public delegate List<MyObjectBuilder_CubeGrid> GetOriginalGridBuilders(long projectorId);
+
+        public delegate IMyCubeGrid GetPreviewGrid(long projectorId, int subgridIndex);
+
+        public delegate IMyCubeGrid GetBuiltGrid(long projectorId, int subgridIndex);
+
+        public delegate int GetBlockState(long projectorId, int subgridIndex, Vector3I position);
+
+        public delegate List<Tuple<Vector3I, int>> GetBlockStates(long projectorId, int subgridIndex, BoundingBoxI box, int mask);
+
+        public delegate Dictionary<Vector3I, Tuple<int, Vector3I>> GetBaseConnections(long projectorId, int subgridIndex);
+
+        public delegate Dictionary<Vector3I, Tuple<int, Vector3I>> GetTopConnections(long projectorId, int subgridIndex);
+    }
+
+    public class MultigridProjectorApiProvider : IMultigridProjectorApi
     {
         #region PluginApi
 
         private static MultigridProjectorApiProvider _api;
         public static IMultigridProjectorApi Api => _api ?? (_api = new MultigridProjectorApiProvider());
-            
+
         public string Version => "0.1.21";
 
         public int GetSubgridCount(long projectorId)
@@ -132,52 +124,33 @@ namespace MultigridProjector.Logic
             return subgrid.TopConnections
                 .ToDictionary(pair => pair.Key, pair => pair.Value.BaseLocation);
         }
-        
+
         #endregion
 
         #region ModApi
-        
+
         private const long WorkshopId = 2415983416;
         public const long ModApiRequestId = WorkshopId * 1000 + 0;
         public const long ModApiResponseId = WorkshopId * 1000 + 1;
 
         private static object _modApi;
-        public static object ModApi => _modApi ?? (_modApi = new object[] {
+
+        public static object ModApi => _modApi ?? (_modApi = new object[]
+        {
             Api.Version,
-            // Cast is to verify that the tuple signature matches what the mods expect. Do NOT remove the cast! 
-            // ReSharper disable once RedundantCast
-            (ModApiFunctions1) Tuple.Create<
-                Func<long, int>,
-                Func<long, List<MyObjectBuilder_CubeGrid>>,
-                Func<long, int, IMyCubeGrid>,
-                Func<long, int, IMyCubeGrid>>(
-                ModApiGetSubgridCount, 
-                ModApiGetOriginalGridBuilders, 
-                ModApiGetPreviewGrid, 
-                ModApiGetBuiltGrid
-            ),
-            // Cast is to verify that the tuple signature matches what the mods expect. Do NOT remove the cast!
-            // ReSharper disable once RedundantCast
-            (ModApiFunctions2) Tuple.Create<    
-                Func<long, int, Vector3I, int>,
-                Func<long, int, BoundingBoxI, int, List<Tuple<Vector3I, int>>>,
-                Func<long, int, Dictionary<Vector3I, Tuple<int, Vector3I>>>,
-                Func<long, int, Dictionary<Vector3I, Tuple<int, Vector3I>>>
-            >(
-                ModApiGetBlockState, 
-                ModApiGetBlockState, 
-                ModApiGetBaseConnections, 
-                ModApiGetTopConnections
-            ),
+            (ModApiFunctions.GetSubgridCount) Api.GetSubgridCount,
+            (ModApiFunctions.GetOriginalGridBuilders) Api.GetOriginalGridBuilders,
+            (ModApiFunctions.GetPreviewGrid) Api.GetPreviewGrid,
+            (ModApiFunctions.GetBuiltGrid) Api.GetBuiltGrid,
+            (ModApiFunctions.GetBlockState) ModApiGetBlockState,
+            (ModApiFunctions.GetBlockStates) ModApiGetBlockStates,
+            (ModApiFunctions.GetBaseConnections) ModApiGetBaseConnections,
+            (ModApiFunctions.GetTopConnections) ModApiGetTopConnections,
         });
 
-        private static int ModApiGetSubgridCount(long projectorId) => Api.GetSubgridCount(projectorId);
-        private static List<MyObjectBuilder_CubeGrid> ModApiGetOriginalGridBuilders(long projectorId) => Api.GetOriginalGridBuilders(projectorId);
-        private static IMyCubeGrid ModApiGetPreviewGrid(long projectorId, int subgridIndex) => Api.GetPreviewGrid(projectorId, subgridIndex);
-        private static IMyCubeGrid ModApiGetBuiltGrid(long projectorId, int subgridIndex) => Api.GetBuiltGrid(projectorId, subgridIndex);
         private static int ModApiGetBlockState(long projectorId, int subgridIndex, Vector3I position) => (int) Api.GetBlockState(projectorId, subgridIndex, position);
 
-        private static List<Tuple<Vector3I, int>> ModApiGetBlockState(long projectorId, int subgridIndex, BoundingBoxI box, int mask)
+        private static List<Tuple<Vector3I, int>> ModApiGetBlockStates(long projectorId, int subgridIndex, BoundingBoxI box, int mask)
         {
             if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
                 return null;
