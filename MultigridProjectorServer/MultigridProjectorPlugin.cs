@@ -1,3 +1,4 @@
+using System;
 using HarmonyLib;
 using MultigridProjector.Api;
 using MultigridProjector.Logic;
@@ -32,7 +33,7 @@ namespace MultigridProjectorServer
             EnsureOriginal.VerifyAll();
             new Harmony("com.spaceengineers.multigridprojector").PatchAll();
             
-            MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModMessage);
+            MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
 
             PluginLog.Info("Loaded server plugin");
         }
@@ -41,7 +42,7 @@ namespace MultigridProjectorServer
         {
             PluginLog.Info("Unloading server plugin");
             
-            MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModMessage);
+            MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
 
             PluginLog.Logger = null;
             Instance = null;
@@ -49,9 +50,16 @@ namespace MultigridProjectorServer
             base.Dispose();
         }
         
-        private void HandleModMessage(object obj)
+        private void HandleModApiRequest(object obj)
         {
-            MyAPIGateway.Utilities.SendModMessage(MultigridProjectorApiProvider.ModApiResponseId , MultigridProjectorApiProvider.ModApi);
+            try
+            {
+                MyAPIGateway.Utilities.SendModMessage(MultigridProjectorApiProvider.ModApiResponseId, MultigridProjectorApiProvider.ModApi);
+            }
+            catch (Exception e)
+            {
+                PluginLog.Error(e, "Failed to respond to Mod API request");
+            }
         }
     }
 }

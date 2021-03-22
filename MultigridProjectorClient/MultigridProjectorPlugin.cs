@@ -26,7 +26,7 @@ namespace MultigridProjectorClient
                 _harmony.PatchAll();
 
                 MySession.OnLoading += OnLoadSession;
-                MySession.OnUnloading += OnUnloading;
+                // MySession.OnUnloading += OnUnloading;
             }
             catch (Exception e)
             {
@@ -39,7 +39,7 @@ namespace MultigridProjectorClient
         public void Dispose()
         {
             MySession.OnLoading -= OnLoadSession;
-            MySession.OnUnloading -= OnUnloading;
+            // MySession.OnUnloading -= OnUnloading;
 
             // PluginLog.Info("Unloading the Multigrid Projector Client Plugin");
             // _harmony.UnpatchAll();
@@ -49,17 +49,24 @@ namespace MultigridProjectorClient
 
         private void OnLoadSession()
         {
-            MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModMessage);
+            MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
         }
 
-        private void OnUnloading()
-        {
-            MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModMessage);
-        }
+        // private void OnUnloading()
+        // {
+        //     MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
+        // }
 
-        private void HandleModMessage(object obj)
+        private void HandleModApiRequest(object obj)
         {
-            MyAPIGateway.Utilities.SendModMessage(MultigridProjectorApiProvider.ModApiResponseId , MultigridProjectorApiProvider.ModApi);
+            try
+            {
+                MyAPIGateway.Utilities.SendModMessage(MultigridProjectorApiProvider.ModApiResponseId, MultigridProjectorApiProvider.ModApi);
+            }
+            catch (Exception e)
+            {
+                PluginLog.Error(e, "Failed to respond to Mod API request");
+            }
         }
 
         public void Update()
