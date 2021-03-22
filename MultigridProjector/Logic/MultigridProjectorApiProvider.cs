@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using MultigridProjector.Api;
@@ -8,12 +9,14 @@ using VRageMath;
 
 namespace MultigridProjector.Logic
 {
-    public class MultigridProjectorApiProvider: IMultigridProjectorApi
+    public class MultigridProjectorApiProvider : IMultigridProjectorApi
     {
-        private static MultigridProjectorApiProvider _instance;
-        public static IMultigridProjectorApi Instance => _instance ?? (_instance = new MultigridProjectorApiProvider());
+        #region PluginApi
 
-        public string Version => "0.1.21";
+        private static MultigridProjectorApiProvider _api;
+        public static IMultigridProjectorApi Api => _api ?? (_api = new MultigridProjectorApiProvider());
+
+        public string Version => "0.2.0";
 
         public int GetSubgridCount(long projectorId)
         {
@@ -63,6 +66,14 @@ namespace MultigridProjector.Logic
             if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
                 return false;
 
+            foreach (var (position, blockState) in IterBlockStates(subgrid, box, mask))
+                blockStates[position] = blockState;
+
+            return true;
+        }
+
+        private static IEnumerable<(Vector3I, BlockState)> IterBlockStates(Subgrid subgrid, BoundingBoxI box, int mask)
+        {
             // Optimization
             var full = box.Min == Vector3I.MinValue && box.Max == Vector3I.MaxValue;
 
@@ -72,10 +83,8 @@ namespace MultigridProjector.Logic
                     continue;
 
                 if (full || box.Contains(position) == ContainmentType.Contains)
-                    blockStates[position] = blockState;
+                    yield return (position, blockState);
             }
-
-            return true;
         }
 
         public Dictionary<Vector3I, BlockLocation> GetBaseConnections(long projectorId, int subgridIndex)
@@ -95,5 +104,67 @@ namespace MultigridProjector.Logic
             return subgrid.TopConnections
                 .ToDictionary(pair => pair.Key, pair => pair.Value.BaseLocation);
         }
+
+        #endregion
+
+        #region ModApi
+
+        private const long WorkshopId = 2415983416;
+        public const long ModApiRequestId = WorkshopId * 1000 + 0;
+        public const long ModApiResponseId = WorkshopId * 1000 + 1;
+
+        private static object _modApi;
+
+        public static object ModApi => _modApi ?? (_modApi = new object[]
+        {
+            Api.Version,
+            (Func<long, int>) Api.GetSubgridCount,
+            (Func<long, List<MyObjectBuilder_CubeGrid>>) Api.GetOriginalGridBuilders,
+            (Func<long, int, IMyCubeGrid>) Api.GetPreviewGrid,
+            (Func<long, int, IMyCubeGrid>) Api.GetBuiltGrid,
+            (Func<long, int, Vector3I, int>) ModApiGetBlockState,
+            (Func<Dictionary<Vector3I, int>, long, int, BoundingBoxI, int, bool>) ModApiGetBlockStates,
+            (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) ModApiGetBaseConnections,
+            (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) ModApiGetTopConnections,
+        });
+
+        private static int ModApiGetBlockState(long projectorId, int subgridIndex, Vector3I position) => (int) Api.GetBlockState(projectorId, subgridIndex, position);
+
+        private static bool ModApiGetBlockStates(Dictionary<Vector3I, int> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask)
+        {
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
+                return false;
+
+            foreach (var (position, blockState) in IterBlockStates(subgrid, box, mask))
+                blockStates[position] = (int)blockState;
+            
+            return true;
+        }
+
+        private static bool ModApiGetBaseConnections(long projectorId, int subgridIndex, List<Vector3I> basePositions, List<int> gridIndices, List<Vector3I> topPositions)
+        {
+            var baseConnections = Api.GetBaseConnections(projectorId, subgridIndex);
+            if (baseConnections == null)
+                return false;
+
+            basePositions.AddRange(baseConnections.Keys);
+            gridIndices.AddRange(baseConnections.Values.Select(blockLocation => blockLocation.GridIndex));
+            topPositions.AddRange(baseConnections.Values.Select(blockLocation => blockLocation.Position));
+            return true;
+        }
+
+        private static bool ModApiGetTopConnections(long projectorId, int subgridIndex, List<Vector3I> topPositions, List<int> gridIndices, List<Vector3I> basePositions)
+        {
+            var topConnections = Api.GetTopConnections(projectorId, subgridIndex);
+            if (topConnections == null)
+                return false;
+
+            topPositions.AddRange(topConnections.Keys);
+            gridIndices.AddRange(topConnections.Values.Select(blockLocation => blockLocation.GridIndex));
+            basePositions.AddRange(topConnections.Values.Select(blockLocation => blockLocation.Position));
+            return true;
+        }
+
+        #endregion
     }
 }

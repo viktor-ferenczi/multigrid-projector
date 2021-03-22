@@ -9,6 +9,7 @@ using VRage.Game;
 using VRage.Game.ModAPI;
 using VRageMath;
 
+// ReSharper disable once CheckNamespace
 namespace MultigridProjector.Api
 {
     public class MultigridProjectorTorchAgent : IMultigridProjectorApi
