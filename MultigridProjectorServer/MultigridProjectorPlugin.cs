@@ -6,6 +6,9 @@ using MultigridProjector.Utilities;
 using Sandbox.ModAPI;
 using Torch;
 using Torch.API;
+using Torch.API.Managers;
+using Torch.API.Session;
+using Torch.Session;
 
 namespace MultigridProjectorServer
 {
@@ -14,6 +17,7 @@ namespace MultigridProjectorServer
     {
         private static string PluginName => "Multigrid Projector";
         public static MultigridProjectorPlugin Instance { get; private set; }
+        private TorchSessionManager _sessionManager;
 
         // Retrieved by MultigridProjectorTorchAgent via reflection
         // ReSharper disable once UnusedMember.Global
@@ -32,18 +36,36 @@ namespace MultigridProjectorServer
 
             EnsureOriginal.VerifyAll();
             new Harmony("com.spaceengineers.multigridprojector").PatchAll();
-            
-            MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
 
+            _sessionManager = torch.CurrentSession.Managers.GetManager<TorchSessionManager>();
+            _sessionManager.SessionStateChanged += SessionStateChanged;
+            
             PluginLog.Info("Loaded server plugin");
         }
-        
+
+        private void SessionStateChanged(ITorchSession session, TorchSessionState newstate)
+        {
+            switch (newstate)
+            {
+                case TorchSessionState.Loading:
+                    MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
+                    break;
+                case TorchSessionState.Loaded:
+                    break;
+                case TorchSessionState.Unloading:
+                    break;
+                case TorchSessionState.Unloaded:
+                    MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
+                    break;
+            }
+        }
+
         public override void Dispose()
         {
             PluginLog.Info("Unloading server plugin");
             
-            MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
-
+            _sessionManager.SessionStateChanged -= SessionStateChanged;
+            
             PluginLog.Logger = null;
             Instance = null;
 
