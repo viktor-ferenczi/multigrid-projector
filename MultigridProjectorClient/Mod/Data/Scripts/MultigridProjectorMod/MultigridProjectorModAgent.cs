@@ -115,7 +115,7 @@ namespace MultigridProjector.Api
                 return null;
 
             var topConnections = new Dictionary<Vector3I, BlockLocation>();
-            for (var i = 0; i < topConnections.Count; i++)
+            for (var i = 0; i < topPositions.Count; i++)
                 topConnections[topPositions[i]] = new BlockLocation(gridIndices[i], basePositions[i]);
 
             return topConnections;
