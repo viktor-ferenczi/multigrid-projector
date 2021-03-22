@@ -37,7 +37,7 @@ namespace MultigridProjectorServer
             EnsureOriginal.VerifyAll();
             new Harmony("com.spaceengineers.multigridprojector").PatchAll();
 
-            _sessionManager = torch.CurrentSession.Managers.GetManager<TorchSessionManager>();
+            _sessionManager = torch.Managers.GetManager<TorchSessionManager>();
             _sessionManager.SessionStateChanged += SessionStateChanged;
             
             PluginLog.Info("Loaded server plugin");
@@ -48,14 +48,14 @@ namespace MultigridProjectorServer
             switch (newstate)
             {
                 case TorchSessionState.Loading:
-                    MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
                     break;
                 case TorchSessionState.Loaded:
+                    MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
                     break;
                 case TorchSessionState.Unloading:
+                    MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
                     break;
                 case TorchSessionState.Unloaded:
-                    MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
                     break;
             }
         }
