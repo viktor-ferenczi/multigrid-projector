@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorServer", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorClient", "MultigridProjectorClient\MultigridProjectorClient.csproj", "{89F02986-D019-4044-BC94-5AF26B1B4365}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorModApiTest", "MultigridProjectorModApiTest\MultigridProjectorModApiTest.csproj", "{C30BC529-29CC-42C2-9330-4880AC7C3CC5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,10 @@ Global
 		{89F02986-D019-4044-BC94-5AF26B1B4365}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{89F02986-D019-4044-BC94-5AF26B1B4365}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89F02986-D019-4044-BC94-5AF26B1B4365}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C30BC529-29CC-42C2-9330-4880AC7C3CC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C30BC529-29CC-42C2-9330-4880AC7C3CC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C30BC529-29CC-42C2-9330-4880AC7C3CC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C30BC529-29CC-42C2-9330-4880AC7C3CC5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(RiderSharedRunConfigurations) = postSolution
 		File = .run\Torch Debug.run.xml
