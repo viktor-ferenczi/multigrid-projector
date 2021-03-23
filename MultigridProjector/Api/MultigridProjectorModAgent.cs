@@ -9,6 +9,7 @@ using VRageMath;
 // ReSharper disable once CheckNamespace
 namespace MultigridProjector.Api
 {
+    // ReSharper disable once UnusedType.Global
     public class MultigridProjectorModAgent : IMultigridProjectorApi
     {
         private static readonly string CompatibleMajorVersion = "0.";
@@ -19,6 +20,7 @@ namespace MultigridProjector.Api
 
         private object[] _api;
 
+        // ReSharper disable once MemberCanBePrivate.Global
         public bool Available { get; private set; }
         public string Version { get; private set; }
 

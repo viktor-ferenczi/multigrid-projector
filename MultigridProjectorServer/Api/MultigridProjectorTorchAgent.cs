@@ -12,6 +12,7 @@ using VRageMath;
 // ReSharper disable once CheckNamespace
 namespace MultigridProjector.Api
 {
+    // ReSharper disable once UnusedType.Global
     public class MultigridProjectorTorchAgent : IMultigridProjectorApi
     {
         public static readonly Guid PluginId = new Guid("d9359ba0-9a69-41c3-971d-eb5170adb97e");
@@ -19,6 +20,7 @@ namespace MultigridProjector.Api
         public readonly ITorchPlugin Plugin;
         public readonly object Api;
 
+        // ReSharper disable once UnusedMember.Global
         public bool Available => Plugin != null;
         public string Version { get; }
 

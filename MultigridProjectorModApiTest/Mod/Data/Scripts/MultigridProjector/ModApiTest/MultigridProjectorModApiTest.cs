@@ -11,17 +11,17 @@ using VRage.Utils;
 using VRageMath;
 
 // ReSharper disable once CheckNamespace
-namespace MultigridProjectorMod
+namespace MultigridProjector.ModApiTest
 {
     [MyEntityComponentDescriptor(typeof(MyObjectBuilder_Projector), true)]
     // ReSharper disable once UnusedType.Global
-    public class MultigridProjectorMod : MyGameLogicComponent
+    public class MultigridProjectorModApiTest : MyGameLogicComponent
     {
         private static MultigridProjectorModAgent _mgp;
         private static MultigridProjectorModAgent Mgp => _mgp ?? (_mgp = new MultigridProjectorModAgent());
-        private static bool MgpVersionLogged;
-        
-        IMyProjector _projector;
+        private static bool _mgpVersionLogged;
+
+        private IMyProjector _projector;
         private List<MyObjectBuilder_CubeGrid> _gridBuilders;
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
@@ -44,10 +44,10 @@ namespace MultigridProjectorMod
 
         public override void UpdateBeforeSimulation100()
         {
-            if (!MgpVersionLogged)
+            if (!_mgpVersionLogged)
             {
-                MgpVersionLogged = true;
-                MyAPIGateway.Utilities.ShowMessage("MGP", Mgp.Available ? $"Plugin v{Mgp.Version}" : $"Plugin not available");
+                _mgpVersionLogged = true;
+                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", Mgp.Available ? $"Plugin v{Mgp.Version}" : $"Plugin is not available");
             }
 
             if (!Mgp.Available)
@@ -68,7 +68,7 @@ namespace MultigridProjectorMod
         private void LogBlueprintDetails(long projectorEntityId, List<MyObjectBuilder_CubeGrid> gridBuilders)
         {
             MyLog.Default.WriteLineAndConsole("==================================================================");
-            MyLog.Default.WriteLineAndConsole($"MultigridProjectorMod: {_projector.BlockDefinition.SubtypeName} {_projector.DisplayName} [{projectorEntityId}] blueprint info");
+            MyLog.Default.WriteLineAndConsole($"Multigrid Projector Mod API Test blueprint info: {_projector.BlockDefinition.SubtypeName} {_projector.DisplayName} [{projectorEntityId}]");
             MyLog.Default.WriteLineAndConsole("==================================================================");
             MyLog.Default.WriteLineAndConsole($"Projecting grid: {_projector.CubeGrid.DisplayName} [{_projector.CubeGrid.EntityId}]");
 
