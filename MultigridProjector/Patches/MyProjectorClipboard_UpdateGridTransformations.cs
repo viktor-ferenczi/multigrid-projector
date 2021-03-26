@@ -30,7 +30,7 @@ namespace MultigridProjector.Patches
                         
                 // Projector is linked to the preview grids
                 var projector = previewGrids[0].Projector;
-                if (projector == null)
+                if (projector == null || !projector.AllowWelding || projector.AllowScaling)
                     return true;
 
                 // The projector must have a blueprint loaded
