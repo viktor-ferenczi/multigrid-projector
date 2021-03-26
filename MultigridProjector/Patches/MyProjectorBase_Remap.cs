@@ -15,7 +15,7 @@ namespace MultigridProjector.Patches
     public class MyProjectorBase_Remap
     {
         // ReSharper disable once InconsistentNaming
-        public static bool Prefix(MyProjectorBase __instance)
+        private static bool Prefix(MyProjectorBase __instance)
         {
             var projector = __instance;
 
@@ -44,8 +44,9 @@ namespace MultigridProjector.Patches
             // Consistent remapping of all grids to keep sub-grid relations intact
             MyEntities.RemapObjectBuilderCollection(gridBuilders);
 
-            // Call our version of SetNewBlueprint
-            MyProjectorBase_SetNewBlueprint.Prefix(projector, gridBuilders);
+            // Call patched SetNewBlueprint
+            var methodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint");
+            methodInfo.Invoke(projector, new object[] {gridBuilders});
         }
     }
 }

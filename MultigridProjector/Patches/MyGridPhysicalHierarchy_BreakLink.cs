@@ -12,7 +12,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyGridPhysicalHierarchy_BreakLink
     {
-        public static bool Prefix(
+        private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyGridPhysicalHierarchy __instance,
             long linkId, 

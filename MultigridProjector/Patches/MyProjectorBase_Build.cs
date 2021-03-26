@@ -14,7 +14,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public class MyProjectorBase_Build
     {
-        public static bool Prefix(
+        private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyProjectorBase __instance,
             MySlimBlock cubeBlock,

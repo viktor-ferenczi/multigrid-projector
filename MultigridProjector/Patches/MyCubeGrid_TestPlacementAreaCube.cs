@@ -42,7 +42,7 @@ namespace MultigridProjector.Patches
     public class MyCubeGrid_TestPlacementAreaCube
     {
         // ReSharper disable once UnusedMember.Global
-        public static void Postfix(
+        private static void Postfix(
             MyCubeGrid targetGrid,
             Vector3I min,
             // ReSharper disable once InconsistentNaming

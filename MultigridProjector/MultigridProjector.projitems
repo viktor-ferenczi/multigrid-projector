@@ -29,11 +29,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_InitFromObjectBuilder.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_OnBlockAdded.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_OnBlockRemoved.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_OnEnabledChanged.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_OnOffsetsChanged.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_Remap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_RemoveProjection.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_SetNewBlueprint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_UpdateAfterSimulation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_UpdateProjection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_UpdateStats.cs" />

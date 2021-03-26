@@ -17,7 +17,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyShipWelder_FindProjectedBlocks
     {
-        public static bool Prefix(
+        private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             // ReSharper disable once UnusedParameter.Global
             MyShipWelder __instance,

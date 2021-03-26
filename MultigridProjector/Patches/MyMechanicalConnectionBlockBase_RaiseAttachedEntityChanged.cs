@@ -13,7 +13,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyMechanicalConnectionBlockBase_RaiseAttachedEntityChanged
     {
-        public static void Postfix(
+        private static void Postfix(
             // ReSharper disable once InconsistentNaming
             // ReSharper disable once UnusedParameter.Global
             MyMechanicalConnectionBlockBase __instance)

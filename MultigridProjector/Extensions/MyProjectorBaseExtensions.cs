@@ -132,12 +132,6 @@ namespace MultigridProjector.Extensions
             return (Dictionary<MyCubeBlockDefinition, int>)RemainingBlocksPerTypeFieldInfo.GetValue(projector);
         }
 
-        private static readonly FieldInfo SavedProjectionsFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_savedProjections");
-        public static List<MyObjectBuilder_CubeGrid> GetSavedProjections(this MyProjectorBase projector)
-        {
-            return (List<MyObjectBuilder_CubeGrid>)SavedProjectionsFieldInfo.GetValue(projector);
-        }
-
         private static readonly FieldInfo OriginalGridBuildersFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_originalGridBuilders");
         public static List<MyObjectBuilder_CubeGrid> GetOriginalGridBuilders(this MyProjectorBase projector)
         {

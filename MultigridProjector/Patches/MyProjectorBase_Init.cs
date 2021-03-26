@@ -37,25 +37,17 @@ namespace MultigridProjector.Patches
 
         private static void Init(MyProjectorBase projector, MyObjectBuilder_CubeBlock objectBuilder)
         {
-            if (projector.CubeGrid == null)
-                return;
-
-            if (!projector.Enabled || !projector.AllowWelding)
+            if (projector.CubeGrid == null || !projector.AllowWelding)
                 return;
 
             if (!(objectBuilder is MyObjectBuilder_ProjectorBase projectorBuilder))
                 return;
 
-            var projectedGrids = projectorBuilder.ProjectedGrids;
-            if (projectedGrids == null || projectedGrids.Count < 1)
-                return;
-
-            var gridBuilders = projector.GetSavedProjections();
+            var gridBuilders = projectorBuilder.ProjectedGrids;
             if (gridBuilders == null || gridBuilders.Count < 1)
                 return;
 
             projector.SetOriginalGridBuilders(gridBuilders);
-            MultigridProjection.Create(projector, gridBuilders);
         }
     }
 }

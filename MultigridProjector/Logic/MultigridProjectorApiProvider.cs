@@ -16,11 +16,11 @@ namespace MultigridProjector.Logic
         private static MultigridProjectorApiProvider _api;
         public static IMultigridProjectorApi Api => _api ?? (_api = new MultigridProjectorApiProvider());
 
-        public string Version => "0.2.1";
+        public string Version => "0.2.2";
 
         public int GetSubgridCount(long projectorId)
         {
-            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection))
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.Initialized)
                 return 0;
 
             return projection.GridCount;
@@ -28,7 +28,7 @@ namespace MultigridProjector.Logic
 
         public List<MyObjectBuilder_CubeGrid> GetOriginalGridBuilders(long projectorId)
         {
-            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection))
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.Initialized)
                 return null;
 
             return projection.Projector.GetOriginalGridBuilders();
