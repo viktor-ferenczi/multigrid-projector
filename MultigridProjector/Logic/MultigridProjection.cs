@@ -274,7 +274,7 @@ namespace MultigridProjector.Logic
         {
             using (Projections.Read())
             {
-                if (!Projections.TryGetValue(projectorId, out projection))
+                if (!Projections.TryGetValue(projectorId, out projection) || !projection.Initialized)
                 {
                     subgrid = null;
                     return false;
@@ -304,6 +304,12 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryFindPreviewGrid(MyCubeGrid grid, out int gridIndex)
         {
+            if (!Initialized)
+            {
+                gridIndex = 0;
+                return false;
+            }
+            
             using (Projections.Read())
             {
                 gridIndex = PreviewGrids.IndexOf(grid);

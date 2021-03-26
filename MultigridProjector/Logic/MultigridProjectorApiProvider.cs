@@ -20,7 +20,7 @@ namespace MultigridProjector.Logic
 
         public int GetSubgridCount(long projectorId)
         {
-            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection))
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.Initialized)
                 return 0;
 
             return projection.GridCount;
@@ -28,7 +28,7 @@ namespace MultigridProjector.Logic
 
         public List<MyObjectBuilder_CubeGrid> GetOriginalGridBuilders(long projectorId)
         {
-            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection))
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.Initialized)
                 return null;
 
             return projection.Projector.GetOriginalGridBuilders();
