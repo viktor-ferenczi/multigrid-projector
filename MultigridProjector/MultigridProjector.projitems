@@ -32,7 +32,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_OnOffsetsChanged.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_Remap.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_RemoveProjection.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_SetNewBlueprint.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_UpdateAfterSimulation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_UpdateProjection.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyProjectorBase_UpdateStats.cs" />

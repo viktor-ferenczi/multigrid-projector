@@ -41,7 +41,6 @@ namespace MultigridProjector.Logic
 
         public int GridCount => GridBuilders.Count;
         public List<MyCubeGrid> PreviewGrids => Clipboard.PreviewGrids;
-        public bool IsClipboardActive => PreviewGrids?.Count == GridBuilders.Count;
         public bool Initialized { get; private set; }
         public bool IsBuildCompleted => Stats.IsBuildCompleted;
 
@@ -75,16 +74,50 @@ namespace MultigridProjector.Logic
         // Show only buildable flag saved on updating cube visuals
         private bool _showOnlyBuildable;
 
-        public static void Create(MyProjectorBase projector, List <MyObjectBuilder_CubeGrid> gridBuilders)
+        public static MultigridProjection Create(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
         {
+            if (projector.Closed)
+                return null;
+
+            using (Projections.Read())
+            {
+                if (Projections.TryGetValue(projector.EntityId, out var existingProjection))
+                    return existingProjection;
+            }
+            
+            var projection = new MultigridProjection(projector, gridBuilders);
+            
             using (Projections.Write())
             {
-                if (Projections.ContainsKey(projector.EntityId))
-                    return;
+                if (Projections.TryGetValue(projector.EntityId, out var existingProjection))
+                    existingProjection.Destroy();
 
-                var projection = new MultigridProjection(projector, gridBuilders);
                 Projections[projector.EntityId] = projection;
             }
+
+            return projection;
+        }
+
+        private MultigridProjection(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
+        {
+            Projector = projector;
+            Clipboard = projector.GetClipboard();
+            GridBuilders = gridBuilders;
+
+            _showOnlyBuildable = Projector.GetShowOnlyBuildable();
+            
+            if (Projector.Closed)
+                return;
+
+            MapBlueprintBlocks();
+            MapPreviewBlocks();
+            CreateSubgrids();
+            ConnectSubgridEventHandlers();
+            CreateUpdateWork();
+
+            Initialized = true;
+
+            ForceUpdateProjection();
         }
 
         public void Destroy()
@@ -96,11 +129,6 @@ namespace MultigridProjector.Logic
             Clipboard.Deactivate();
             Clipboard.Clear();
 
-            Dispose();
-        }
-
-        private void Dispose()
-        {
             if (!Initialized) return;
             Initialized = false;
 
@@ -116,30 +144,6 @@ namespace MultigridProjector.Logic
                 subgrid.Dispose();
 
             Subgrids.Clear();
-        }
-
-        private MultigridProjection(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
-        {
-            Projector = projector;
-            Clipboard = projector.GetClipboard();
-            GridBuilders = gridBuilders;
-            _showOnlyBuildable = Projector.GetShowOnlyBuildable();
-        }
-
-        private void Initialize()
-        {
-            if (Projector.Closed)
-                return;
-
-            MapBlueprintBlocks();
-            MapPreviewBlocks();
-            CreateSubgrids();
-            ConnectSubgridEventHandlers();
-            CreateUpdateWork();
-
-            Initialized = true;
-
-            ForceUpdateProjection();
         }
 
         private void MapBlueprintBlocks()
@@ -439,12 +443,6 @@ namespace MultigridProjector.Logic
         // FIXME: Refactor, simplify
         public void UpdateGridTransformations()
         {
-            if (!IsClipboardActive || Projector.Closed)
-                return;
-
-            if (!Initialized)
-                Initialize();
-
             if(Subgrids.Any(s => s.UpdateRequested))
                 ForceUpdateProjection();
 
