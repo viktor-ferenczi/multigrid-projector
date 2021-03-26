@@ -103,9 +103,13 @@ namespace MultigridProjector.Patches
             if (!projector.GetForceUpdateProjection() && (!projector.GetShouldUpdateProjection() || MySandboxGame.TotalGamePlayTimeInMilliseconds - projector.GetLastUpdate() <= 2000))
                 return false;
 
-            MyProjectorBase_UpdateProjection.Prefix(projector);
+            // Call patched UpdateProjection
+            var methodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "UpdateProjection");
+            methodInfo.Invoke(projector, new object[]{});
+            
             projector.SetShouldUpdateProjection(false);
             projector.SetForceUpdateProjection(false);
+            
             projector.SetLastUpdate(MySandboxGame.TotalGamePlayTimeInMilliseconds);
 
             return false;

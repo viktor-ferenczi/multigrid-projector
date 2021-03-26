@@ -14,7 +14,7 @@ namespace MultigridProjector.Patches
     public class MyProjectorBase_OnOffsetsChanged
     {
         // ReSharper disable once InconsistentNaming
-        public static void Postfix(MyProjectorBase __instance)
+        private static void Postfix(MyProjectorBase __instance)
         {
             var projector = __instance;
 

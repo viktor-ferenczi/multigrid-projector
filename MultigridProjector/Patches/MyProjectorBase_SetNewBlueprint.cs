@@ -17,7 +17,7 @@ namespace MultigridProjector.Patches
     public static class MyProjectorBase_SetNewBlueprint
     {
         // ReSharper disable once UnusedMember.Local
-        public static bool Prefix(
+        private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyProjectorBase __instance,
             List<MyObjectBuilder_CubeGrid> gridBuilders)
