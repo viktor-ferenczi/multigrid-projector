@@ -385,6 +385,7 @@ namespace MultigridProjector.Logic
             UpdateMechanicalConnections();
             
             AggregateStatistics();
+            UpdateProjectorStats();
             UpdatePreviewBlockVisuals(true);
 
             Projector.UpdateSounds();
