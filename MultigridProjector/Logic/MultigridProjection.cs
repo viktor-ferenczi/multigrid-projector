@@ -852,16 +852,14 @@ namespace MultigridProjector.Logic
             }
             else
             {
-                // The request was sent by a client without the plugin installed or from a mod which is not aware of subgrids, but can traverse them.
-                // They send an identityId here, which is very likely above the subgrid count.
-                // Here we attempt to guess the subgrid based on the existence of a weldable block at the given position.
-                // In some cases the result is ambiguous and the first one is picked, but this is still better than not being able to weld at all.
-                // It works for at least the "Build and Repair mod". Do not remove this speculative code, because it fixes compatibility!
-                // It does not work without a mod for hand and ship welders. So a supplemental mod will be needed to send a BuildInternal request.
-                subgrid = Subgrids.Find(sg => sg.HasBuildableBlockAtPosition(previewCubeBlockPosition));
-                if (subgrid == null)
-                    return;
+                // The request was sent by a client without the plugin installed or from a mod which is not aware of subgrids.
+                // They send an identityId value instead of a subgrid index, which is unlikely to be a valid subgrid index.
+                // Allow building only on the first subgrid (main grid).
+                subgrid = Subgrids.First();
             }
+
+            if (!subgrid.HasBuildableBlockAtPosition(previewCubeBlockPosition))
+                return;
 
             var previewGrid = subgrid.PreviewGrid;
             if (previewGrid == null)

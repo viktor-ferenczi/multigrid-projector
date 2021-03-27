@@ -451,7 +451,21 @@ namespace MultigridProjector.Logic
         {
             using (BuiltGridLock.Read())
             {
-                return HasBuilt && BlockStates.TryGetValue(position, out var state) && state == BlockState.Buildable;
+                if (!HasBuilt)
+                    return false;
+
+                if (!BlockStates.TryGetValue(position, out var blockState))
+                    return false;
+
+                switch (blockState)
+                {
+                    case BlockState.Buildable:
+                        return true;
+                    case BlockState.BeingBuilt:
+                        return true;
+                }
+
+                return false;
             }
         }
     }
