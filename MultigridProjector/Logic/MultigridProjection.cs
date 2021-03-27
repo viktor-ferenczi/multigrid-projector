@@ -37,6 +37,7 @@ namespace MultigridProjector.Logic
     public class MultigridProjection
     {
         public static readonly RwLockDictionary<long, MultigridProjection> Projections = new RwLockDictionary<long, MultigridProjection>();
+        public static readonly HashSet<long> ProjectorsWithBlueprintLoadedByHand = new HashSet<long>();
 
         public readonly MyProjectorBase Projector;
         public readonly MyProjectorClipboard Clipboard;
@@ -133,6 +134,7 @@ namespace MultigridProjector.Logic
             CreateSubgrids();
             MarkSupportedSubgrids();
             CreateUpdateWork();
+            AutoAlignBlueprint();
 
             Projector.PropertiesChanged += OnPropertiesChanged;
 
@@ -273,6 +275,17 @@ namespace MultigridProjector.Logic
         {
             _updateWork = new MultigridUpdateWork(this);
             _updateWork.OnUpdateWorkCompleted += OnUpdateWorkCompletedWithErrorHandler;
+        }
+
+        private void AutoAlignBlueprint()
+        {
+            if (!ProjectorsWithBlueprintLoadedByHand.Contains(Projector.EntityId))
+                return;
+
+            ProjectorsWithBlueprintLoadedByHand.Remove(Projector.EntityId);
+
+            if(Projector.AlignToRepairProjector(PreviewGrids[0]))
+                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", $"Aligned repair projection: {Projector.CustomName}");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
