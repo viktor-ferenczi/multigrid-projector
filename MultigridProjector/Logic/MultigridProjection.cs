@@ -71,6 +71,9 @@ namespace MultigridProjector.Logic
         // True if the preview block visuals have already been set once before (used for optimization only)
         private bool _previewBlockVisualsUpdated;
 
+        // Keep projection flag saved for change detection
+        private bool _keepProjection;
+
         // Show only buildable flag saved on updating cube visuals
         private bool _showOnlyBuildable;
 
@@ -103,16 +106,19 @@ namespace MultigridProjector.Logic
             Clipboard = projector.GetClipboard();
             GridBuilders = gridBuilders;
 
+            _keepProjection = Projector.GetKeepProjection();
             _showOnlyBuildable = Projector.GetShowOnlyBuildable();
             
             if (Projector.Closed)
                 return;
-
+            
             MapBlueprintBlocks();
             MapPreviewBlocks();
             CreateSubgrids();
             ConnectSubgridEventHandlers();
             CreateUpdateWork();
+
+            Projector.PropertiesChanged += OnPropertiesChanged;
 
             Initialized = true;
 
@@ -127,6 +133,8 @@ namespace MultigridProjector.Logic
 
             if (!Initialized) return;
             Initialized = false;
+            
+            Projector.PropertiesChanged -= OnPropertiesChanged;
 
             UpdateWork.OnUpdateWorkCompleted -= OnUpdateWorkCompletedWithErrorHandler;
             UpdateWork.Dispose();
@@ -358,6 +366,15 @@ namespace MultigridProjector.Logic
                 subgrid.HidePreviewGrid(Projector);
         }
 
+        private void OnPropertiesChanged(MyTerminalBlock obj)
+        {
+            if (_keepProjection != Projector.GetKeepProjection())
+            {
+                _keepProjection = !_keepProjection;
+                ForceUpdateProjection();
+            }
+        }
+        
         private void OnUpdateWorkCompletedWithErrorHandler() {
             try
             {

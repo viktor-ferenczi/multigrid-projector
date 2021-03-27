@@ -27,7 +27,8 @@ namespace MultigridProjector.Patches
 
             try
             {
-                if (projector == null || projector.Closed || !projector.Enabled || !projector.IsFunctional || !clipboard.IsActive)
+                if (projector == null || projector.Closed || !projector.Enabled || !projector.IsFunctional || 
+                    !projector.AllowWelding || projector.AllowScaling || !clipboard.IsActive)
                     return true;
 
                 if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
