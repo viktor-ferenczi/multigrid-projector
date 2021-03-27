@@ -7,7 +7,7 @@ namespace MultigridProjector.Logic
     public abstract class Connection<T> where T : MyCubeBlock
     {
         // Corresponding preview block
-        public T Preview;
+        public readonly T Preview;
 
         // Built block if any, null if not built
         public T Block;
@@ -32,7 +32,6 @@ namespace MultigridProjector.Logic
     {
         public BlockLocation TopLocation;
         public bool RequestAttach;
-        public bool IsConnected => HasBuilt && Block.TopBlock != null && !Block.TopBlock.Closed;
 
         public BaseConnection(MyMechanicalConnectionBlockBase previewBlock, BlockLocation topLocation) : base(previewBlock)
         {
@@ -50,7 +49,6 @@ namespace MultigridProjector.Logic
     public class TopConnection: Connection<MyAttachableTopBlockBase>
     {
         public BlockLocation BaseLocation;
-        public bool IsConnected => HasBuilt && Block.Stator != null && !Block.Stator.Closed;
 
         public TopConnection(MyAttachableTopBlockBase previewBlock, BlockLocation baseLocation) : base(previewBlock)
         {

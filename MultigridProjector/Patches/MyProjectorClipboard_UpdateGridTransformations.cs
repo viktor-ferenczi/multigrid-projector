@@ -3,6 +3,7 @@ using HarmonyLib;
 using MultigridProjector.Extensions;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
+using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
 
 namespace MultigridProjector.Patches
@@ -17,31 +18,29 @@ namespace MultigridProjector.Patches
         // ReSharper disable once UnusedMember.Local
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
-            MyProjectorClipboard __instance)
+            MyProjectorClipboard __instance,
+            // ReSharper disable once InconsistentNaming
+            MyProjectorBase ___m_projector)
         {
             var clipboard = __instance;
+            var projector = ___m_projector;
 
             try
             {
-                // Ensure an active clipboard with preview grids
-                var previewGrids = clipboard.PreviewGrids;
-                if(previewGrids == null || previewGrids.Count == 0)
-                    return true;
-                        
-                // Projector is linked to the preview grids
-                var projector = previewGrids[0].Projector;
-                if (projector == null || !projector.AllowWelding || projector.AllowScaling)
+                if (projector == null || projector.Closed || !projector.Enabled || !projector.IsFunctional || !clipboard.IsActive)
                     return true;
 
-                // The projector must have a blueprint loaded
-                var gridBuilders = projector.GetOriginalGridBuilders();
-                if (gridBuilders == null || gridBuilders.Count == 0)
-                    return true;
-
-                // Create custom data model for the multigrid projection if not exist
-                var projection = MultigridProjection.Create(projector, gridBuilders);
-                if (projection == null)
-                    return true;
+                if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
+                {
+                    // The projector must have a blueprint loaded
+                    var gridBuilders = projector.GetOriginalGridBuilders();
+                    if (gridBuilders == null || gridBuilders.Count == 0 || clipboard.CopiedGrids?.Count != gridBuilders.Count)
+                        return true;
+                    
+                    projection = MultigridProjection.Create(projector, gridBuilders);
+                    if (projection == null)
+                        return true;
+                }
                 
                 // Align the preview grids to match any grids has already been built
                 projection.UpdateGridTransformations();

@@ -76,13 +76,10 @@ namespace MultigridProjector.Logic
 
         public static MultigridProjection Create(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
         {
-            if (projector.Closed)
-                return null;
-
             using (Projections.Read())
             {
-                if (Projections.TryGetValue(projector.EntityId, out var existingProjection))
-                    return existingProjection;
+                if (Projections.ContainsKey(projector.EntityId))
+                    return null;
             }
             
             var projection = new MultigridProjection(projector, gridBuilders);
@@ -90,12 +87,14 @@ namespace MultigridProjector.Logic
             using (Projections.Write())
             {
                 if (Projections.TryGetValue(projector.EntityId, out var existingProjection))
-                    existingProjection.Destroy();
+                {
+                    projection.Destroy();
+                    return existingProjection;
+                }
 
                 Projections[projector.EntityId] = projection;
+                return projection;
             }
-
-            return projection;
         }
 
         private MultigridProjection(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
@@ -125,9 +124,6 @@ namespace MultigridProjector.Logic
             using (Projections.Write())
                 if (!Projections.Remove(Projector.EntityId))
                     return;
-
-            Clipboard.Deactivate();
-            Clipboard.Clear();
 
             if (!Initialized) return;
             Initialized = false;
@@ -380,8 +376,6 @@ namespace MultigridProjector.Logic
 
             Clipboard.HasPreviewBBox = false;
             
-            UpdateSubgridConnectedness();
-            UnregisterDisconnectedSubgrids();
             UpdateMechanicalConnections();
             
             AggregateStatistics();
@@ -454,10 +448,9 @@ namespace MultigridProjector.Logic
             projectorMatrix = MatrixD.Multiply(fromQuaternion, projectorMatrix);
             projectorMatrix.Translation -= Vector3D.Transform(Projector.GetProjectionTranslationOffset(), Projector.WorldMatrix.GetOrientation());
 
-            // First subgrid
-            var firstPreviewGrid = PreviewGrids[0];
-            var inverseFirstGridMatrix = MatrixD.Invert(firstPreviewGrid.WorldMatrix);
+            // Position the first subgrid preview relative to the projector
             var worldMatrix = projectorMatrix;
+            var firstPreviewGrid = PreviewGrids[0];
             var mySlimBlock = firstPreviewGrid.CubeBlocks.First();
             var firstBlockWorldPosition = MyCubeGrid.GridIntegerToWorld(firstPreviewGrid.GridSize, mySlimBlock.Position, worldMatrix);
             var projectionOffset = worldMatrix.Translation - firstBlockWorldPosition;
@@ -468,13 +461,18 @@ namespace MultigridProjector.Logic
             // Further subgrids
             foreach (var (gridIndex, subgrid) in Subgrids.Enumerate())
             {
-                if(gridIndex == 0) continue;
+                if(gridIndex == 0) 
+                    continue;
+
+                var gridBuilder = subgrid.GridBuilder;
+                if(!gridBuilder.PositionAndOrientation.HasValue) 
+                    continue;
 
                 var previewGrid = subgrid.PreviewGrid;
                 previewGrid.PositionComp.Scale = 1f;
-
+                
                 // Align the preview to an already built top block
-                var topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => c.IsConnected);
+                var topConnection = subgrid.TopConnections.Values.FirstOrDefault(IsConnected);
                 if (topConnection != null && !topConnection.Block.CubeGrid.Closed)
                 {
                     topConnection.Preview.AlignGrid(topConnection.Block);
@@ -482,21 +480,21 @@ namespace MultigridProjector.Logic
                 }
 
                 // Align the preview to an already built base block
-                var baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => c.IsConnected);
+                var baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(IsConnected);
                 if (baseConnection != null && !baseConnection.Block.CubeGrid.Closed)
                 {
                     baseConnection.Preview.AlignGrid(baseConnection.Block);
                     continue;
                 }
 
-                // Snap the preview by top block connecting to an already positioned preview with a lower index
+                // Align the preview by top block connecting to an already positioned preview with a lower index
                 topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => c.BaseLocation.GridIndex < gridIndex);
-                if (topConnection != null && subgrid.GridBuilder.PositionAndOrientation.HasValue)
+                if (topConnection != null)
                 {
                     var baseSubgrid = Subgrids[topConnection.BaseLocation.GridIndex];
                     if (baseSubgrid.GridBuilder.PositionAndOrientation != null)
                     {
-                        subgrid.GridBuilder.PositionAndOrientation.Value.ToMatrixD(out var topMatrix);
+                        gridBuilder.PositionAndOrientation.Value.ToMatrixD(out var topMatrix);
                         baseSubgrid.GridBuilder.PositionAndOrientation.Value.ToMatrixD(out var baseMatrix);
                         var wm = topMatrix * MatrixD.Invert(baseMatrix) * baseSubgrid.PreviewGrid.PositionComp.WorldMatrixRef;
                         subgrid.PreviewGrid.PositionComp.SetWorldMatrix(ref wm, skipTeleportCheck: true);
@@ -504,14 +502,14 @@ namespace MultigridProjector.Logic
                     }
                 }
 
-                // Snap the preview by base block connecting to an already positioned preview with a lower index
+                // Align the preview by base block connecting to an already positioned preview with a lower index
                 baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => c.TopLocation.GridIndex < gridIndex);
-                if (baseConnection != null && subgrid.GridBuilder.PositionAndOrientation.HasValue)
+                if (baseConnection != null)
                 {
                     var topSubgrid = Subgrids[baseConnection.TopLocation.GridIndex];
                     if (topSubgrid.GridBuilder.PositionAndOrientation != null)
                     {
-                        subgrid.GridBuilder.PositionAndOrientation.Value.ToMatrixD(out var topMatrix);
+                        gridBuilder.PositionAndOrientation.Value.ToMatrixD(out var topMatrix);
                         topSubgrid.GridBuilder.PositionAndOrientation.Value.ToMatrixD(out var baseMatrix);
                         var wm = topMatrix * MatrixD.Invert(baseMatrix) * topSubgrid.PreviewGrid.PositionComp.WorldMatrixRef;
                         subgrid.PreviewGrid.PositionComp.SetWorldMatrix(ref wm, skipTeleportCheck: true);
@@ -519,11 +517,7 @@ namespace MultigridProjector.Logic
                     }
                 }
 
-                // FIXME: This fallback case should not be used
-                // Default positioning (incorrect, but follows the projecting grid at least)
-                worldMatrix = previewGrid.WorldMatrix * inverseFirstGridMatrix * projectorMatrix;
-                worldMatrix.Translation += projectionOffset;
-                previewGrid.PositionComp.SetWorldMatrix(ref worldMatrix, skipTeleportCheck: true);
+                // Reaching this point means that this subgrid is disconnected from the first subgrid, which should not happen 
             }
         }
 
@@ -595,13 +589,11 @@ namespace MultigridProjector.Logic
 
         private void OnBuiltGridSplit(Subgrid subgrid)
         {
-            DetectAndUnregisterAnyDisconnectedGrids();
             ForceUpdateProjection();
         }
 
         private void OnBuiltGridClose(Subgrid subgrid)
         {
-            DetectAndUnregisterAnyDisconnectedGrids();
             ForceUpdateProjection();
         }
 
@@ -625,15 +617,13 @@ namespace MultigridProjector.Logic
             if (Subgrids.Count < 1)
                 return;
 
-            Subgrids[0].UpdateRequested = true;
-
-            foreach (var subgrid in Subgrids.Skip(1))
+            foreach (var subgrid in Subgrids)
             {
                 subgrid.UnregisterBuiltGrid();
                 subgrid.UpdateRequested = true;
             }
 
-            ForceUpdateProjection();
+            Subgrids[0].RegisterBuiltGrid(Projector.CubeGrid);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -650,6 +640,24 @@ namespace MultigridProjector.Logic
             return baseSubgrid.BaseConnections[topConnection.BaseLocation.Position];
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsConnected(BaseConnection baseConnection, TopConnection topConnection)
+        {
+            return baseConnection.HasBuilt && topConnection.HasBuilt && baseConnection.Block.TopBlock.EntityId == topConnection.Block.EntityId;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsConnected(BaseConnection baseConnection)
+        {
+            return IsConnected(baseConnection, GetCounterparty(baseConnection, out _));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool IsConnected(TopConnection topConnection)
+        {
+            return IsConnected(GetCounterparty(topConnection, out _), topConnection);
+        }
+
         private void UnregisterDisconnectedSubgrids()
         {
             foreach (var subgrid in Subgrids)
@@ -663,6 +671,9 @@ namespace MultigridProjector.Logic
         {
             foreach (var subgrid in Subgrids)
                 UpdateSubgridConnections(subgrid);
+            
+            UpdateSubgridConnectedness();
+            UnregisterDisconnectedSubgrids();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -689,9 +700,8 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void BuildMissingHead(BaseConnection baseConnection, Subgrid baseSubgrid)
         {
-            if (!baseConnection.HasBuilt) return;
-            if (baseConnection.IsConnected) return;
-
+            if (!baseConnection.HasBuilt || baseConnection.Block.TopBlock != null) return;
+            
             // Create head of right size
             GetCounterparty(baseConnection, out var topSubgrid);
             if (topSubgrid.HasBuilt) return;
@@ -741,8 +751,7 @@ namespace MultigridProjector.Logic
 
         private void BuildMissingBase(TopConnection topConnection, Subgrid topSubgrid)
         {
-            if (!topConnection.HasBuilt) return;
-            if (topConnection.IsConnected) return;
+            if (!topConnection.HasBuilt || topConnection.Block.Stator != null) return;
 
             // Create head of right size
             GetCounterparty(topConnection, out var baseSubgrid);
@@ -763,8 +772,7 @@ namespace MultigridProjector.Logic
 
             var loneTopPart = topConnection.Block.CubeGrid.CubeBlocks.Count == 1;
 
-            var connected = baseConnection.IsConnected && baseConnection.Block.TopBlock.EntityId == topConnection.Block.EntityId;
-            if (!connected && baseConnection.RequestAttach)
+            if (baseConnection.Block.TopBlock == null && topConnection.Block.Stator == null && baseConnection.RequestAttach)
             {
                 baseConnection.RequestAttach = false;
                 if(baseConnection.HasBuilt && topConnection.HasBuilt)
@@ -1249,7 +1257,7 @@ namespace MultigridProjector.Logic
             
             // Flood fill along the connected mechanical connections
             Subgrids[0].IsConnectedToProjector = true;
-            for (var connected = 0; connected < Subgrids.Count;)
+            for (var connected = 1; connected < Subgrids.Count;)
             {
                 var modified = 0;
                 foreach (var subgrid in Subgrids)
@@ -1259,13 +1267,17 @@ namespace MultigridProjector.Logic
 
                     foreach (var baseConnection in subgrid.BaseConnections.Values)
                     {
-                        if (Subgrids[baseConnection.TopLocation.GridIndex].IsConnectedToProjector && baseConnection.IsConnected)
-                        {
-                            subgrid.IsConnectedToProjector = true;
-                            modified += 1;
-                            connected += 1;
-                            break;
-                        }
+                        var topConnection = GetCounterparty(baseConnection, out var topSubgrid);
+                        if(!IsConnected(baseConnection, topConnection))
+                            continue;
+
+                        if (!topSubgrid.IsConnectedToProjector) 
+                            continue;
+                        
+                        subgrid.IsConnectedToProjector = true;
+                        modified += 1;
+                        connected += 1;
+                        break;
                     }
                     
                     if(subgrid.IsConnectedToProjector)
@@ -1273,25 +1285,23 @@ namespace MultigridProjector.Logic
                     
                     foreach (var topConnection in subgrid.TopConnections.Values)
                     {
-                        if (Subgrids[topConnection.BaseLocation.GridIndex].IsConnectedToProjector && topConnection.IsConnected)
-                        {
-                            subgrid.IsConnectedToProjector = true;
-                            modified += 1;
-                            connected += 1;
-                            break;
-                        }
+                        var baseConnection = GetCounterparty(topConnection, out var baseSubgrid);
+                        if(!IsConnected(baseConnection, topConnection))
+                            continue;
+
+                        if (!baseSubgrid.IsConnectedToProjector) 
+                            continue;
+                        
+                        subgrid.IsConnectedToProjector = true;
+                        modified += 1;
+                        connected += 1;
+                        break;
                     }
                 }
                 
                 if(modified == 0)
                     break;
             }
-        }
-
-        public void DetectAndUnregisterAnyDisconnectedGrids()
-        {
-            UpdateSubgridConnectedness();
-            UnregisterDisconnectedSubgrids();
         }
     }
 }

@@ -58,7 +58,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logic\ProjectionStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\ProjectorSubgrid.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\Subgrid.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Logic\SubgridConnection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\Connection.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="0Harmony, Version=2.0.4.0, Culture=neutral, PublicKeyToken=null">
