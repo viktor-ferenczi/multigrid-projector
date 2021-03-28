@@ -5,18 +5,18 @@ using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 using Torch.Managers.PatchManager;
 
-namespace MultigridProjectorServer
+namespace MultigridProjector.Patches
 {
     [PatchShim]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
-    public static class MyProjectorBase_InitializeClipboard
+    public static class MyProjectorBase_UpdateStats
     {
-        public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("InitializeClipboard", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyProjectorBase_InitializeClipboard).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
-
-        private static bool Prefix(
-            // ReSharper disable once InconsistentNaming
-            MyProjectorBase __instance)
+        public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("UpdateStats", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyProjectorBase_UpdateStats).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
+        
+        // ReSharper disable once UnusedMember.Local
+        // ReSharper disable once InconsistentNaming
+        private static bool Prefix(MyProjectorBase __instance)
         {
             var projector = __instance;
 
@@ -26,7 +26,7 @@ namespace MultigridProjectorServer
                 if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
                     return true;
 
-                projection.InitializeClipboard();
+                projection.UpdateProjectorStats();
             }
             catch (Exception e)
             {

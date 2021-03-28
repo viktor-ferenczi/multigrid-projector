@@ -17,9 +17,6 @@ namespace MultigridProjector.Patches
     {
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
-            // ReSharper disable once UnusedParameter.Global
-            MyWelder __instance,
-            // ReSharper disable once InconsistentNaming
             MyCasterComponent rayCaster,
             float distanceMultiplier,
             // ReSharper disable once InconsistentNaming

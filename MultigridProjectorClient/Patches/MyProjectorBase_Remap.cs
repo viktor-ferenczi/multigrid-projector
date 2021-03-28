@@ -12,7 +12,7 @@ namespace MultigridProjector.Patches
     [HarmonyPatch("Remap")]
     [EnsureOriginal("bce65541")]
     // ReSharper disable once InconsistentNaming
-    public class MyProjectorBase_Remap
+    public static class MyProjectorBase_Remap
     {
         // ReSharper disable once InconsistentNaming
         private static bool Prefix(MyProjectorBase __instance)

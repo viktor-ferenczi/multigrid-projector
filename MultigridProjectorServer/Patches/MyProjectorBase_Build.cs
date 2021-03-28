@@ -1,19 +1,19 @@
 using System;
-using HarmonyLib;
+using System.Reflection;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
+using Torch.Managers.PatchManager;
 
 namespace MultigridProjector.Patches
 {
-    // ReSharper disable once UnusedType.Global
-    [HarmonyPatch(typeof(MyProjectorBase))]
-    [HarmonyPatch("Build")]
-    [EnsureOriginal("56be06c3")]
+    [PatchShim]
     // ReSharper disable once InconsistentNaming
-    public class MyProjectorBase_Build
+    // ReSharper disable once UnusedType.Global
+    public static class MyProjectorBase_Build
     {
+        public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("Build", BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public)).Prefixes.Add(typeof (MyProjectorBase_Build).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyProjectorBase __instance,

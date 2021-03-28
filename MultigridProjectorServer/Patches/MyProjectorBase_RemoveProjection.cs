@@ -5,18 +5,18 @@ using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 using Torch.Managers.PatchManager;
 
-namespace MultigridProjectorServer
+namespace MultigridProjector.Patches
 {
     [PatchShim]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
-    public static class MyProjectorBase_InitializeClipboard
+    public static class MyProjectorBase_RemoveProjection
     {
-        public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("InitializeClipboard", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyProjectorBase_InitializeClipboard).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
-
-        private static bool Prefix(
-            // ReSharper disable once InconsistentNaming
-            MyProjectorBase __instance)
+        public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("RemoveProjection", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyProjectorBase_RemoveProjection).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
+        
+        // ReSharper disable once InconsistentNaming
+        // ReSharper disable once UnusedMember.Local
+        private static bool Prefix(MyProjectorBase __instance, bool keepProjection)
         {
             var projector = __instance;
 
@@ -26,13 +26,13 @@ namespace MultigridProjectorServer
                 if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
                     return true;
 
-                projection.InitializeClipboard();
+                projection.RemoveProjection(keepProjection);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
             }
-
+            
             return false;
         }
     }

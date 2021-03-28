@@ -1483,7 +1483,7 @@ namespace MultigridProjector.Logic
                 Projector.SetEmissiveStateDisabled();
         }
 
-        public static bool ProjectorUpdateAfterSimulation(MyProjectorBase projector, IMyGameLogicComponent gameLogic)
+        public static bool ProjectorUpdateAfterSimulation(MyProjectorBase projector)
         {
             // Create the MultigridProjection instance on demand
             if (!TryFindProjectionByProjector(projector, out var projection))
@@ -1511,7 +1511,7 @@ namespace MultigridProjector.Logic
             // Call the base class implementation
             //projector.UpdateAfterSimulation();
             // Could not call virtual base class method, so copied it here from MyEntity where it is defined:
-            gameLogic.UpdateAfterSimulation(true);
+            projector.GameLogic.UpdateAfterSimulation();
 
             // Call custom update logic
             projection.UpdateAfterSimulation();

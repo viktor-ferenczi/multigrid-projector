@@ -3,15 +3,16 @@ using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
+using VRage.Game.Entity.EntityComponents.Interfaces;
 
 namespace MultigridProjector.Patches
 {
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyProjectorBase))]
-    [HarmonyPatch("previewGrid_OnBlockRemoved")]
-    [EnsureOriginal("a3aa98dd")]
+    [HarmonyPatch("UpdateAfterSimulation")]
+    [EnsureOriginal("47184779")]
     // ReSharper disable once InconsistentNaming
-    public class MyProjectorBase_OnBlockRemoved
+    public static class MyProjectorBase_UpdateAfterSimulation
     {
         // ReSharper disable once UnusedMember.Local
         private static bool Prefix(
@@ -22,17 +23,13 @@ namespace MultigridProjector.Patches
 
             try
             {
-                // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
-                if (!MultigridProjection.TryFindProjectionByProjector(projector, out _))
-                    return true;
+                return MultigridProjection.ProjectorUpdateAfterSimulation(projector);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
+                return false;
             }
-
-            // Disable the original handler, since the MultigridProjection instance already handles it
-            return false;
         }
     }
 }
