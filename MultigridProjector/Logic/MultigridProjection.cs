@@ -452,12 +452,13 @@ namespace MultigridProjector.Logic
             Projector.SetStatsDirty(true);
         }
 
+        // Client only!
         // FIXME: Refactor, simplify
         public void UpdateGridTransformations()
         {
-            if(Subgrids.Any(s => s.UpdateRequested))
-                ForceUpdateProjection();
-
+            if (Projector.Closed || !Clipboard.IsActive)
+                return;
+            
             var projectorMatrix = Projector.WorldMatrix;
 
             // Apply projections setting (offset, rotation)
@@ -853,6 +854,9 @@ namespace MultigridProjector.Logic
 
             if (_showOnlyBuildable != Projector.GetShowOnlyBuildable())
                 UpdatePreviewBlockVisuals(false);
+            
+            if(Subgrids.Any(s => s.UpdateRequested))
+                ForceUpdateProjection();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

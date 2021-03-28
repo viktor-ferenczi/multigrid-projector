@@ -1,6 +1,5 @@
 using System;
 using HarmonyLib;
-using MultigridProjector.Extensions;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
@@ -15,6 +14,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorClipboard_UpdateGridTransformations
     {
+        // Client only!
         // ReSharper disable once UnusedMember.Local
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
@@ -22,26 +22,12 @@ namespace MultigridProjector.Patches
             // ReSharper disable once InconsistentNaming
             MyProjectorBase ___m_projector)
         {
-            var clipboard = __instance;
             var projector = ___m_projector;
 
             try
             {
-                if (projector == null || projector.Closed || !projector.Enabled || !projector.IsFunctional || 
-                    !projector.AllowWelding || projector.AllowScaling || !clipboard.IsActive)
-                    return true;
-
                 if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
-                {
-                    // The projector must have a blueprint loaded
-                    var gridBuilders = projector.GetOriginalGridBuilders();
-                    if (gridBuilders == null || gridBuilders.Count == 0 || clipboard.CopiedGrids?.Count != gridBuilders.Count)
-                        return true;
-                    
-                    projection = MultigridProjection.Create(projector, gridBuilders);
-                    if (projection == null)
-                        return true;
-                }
+                    return true;
                 
                 // Align the preview grids to match any grids has already been built
                 projection.UpdateGridTransformations();

@@ -38,9 +38,21 @@ namespace MultigridProjector.Patches
 
         private static bool UpdateAfterSimulation(MyProjectorBase projector, IMyGameLogicComponent gameLogic)
         {
-            // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
+            // Create the MultigridProjection instance on demand
             if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
-                return true;
+            {
+                if (projector == null || projector.Closed || !projector.Enabled || !projector.IsFunctional || 
+                    !projector.AllowWelding || projector.AllowScaling || !projector.Clipboard.IsActive)
+                    return true;
+                
+                var gridBuilders = projector.GetOriginalGridBuilders();
+                if (gridBuilders == null || gridBuilders.Count == 0)
+                    return true;
+                    
+                projection = MultigridProjection.Create(projector, gridBuilders);
+                if (projection == null)
+                    return true;
+            }
 
             // Call the base class implementation
             //projector.UpdateAfterSimulation();
