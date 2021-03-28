@@ -5,6 +5,7 @@ using System.Runtime.CompilerServices;
 using HarmonyLib;
 using MultigridProjector.Utilities;
 using MultigridProjector.Extensions;
+using Sandbox;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Engine.Multiplayer;
@@ -353,10 +354,18 @@ namespace MultigridProjector.Logic
             if (Projector.Closed)
                 return;
 
-            if (Projector.Enabled)
-                UpdateWork.Start();
-            else
+            if (!Projector.Enabled)
+            {
                 HidePreviewGrids();
+                return;
+            }
+
+            if (!UpdateWork.IsComplete) return;
+            
+            Projector.SetShouldUpdateProjection(false);
+            Projector.SetForceUpdateProjection(false);
+            
+            UpdateWork.Start();
         }
 
         // FIXME: Do we really need this?
@@ -391,16 +400,22 @@ namespace MultigridProjector.Logic
             if (Projector.Closed)
                 return;
 
+            Projector.SetLastUpdate(MySandboxGame.TotalGamePlayTimeInMilliseconds);
+            
             Clipboard.HasPreviewBBox = false;
             
             UpdateMechanicalConnections();
             
             AggregateStatistics();
             UpdateProjectorStats();
-            UpdatePreviewBlockVisuals(true);
 
-            Projector.UpdateSounds();
-            Projector.SetEmissiveStateWorking();
+            if (!Sandbox.Game.Multiplayer.Sync.IsDedicated)
+            {
+                UpdatePreviewBlockVisuals(true);
+
+                Projector.UpdateSounds();
+                Projector.SetEmissiveStateWorking();
+            }
 
             if (Projector.GetShouldUpdateTexts())
             {
@@ -408,8 +423,6 @@ namespace MultigridProjector.Logic
                 Projector.UpdateText();
                 Projector.RaisePropertiesChanged();
             }
-
-            DetectCompletedProjection();
         }
 
         private void DetectCompletedProjection()
@@ -458,6 +471,8 @@ namespace MultigridProjector.Logic
         {
             if (Projector.Closed || !Clipboard.IsActive)
                 return;
+            
+            // Align the preview grids to match any grids has already been built
             
             var projectorMatrix = Projector.WorldMatrix;
 
@@ -857,6 +872,16 @@ namespace MultigridProjector.Logic
             
             if(Subgrids.Any(s => s.UpdateRequested))
                 ForceUpdateProjection();
+            
+            UpdateGridTransformations();
+
+            if (!UpdateWork.IsComplete) return;
+            
+            if (Projector.GetForceUpdateProjection() || (Projector.GetShouldUpdateProjection() && MySandboxGame.TotalGamePlayTimeInMilliseconds - Projector.GetLastUpdate() >= 2000))
+            {
+                Projector.SetHiddenBlock(null);
+                StartUpdateWork();
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

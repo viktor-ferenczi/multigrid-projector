@@ -28,9 +28,8 @@ namespace MultigridProjector.Patches
             {
                 if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
                     return true;
-                
-                // Align the preview grids to match any grids has already been built
-                projection.UpdateGridTransformations();
+
+                // Alignment is needed on server side as well, so it was moved into UpdateAfterSimulation
             }
             catch (Exception e)
             {

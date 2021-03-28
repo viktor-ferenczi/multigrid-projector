@@ -48,7 +48,7 @@ namespace MultigridProjector.Logic
 
         public void Start()
         {
-            if (!_task.IsComplete) return;
+            if (!IsComplete) return;
 
             _allGridsProcessed = false;
             _task = Parallel.Start(this, OnComplete);

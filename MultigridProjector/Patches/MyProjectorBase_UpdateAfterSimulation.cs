@@ -102,34 +102,16 @@ namespace MultigridProjector.Patches
             }
 
             var clipboard = projector.GetClipboard();
-            if (!clipboard.IsActive)
-                return false;
-
-            clipboard.Update();
-
-            if (projector.GetShouldResetBuildable())
+            if (clipboard.IsActive)
             {
-                projector.SetShouldResetBuildable(false);
-                foreach (var previewGrid in projection.PreviewGrids)
+                // Client only
+                clipboard.Update();
+                if (projector.GetShouldResetBuildable())
                 {
-                    foreach (var cubeBlock in previewGrid.CubeBlocks)
-                    {
-                        projector.HideCube(cubeBlock);
-                    }
+                    projector.SetShouldResetBuildable(false);
+                    projection.ForceUpdateProjection();
                 }
             }
-
-            if (!projector.GetForceUpdateProjection() && (!projector.GetShouldUpdateProjection() || MySandboxGame.TotalGamePlayTimeInMilliseconds - projector.GetLastUpdate() <= 2000))
-                return false;
-
-            // Call patched UpdateProjection
-            var methodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "UpdateProjection");
-            methodInfo.Invoke(projector, new object[]{});
-            
-            projector.SetShouldUpdateProjection(false);
-            projector.SetForceUpdateProjection(false);
-            
-            projector.SetLastUpdate(MySandboxGame.TotalGamePlayTimeInMilliseconds);
 
             return false;
         }
