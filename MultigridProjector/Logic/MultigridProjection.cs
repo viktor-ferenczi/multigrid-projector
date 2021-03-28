@@ -738,7 +738,7 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void BuildMissingHead(BaseConnection baseConnection, Subgrid baseSubgrid)
         {
-            if (!baseConnection.HasBuilt || baseConnection.Block.TopBlock != null) return;
+            if (!baseConnection.HasBuilt || baseConnection.Block.TopBlock != null || !baseConnection.Block.IsFunctional) return;
             
             // Create head of right size
             GetCounterparty(baseConnection, out var topSubgrid);
@@ -792,8 +792,8 @@ namespace MultigridProjector.Logic
             if (!topConnection.HasBuilt || topConnection.Block.Stator != null) return;
 
             // Create head of right size
-            GetCounterparty(topConnection, out var baseSubgrid);
-            if (baseSubgrid.HasBuilt) return;
+            var baseConnection = GetCounterparty(topConnection, out var baseSubgrid);
+            if (baseSubgrid.HasBuilt || !baseConnection.HasBuilt || !baseConnection.Block.IsFunctional) return;
             var smallToLarge = baseSubgrid.GridSizeEnum != topSubgrid.GridSizeEnum;
             // FIXME: Implement extension method RecreateBase
             // topConnection.Block.RecreateBase(topConnection.Block.BuiltBy, smallToLarge);
