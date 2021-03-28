@@ -465,13 +465,9 @@ namespace MultigridProjector.Logic
             Projector.SetStatsDirty(true);
         }
 
-        // Client only!
         // FIXME: Refactor, simplify
         public void UpdateGridTransformations()
         {
-            if (Projector.Closed || !Clipboard.IsActive)
-                return;
-            
             // Align the preview grids to match any grids has already been built
             
             var projectorMatrix = Projector.WorldMatrix;
@@ -676,7 +672,10 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool IsConnected(BaseConnection baseConnection, TopConnection topConnection)
         {
-            return baseConnection.HasBuilt && topConnection.HasBuilt && baseConnection.Block.TopBlock.EntityId == topConnection.Block.EntityId;
+            return baseConnection.HasBuilt && 
+                   topConnection.HasBuilt && 
+                   baseConnection.Block.TopBlock != null && 
+                   baseConnection.Block.TopBlock.EntityId == topConnection.Block.EntityId;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
