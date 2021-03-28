@@ -1,8 +1,7 @@
 using System;
 using HarmonyLib;
-using MultigridProjector.Extensions;
+using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
-using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using VRage.Game;
 
@@ -25,31 +24,12 @@ namespace MultigridProjector.Patches
         {
             try
             {
-                GetObjectBuilderCubeBlock(__instance, __result, copy);
+                MultigridProjection.GetObjectBuilderOfProjector(__instance, copy, __result);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
             }
-        }
-
-        private static void GetObjectBuilderCubeBlock(MyProjectorBase projector, MyObjectBuilder_CubeBlock blockBuilder, bool copy)
-        {
-            if (!copy) return;
-
-            var clipboard = projector.GetClipboard();
-            if (clipboard?.CopiedGrids == null || clipboard.CopiedGrids.Count < 1)
-                return;
-
-            var gridBuilders = projector.GetOriginalGridBuilders();
-            if (gridBuilders == null)
-                return;
-
-            // Fix the inconsistent remapping the original implementation has done, this is
-            // needed to be able to load back the projection properly form a saved world
-            var builderCubeBlock = (MyObjectBuilder_ProjectorBase) blockBuilder;
-            builderCubeBlock.ProjectedGrids = gridBuilders.Clone();
-            MyEntities.RemapObjectBuilderCollection(builderCubeBlock.ProjectedGrids);
         }
     }
 }

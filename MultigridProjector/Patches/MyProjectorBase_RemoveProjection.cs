@@ -1,6 +1,5 @@
 using System;
 using HarmonyLib;
-using MultigridProjector.Extensions;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
@@ -26,36 +25,13 @@ namespace MultigridProjector.Patches
                 if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
                     return true;
 
-                var buildCompleted = projection.Stats.IsBuildCompleted;
-                if (buildCompleted && !projection.Projector.GetKeepProjection())
-                    keepProjection = false;
-
-                projector.SetHiddenBlock(null);
-                projector.SetStatsDirty(true);
-                projector.UpdateText();
-                projector.RaisePropertiesChanged();
-
-                projection.Destroy();
-                
-                if (!keepProjection)
-                {
-                    var clipboard = projection.Clipboard;
-                    clipboard.Deactivate();
-                    clipboard.Clear();
-                    projector.SetOriginalGridBuilders(null);
-                }
-
-                projector.UpdateSounds();
-
-                if (projector.Enabled)
-                    projector.SetEmissiveStateWorking();
-                else
-                    projector.SetEmissiveStateDisabled();
+                projection.RemoveProjection(keepProjection);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
             }
+            
             return false;
         }
     }

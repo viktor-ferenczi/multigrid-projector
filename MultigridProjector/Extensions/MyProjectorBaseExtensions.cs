@@ -247,5 +247,15 @@ namespace MultigridProjector.Extensions
         {
             SetRotationMethodInfo.Invoke(projector, new object[]{ clipboard, rotation });
         }
+        
+        public static void RemapObjectBuilders(this MyProjectorBase projector)
+        {
+            var gridBuilders = projector.GetOriginalGridBuilders();
+            if (gridBuilders == null || gridBuilders.Count <= 0)
+                return;
+
+            // Consistent remapping of all grids to keep sub-grid relations intact
+            MyEntities.RemapObjectBuilderCollection(gridBuilders);
+        }
     }
 }

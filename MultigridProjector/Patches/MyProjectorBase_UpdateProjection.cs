@@ -1,6 +1,5 @@
 using System;
 using HarmonyLib;
-using MultigridProjector.Extensions;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
@@ -22,35 +21,13 @@ namespace MultigridProjector.Patches
 
             try
             {
-                return UpdateProjection(projector);
+                return MultigridProjection.MyProjectorBase_UpdateProjection(projector);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
             }
 
-            return false;
-        }
-
-        private static bool UpdateProjection(MyProjectorBase projector)
-        {
-            // Console block (aka hologram table)?
-            if (!projector.AllowWelding || projector.AllowScaling)
-                return true;
-
-            // In case of projectors never fall back to the original implementation, because that would start the original update work
-
-            if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
-                return false;
-
-            if (!projection.UpdateWork.IsComplete)
-                return false;
-
-            if (!projection.Initialized)
-                return false;
-
-            projector.SetHiddenBlock(null);
-            projection.StartUpdateWork();
             return false;
         }
     }

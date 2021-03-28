@@ -12,8 +12,10 @@ using Sandbox.Engine.Multiplayer;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
+using Sandbox.Game.EntityComponents;
 using Sandbox.Game.Gui;
 using Sandbox.Game.GUI;
+using Sandbox.Game.Multiplayer;
 using Sandbox.Game.SessionComponents;
 using Sandbox.Game.Weapons;
 using Sandbox.Game.World;
@@ -23,6 +25,7 @@ using SpaceEngineers.Game.Entities.Blocks;
 using VRage;
 using VRage.Audio;
 using VRage.Game;
+using VRage.Game.Entity.EntityComponents.Interfaces;
 using VRage.Game.ObjectBuilders.Definitions.SessionComponents;
 using VRage.ModAPI;
 using VRage.Network;
@@ -409,7 +412,7 @@ namespace MultigridProjector.Logic
             AggregateStatistics();
             UpdateProjectorStats();
 
-            if (!Sandbox.Game.Multiplayer.Sync.IsDedicated)
+            if (!Sync.IsDedicated)
             {
                 UpdatePreviewBlockVisuals(true);
 
@@ -446,7 +449,7 @@ namespace MultigridProjector.Logic
         {
             _showOnlyBuildable = Projector.GetShowOnlyBuildable();
 
-            if (Sandbox.Game.Multiplayer.Sync.IsDedicated)
+            if (Sync.IsDedicated)
                 return;
             
             if (!_previewBlockVisualsUpdated)
@@ -1353,6 +1356,258 @@ namespace MultigridProjector.Logic
                 if(modified == 0)
                     break;
             }
+        }
+
+        public static void GetObjectBuilderOfProjector(MyProjectorBase projector, bool copy, MyObjectBuilder_CubeBlock blockBuilder)
+        {
+            if (!copy) return;
+
+            var clipboard = projector.GetClipboard();
+            if (clipboard?.CopiedGrids == null || clipboard.CopiedGrids.Count < 1)
+                return;
+
+            var gridBuilders = projector.GetOriginalGridBuilders();
+            if (gridBuilders == null)
+                return;
+
+            // Fix the inconsistent remapping the original implementation has done, this is
+            // needed to be able to load back the projection properly form a saved world
+            var builderCubeBlock = (MyObjectBuilder_ProjectorBase) blockBuilder;
+            builderCubeBlock.ProjectedGrids = gridBuilders.Clone();
+            MyEntities.RemapObjectBuilderCollection(builderCubeBlock.ProjectedGrids);
+        }
+
+        public static void ProjectorInit(MyProjectorBase projector, MyObjectBuilder_CubeBlock objectBuilder)
+        {
+            if (projector.CubeGrid == null || !projector.AllowWelding)
+                return;
+
+            if (!(objectBuilder is MyObjectBuilder_ProjectorBase projectorBuilder))
+                return;
+
+            var gridBuilders = projectorBuilder.ProjectedGrids;
+            if (gridBuilders == null || gridBuilders.Count < 1)
+                return;
+
+            projector.SetOriginalGridBuilders(gridBuilders);
+        }
+
+        public static bool ProjectorLoadBlueprint(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
+        {
+            if (gridBuilders == null)
+                return true;
+
+            // Projector update
+            projector.ResourceSink.Update();
+            projector.UpdateIsWorking();
+
+            if (!projector.Enabled)
+                return true;
+
+            // Fall back to the original implementation to handle failure cases
+            if (gridBuilders.Count < 1)
+                return true;
+
+            // Is the projector is dead?
+            if (!projector.IsWorking)
+                return false;
+
+            // Clone and remap the blueprint before modifying it
+            gridBuilders = gridBuilders.Clone();
+            MyEntities.RemapObjectBuilderCollection(gridBuilders);
+
+            projector.SetHiddenBlock(null);
+
+            // Fixes the multiplayer preview position issue with console blocks (aka hologram table) and now projectors, which caused by damaged
+            // first subgrid position. Something is clearing the first subgrid's position, but if we transform the whole blueprint to the origin,
+            // then this is not a problem.
+            // IMPORTANT: This issue does not appear in single player! Even testing it needs two players in multiplayer setup!
+            gridBuilders.NormalizeBlueprintPositionAndOrientation();
+
+            // Console block (aka hologram table)?
+            if (!projector.AllowWelding || projector.AllowScaling)
+            {
+                gridBuilders.PrepareForConsoleProjection(projector.GetClipboard());
+                projector.SetOriginalGridBuilders(gridBuilders);
+                projector.SendNewBlueprint(gridBuilders);
+                return false;
+            }
+
+            // Prevent re-initializing an existing multigrid projection
+            if (MultigridProjection.TryFindProjectionByProjector(projector, out _))
+                return false;
+
+            // Ensure compatible grid size between the projector and the first subgrid to be built
+            var compatibleGridSize = gridBuilders[0].GridSizeEnum == projector.CubeGrid.GridSizeEnum;
+            if (!compatibleGridSize)
+                return true;
+
+            // Prepare the blueprint for being projected for welding
+            gridBuilders.PrepareForProjection();
+
+            // Load the blueprint
+            projector.SetOriginalGridBuilders(gridBuilders);
+
+            // Notify the server and all clients (including this one) to create the projection,
+            // our data model will be created by SetNewBlueprint the same way at all locations
+            projector.SendNewBlueprint(gridBuilders);
+            return false;
+        }
+
+        public void RemoveProjection(bool keepProjection)
+        {
+            var buildCompleted = Stats.IsBuildCompleted;
+            if (buildCompleted && !Projector.GetKeepProjection())
+                keepProjection = false;
+
+            Projector.SetHiddenBlock(null);
+            Projector.SetStatsDirty(true);
+            Projector.UpdateText();
+            Projector.RaisePropertiesChanged();
+
+            Destroy();
+
+            if (!keepProjection)
+            {
+                var clipboard = Clipboard;
+                clipboard.Deactivate();
+                clipboard.Clear();
+                Projector.SetOriginalGridBuilders(null);
+            }
+
+            Projector.UpdateSounds();
+
+            if (Projector.Enabled)
+                Projector.SetEmissiveStateWorking();
+            else
+                Projector.SetEmissiveStateDisabled();
+        }
+
+        public static bool ProjectorUpdateAfterSimulation(MyProjectorBase projector, IMyGameLogicComponent gameLogic)
+        {
+            // Create the MultigridProjection instance on demand
+            if (!TryFindProjectionByProjector(projector, out var projection))
+            {
+                if (projector == null || 
+                    projector.Closed || 
+                    projector.CubeGrid.IsPreview ||
+                    !projector.Enabled || 
+                    !projector.IsFunctional || 
+                    !projector.AllowWelding || 
+                    projector.AllowScaling || 
+                    projector.Clipboard.PreviewGrids == null || 
+                    projector.Clipboard.PreviewGrids.Count == 0)
+                    return true;
+                
+                var gridBuilders = projector.GetOriginalGridBuilders();
+                if (gridBuilders == null || gridBuilders.Count != projector.Clipboard.PreviewGrids.Count)
+                    return true;
+                    
+                projection = Create(projector, gridBuilders);
+                if (projection == null)
+                    return true;
+            }
+
+            // Call the base class implementation
+            //projector.UpdateAfterSimulation();
+            // Could not call virtual base class method, so copied it here from MyEntity where it is defined:
+            gameLogic.UpdateAfterSimulation(true);
+
+            // Call custom update logic
+            projection.UpdateAfterSimulation();
+
+            // Based on the original code
+
+            var projectionTimer = projector.GetProjectionTimer();
+            if (!projector.GetTierCanProject() && projectionTimer > 0)
+            {
+                --projectionTimer;
+                projector.SetProjectionTimer(projectionTimer);
+                if (projectionTimer == 0)
+                    projector.MyProjector_IsWorkingChanged(projector);
+            }
+
+            projector.ResourceSink.Update();
+            if (projector.GetRemoveRequested())
+            {
+                var frameCount = projector.GetFrameCount();
+                ++frameCount;
+                projector.SetFrameCount(frameCount);
+
+                if (frameCount > 9)
+                {
+                    projector.UpdateIsWorking();
+                    if (projector.IsProjecting())
+                    {
+                        if (!projector.IsWorking || !projector.TierCanProject || projection.IsBuildCompleted)
+                            projector.RemoveProjection(true);
+                    }
+
+                    projector.SetFrameCount(0);
+                    projector.SetRemoveRequested(false);
+                }
+            }
+
+            var clipboard = projector.GetClipboard();
+            if (clipboard.IsActive)
+            {
+                // Client only
+                clipboard.Update();
+                if (projector.GetShouldResetBuildable())
+                {
+                    projector.SetShouldResetBuildable(false);
+                    projection.ForceUpdateProjection();
+                }
+            }
+
+            return false;
+        }
+
+        public static bool MyProjectorBase_UpdateProjection(MyProjectorBase projector)
+        {
+            // Console block (aka hologram table)?
+            if (!projector.AllowWelding || projector.AllowScaling)
+                return true;
+
+            // In case of projectors never fall back to the original implementation, because that would start the original update work
+
+            if (!TryFindProjectionByProjector(projector, out var projection))
+                return false;
+
+            if (!projection.UpdateWork.IsComplete)
+                return false;
+
+            if (!projection.Initialized)
+                return false;
+
+            projector.SetHiddenBlock(null);
+            projection.StartUpdateWork();
+            return false;
+        }
+
+        public static bool MyWelder_FindProjectedBlock(MyCasterComponent rayCaster, float distanceMultiplier, ref MyWelder.ProjectionRaycastData result)
+        {
+            var center = rayCaster.Caster.Center;
+
+            var lookDirection = rayCaster.Caster.FrontPoint - rayCaster.Caster.Center;
+            lookDirection.Normalize();
+
+            var distance = MyEngineerToolBase.DEFAULT_REACH_DISTANCE * distanceMultiplier;
+            var reachFarPoint = center + lookDirection * distance;
+            var viewLine = new LineD(center, reachFarPoint);
+
+            if (!MyCubeGrid.GetLineIntersection(ref viewLine, out var previewGridByWeldingLine, out _, out _, x => x.Projector != null))
+                return true;
+
+            if (previewGridByWeldingLine.Projector == null)
+                return true;
+
+            // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
+            if (!TryFindProjectionByProjector(previewGridByWeldingLine.Projector, out var projection))
+                return true;
+
+            projection.FindProjectedBlock(center, reachFarPoint, ref result);
+            return false;
         }
     }
 }
