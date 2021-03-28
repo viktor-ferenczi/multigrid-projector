@@ -17,7 +17,7 @@ namespace MultigridProjector.Patches
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof(MyProjectorClipboard).GetMethod("UpdateGridTransformations", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes
             .Add(typeof(MyProjectorClipboard_UpdateGridTransformations).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
 
-        private static readonly FieldInfo ProjectorFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_projector");
+        private static readonly FieldInfo ProjectorFieldInfo = AccessTools.Field(typeof(MyProjectorClipboard), "m_projector");
 
         // Client only!
         // ReSharper disable once UnusedMember.Local
@@ -30,7 +30,7 @@ namespace MultigridProjector.Patches
             try
             {
                 var projector = (MyProjectorBase) ProjectorFieldInfo.GetValue(clipboard);
-                if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
+                if (!MultigridProjection.TryFindProjectionByProjector(projector, out _))
                     return true;
 
                 // Alignment is needed on server side as well, so it was moved into UpdateAfterSimulation
