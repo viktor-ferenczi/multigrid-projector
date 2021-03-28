@@ -105,8 +105,14 @@ namespace MultigridProjector.Logic
                 {
                     if(subgrid.TryGetBuiltBlockByPreview(previewBlock, out var builtSlimBlock))
                     {
-                        // Already built
-                        blockStates[previewBlock.Position] = builtSlimBlock.Integrity >= previewBlock.Integrity ? BlockState.FullyBuilt : BlockState.BeingBuilt;  
+                        // Partially or fully built
+                        var fullyBuilt = builtSlimBlock.Integrity >= previewBlock.Integrity;
+                        blockStates[previewBlock.Position] = fullyBuilt ? BlockState.FullyBuilt : BlockState.BeingBuilt;
+                        
+                        // What has not built to the level required by the blueprint is considered as remaining
+                        if(!fullyBuilt)
+                            stats.RegisterRemainingBlock(previewBlock);
+                        
                         continue;
                     }
 
