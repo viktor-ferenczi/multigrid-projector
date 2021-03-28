@@ -42,7 +42,8 @@ namespace MultigridProjector.Patches
             if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
             {
                 if (projector == null || projector.Closed || !projector.Enabled || !projector.IsFunctional || 
-                    !projector.AllowWelding || projector.AllowScaling || !projector.Clipboard.IsActive)
+                    !projector.AllowWelding || projector.AllowScaling || !projector.Clipboard.IsActive ||
+                    projector.CubeGrid.IsPreview)
                     return true;
                 
                 var gridBuilders = projector.GetOriginalGridBuilders();
