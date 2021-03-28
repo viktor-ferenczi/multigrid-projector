@@ -446,6 +446,9 @@ namespace MultigridProjector.Logic
         {
             _showOnlyBuildable = Projector.GetShowOnlyBuildable();
 
+            if (Sandbox.Game.Multiplayer.Sync.IsDedicated)
+                return;
+            
             if (!_previewBlockVisualsUpdated)
                 allowOptimization = false;
 
@@ -469,6 +472,9 @@ namespace MultigridProjector.Logic
         public void UpdateGridTransformations()
         {
             // Align the preview grids to match any grids has already been built
+
+            if (PreviewGrids == null || PreviewGrids.Count == 0 || Subgrids.Count != PreviewGrids.Count)
+                return;
             
             var projectorMatrix = Projector.WorldMatrix;
 
