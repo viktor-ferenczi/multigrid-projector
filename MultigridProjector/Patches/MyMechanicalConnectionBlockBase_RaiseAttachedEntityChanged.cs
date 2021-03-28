@@ -24,7 +24,7 @@ namespace MultigridProjector.Patches
             {
                 if (!MultigridProjection.TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out _)) return;
 
-                projection.DetectAndUnregisterAnyDisconnectedGrids();
+                projection.ForceUpdateProjection();
             }
             catch (Exception e)
             {

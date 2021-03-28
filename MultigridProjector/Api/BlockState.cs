@@ -15,7 +15,6 @@ namespace MultigridProjector.Api
         BeingBuilt = 4,
 
         // The block has been built to the level required by the blueprint or more
-        // NOTE: Reserved for welder optimization, not used yet. All built blocks remain in BeingBuilt state, currently.
         FullyBuilt = 8,
 
         // There is mismatching block in the place of the projected block with a different definition than required by the blueprint

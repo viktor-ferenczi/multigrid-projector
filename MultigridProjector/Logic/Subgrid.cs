@@ -57,7 +57,7 @@ namespace MultigridProjector.Logic
 
         // Welding state statistics collected by the background worker
         public readonly ProjectionStats Stats = new ProjectionStats();
-
+        
         public volatile bool UpdateRequested = true;
 
         public Subgrid(MultigridProjection projection, int index)
@@ -65,7 +65,7 @@ namespace MultigridProjector.Logic
             Index = index;
             GridBuilder = projection.GridBuilders[index];
             PreviewGrid = projection.PreviewGrids[index];
-
+            
             PrepareMechanicalConnections(projection);
             ClearBlockStates();
         }
@@ -401,19 +401,13 @@ namespace MultigridProjector.Logic
                         break;
 
                     case BlockState.Buildable:
+                    case BlockState.Mismatch:
                         ShowCube(projector, slimBlock, true);
                         break;
 
                     case BlockState.BeingBuilt:
-                        HideCube(projector, slimBlock);
-                        break;
-
                     case BlockState.FullyBuilt:
                         HideCube(projector, slimBlock);
-                        break;
-
-                    case BlockState.Mismatch:
-                        ShowCube(projector, slimBlock, false);
                         break;
                 }
 
@@ -451,7 +445,20 @@ namespace MultigridProjector.Logic
         {
             using (BuiltGridLock.Read())
             {
-                return HasBuilt && BlockStates.TryGetValue(position, out var state) && state == BlockState.Buildable;
+                if (!HasBuilt)
+                    return false;
+
+                if (!BlockStates.TryGetValue(position, out var blockState))
+                    return false;
+
+                switch (blockState)
+                {
+                    case BlockState.Buildable:
+                    case BlockState.BeingBuilt:
+                        return true;
+                }
+
+                return false;
             }
         }
     }

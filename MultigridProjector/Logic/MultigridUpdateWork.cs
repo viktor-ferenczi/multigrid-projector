@@ -48,7 +48,7 @@ namespace MultigridProjector.Logic
 
         public void Start()
         {
-            if (!_task.IsComplete) return;
+            if (!IsComplete) return;
 
             _allGridsProcessed = false;
             _task = Parallel.Start(this, OnComplete);
@@ -106,7 +106,7 @@ namespace MultigridProjector.Logic
                     if(subgrid.TryGetBuiltBlockByPreview(previewBlock, out var builtSlimBlock))
                     {
                         // Already built
-                        blockStates[previewBlock.Position] = BlockState.BeingBuilt;
+                        blockStates[previewBlock.Position] = builtSlimBlock.Integrity >= previewBlock.Integrity ? BlockState.FullyBuilt : BlockState.BeingBuilt;  
                         continue;
                     }
 
@@ -146,6 +146,7 @@ namespace MultigridProjector.Logic
                     switch (blockStates[position])
                     {
                         case BlockState.BeingBuilt:
+                        case BlockState.FullyBuilt:
                             if (baseConnection.Found != null) break;
                             if (subgrid.TryGetBuiltBlockByPreview(baseConnection.Preview.SlimBlock, out var builtBlock))
                                 baseConnection.Found = (MyMechanicalConnectionBlockBase) builtBlock.FatBlock;
@@ -163,6 +164,7 @@ namespace MultigridProjector.Logic
                     switch (blockStates[position])
                     {
                         case BlockState.BeingBuilt:
+                        case BlockState.FullyBuilt:
                             if (topConnection.Found != null) break;
                             if (subgrid.TryGetBuiltBlockByPreview(topConnection.Preview.SlimBlock, out var builtBlock))
                                 topConnection.Found = (MyAttachableTopBlockBase)builtBlock.FatBlock;

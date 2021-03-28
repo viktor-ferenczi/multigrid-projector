@@ -35,9 +35,13 @@ namespace MultigridProjector.Patches
                 projector.UpdateText();
                 projector.RaisePropertiesChanged();
 
+                projection.Destroy();
+                
                 if (!keepProjection)
                 {
-                    projection.Destroy();
+                    var clipboard = projection.Clipboard;
+                    clipboard.Deactivate();
+                    clipboard.Clear();
                     projector.SetOriginalGridBuilders(null);
                 }
 
