@@ -41,13 +41,19 @@ namespace MultigridProjector.Patches
             // Create the MultigridProjection instance on demand
             if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
             {
-                if (projector == null || projector.Closed || !projector.Enabled || !projector.IsFunctional || 
-                    !projector.AllowWelding || projector.AllowScaling || !projector.Clipboard.IsActive ||
-                    projector.CubeGrid.IsPreview)
+                if (projector == null || 
+                    projector.Closed || 
+                    projector.CubeGrid.IsPreview ||
+                    !projector.Enabled || 
+                    !projector.IsFunctional || 
+                    !projector.AllowWelding || 
+                    projector.AllowScaling || 
+                    projector.Clipboard.PreviewGrids == null || 
+                    projector.Clipboard.PreviewGrids.Count == 0)
                     return true;
                 
                 var gridBuilders = projector.GetOriginalGridBuilders();
-                if (gridBuilders == null || gridBuilders.Count == 0)
+                if (gridBuilders == null || gridBuilders.Count != projector.Clipboard.PreviewGrids.Count)
                     return true;
                     
                 projection = MultigridProjection.Create(projector, gridBuilders);
