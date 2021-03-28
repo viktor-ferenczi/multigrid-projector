@@ -19,8 +19,8 @@ namespace MultigridProjector.Patches
     {
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyShipWelder).GetMethod("FindProjectedBlocks", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyShipWelder_FindProjectedBlocks).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
 
-        private static readonly FieldInfo DetectorSphereFieldInfo = AccessTools.Field(typeof(MyShipWelder), "_m_detectorSphere");
-        private static readonly FieldInfo ProjectedBlockFieldInfo = AccessTools.Field(typeof(MyShipWelder), "_m_projectedBlock");
+        private static readonly FieldInfo DetectorSphereFieldInfo = AccessTools.Field(typeof(MyShipWelder), "m_detectorSphere");
+        private static readonly FieldInfo ProjectedBlockFieldInfo = AccessTools.Field(typeof(MyShipWelder), "m_projectedBlock");
         
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
