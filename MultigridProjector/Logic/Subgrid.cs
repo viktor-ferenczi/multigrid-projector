@@ -170,6 +170,7 @@ namespace MultigridProjector.Logic
 
         private void ConnectGridEvents()
         {
+            BuiltGrid.OnBlockIntegrityChanged += OnBlockIntegrityChangedWithErrorHandler;
             BuiltGrid.OnBlockAdded += OnBlockAddedWithErrorHandler;
             BuiltGrid.OnBlockRemoved += OnBlockRemovedWithErrorHandler;
             BuiltGrid.OnGridSplit += OnGridSplitWithErrorHandler;
@@ -178,12 +179,25 @@ namespace MultigridProjector.Logic
 
         private void DisconnectGridEvents()
         {
+            BuiltGrid.OnBlockIntegrityChanged -= OnBlockIntegrityChangedWithErrorHandler;
             BuiltGrid.OnBlockAdded -= OnBlockAddedWithErrorHandler;
             BuiltGrid.OnBlockRemoved -= OnBlockRemovedWithErrorHandler;
             BuiltGrid.OnGridSplit -= OnGridSplitWithErrorHandler;
             BuiltGrid.OnClosing -= OnGridClosingWithErrorHandler;
         }
 
+        private void OnBlockIntegrityChangedWithErrorHandler(MySlimBlock obj)
+        {
+            try
+            {
+                OnBlockIntegrityChanged(obj);
+            }
+            catch (Exception e)
+            {
+                PluginLog.Error(e);
+            }
+        }
+        
         private void OnBlockAddedWithErrorHandler(MySlimBlock obj)
         {
             try
@@ -232,6 +246,36 @@ namespace MultigridProjector.Logic
             }
         }
 
+        private void OnBlockIntegrityChanged(MySlimBlock slimBlock)
+        {
+            if (!HasBuilt) return;
+
+            if (!TryGetPreviewByBuiltBlock(slimBlock, out var previewSlimBlock))
+                return;
+
+            if (!BlockStates.TryGetValue(previewSlimBlock.Position, out var blockState))
+                return;
+
+            switch (blockState)
+            {
+                case BlockState.BeingBuilt:
+                    if (slimBlock.Integrity < previewSlimBlock.Integrity)
+                        break;
+                    
+                    UpdateRequested = true;
+                    BlockStates[previewSlimBlock.Position] = BlockState.BeingBuilt;
+                    break;
+                
+                case BlockState.FullyBuilt:
+                    if (slimBlock.Integrity >= previewSlimBlock.Integrity)
+                        break;
+                    
+                    UpdateRequested = true;
+                    BlockStates[previewSlimBlock.Position] = BlockState.FullyBuilt;
+                    break;
+            }
+        }
+        
         private void OnBlockAdded(MySlimBlock slimBlock)
         {
             if (!HasBuilt) return;
