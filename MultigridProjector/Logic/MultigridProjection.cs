@@ -25,7 +25,6 @@ using SpaceEngineers.Game.Entities.Blocks;
 using VRage;
 using VRage.Audio;
 using VRage.Game;
-using VRage.Game.Entity.EntityComponents.Interfaces;
 using VRage.Game.ObjectBuilders.Definitions.SessionComponents;
 using VRage.ModAPI;
 using VRage.Network;
@@ -226,18 +225,19 @@ namespace MultigridProjector.Logic
         {
             foreach (var subgrid in Subgrids)
             {
-                subgrid.OnBaseAdded += OnBaseAdded;
-                subgrid.OnBaseRemoved += OnBaseRemoved;
-                subgrid.OnTopAdded += OnTopAdded;
-                subgrid.OnTopRemoved += OnTopRemoved;
-                subgrid.OnTerminalBlockAdded += OnTerminalBlockAdded;
-                subgrid.OnTerminalBlockRemoved += OnTerminalBlockRemoved;
-                subgrid.OnOtherBlockAdded += OnOtherBlockAdded;
-                subgrid.OnOtherBlockRemoved += OnOtherBlockRemoved;
-                subgrid.OnBuiltGridRegistered += OnBuiltGridRegistered;
-                subgrid.OnBuiltGridUnregistered += OnBuiltGridUnregistered;
-                subgrid.OnBuiltGridSplit += OnBuiltGridSplit;
-                subgrid.OnBuiltGridClose += OnBuiltGridClose;
+                subgrid.BaseAddedEvent += OnBaseAdded;
+                subgrid.BaseRemovedEvent += OnBaseRemoved;
+                subgrid.TopAddedEvent += OnTopAdded;
+                subgrid.TopRemovedEvent += OnTopRemoved;
+                subgrid.TerminalBlockAddedEvent += OnTerminalBlockAdded;
+                subgrid.TerminalBlockRemovedEvent += OnTerminalBlockRemoved;
+                subgrid.OtherBlockAddedEvent += OnOtherBlockAdded;
+                subgrid.OtherBlockRemovedEvent += OnOtherBlockRemoved;
+                subgrid.BlockIntegrityChangedEvent += OnBlockIntegrityChanged;
+                subgrid.BuiltGridRegisteredEvent += OnBuiltGridRegistered;
+                subgrid.BuiltGridUnregisteredEvent += OnBuiltGridUnregistered;
+                subgrid.BuiltGridSplitEvent += OnBuiltGridSplit;
+                subgrid.BuiltGridCloseEvent += OnBuiltGridClose;
             }
         }
 
@@ -245,18 +245,19 @@ namespace MultigridProjector.Logic
         {
             foreach (var subgrid in Subgrids)
             {
-                subgrid.OnBaseAdded -= OnBaseAdded;
-                subgrid.OnBaseRemoved -= OnBaseRemoved;
-                subgrid.OnTopAdded -= OnTopAdded;
-                subgrid.OnTopRemoved -= OnTopRemoved;
-                subgrid.OnTerminalBlockAdded -= OnTerminalBlockAdded;
-                subgrid.OnTerminalBlockRemoved -= OnTerminalBlockRemoved;
-                subgrid.OnOtherBlockAdded -= OnOtherBlockAdded;
-                subgrid.OnOtherBlockRemoved -= OnOtherBlockRemoved;
-                subgrid.OnBuiltGridRegistered -= OnBuiltGridRegistered;
-                subgrid.OnBuiltGridUnregistered -= OnBuiltGridUnregistered;
-                subgrid.OnBuiltGridSplit -= OnBuiltGridSplit;
-                subgrid.OnBuiltGridClose -= OnBuiltGridClose;
+                subgrid.BaseAddedEvent -= OnBaseAdded;
+                subgrid.BaseRemovedEvent -= OnBaseRemoved;
+                subgrid.TopAddedEvent -= OnTopAdded;
+                subgrid.TopRemovedEvent -= OnTopRemoved;
+                subgrid.TerminalBlockAddedEvent -= OnTerminalBlockAdded;
+                subgrid.TerminalBlockRemovedEvent -= OnTerminalBlockRemoved;
+                subgrid.OtherBlockAddedEvent -= OnOtherBlockAdded;
+                subgrid.OtherBlockRemovedEvent -= OnOtherBlockRemoved;
+                subgrid.BlockIntegrityChangedEvent -= OnBlockIntegrityChanged;
+                subgrid.BuiltGridRegisteredEvent -= OnBuiltGridRegistered;
+                subgrid.BuiltGridUnregisteredEvent -= OnBuiltGridUnregistered;
+                subgrid.BuiltGridSplitEvent -= OnBuiltGridSplit;
+                subgrid.BuiltGridCloseEvent -= OnBuiltGridClose;
             }
         }
 
@@ -605,14 +606,26 @@ namespace MultigridProjector.Logic
             }
         }
 
-        private void OnOtherBlockAdded(Subgrid subgrid, MySlimBlock block)
+        private void OnOtherBlockAdded(Subgrid subgrid, MySlimBlock slimBlock)
         {
-            ShouldUpdateProjection();
+            if (slimBlock.FatBlock is MyMechanicalConnectionBlockBase)
+                ForceUpdateProjection();
+            else
+                ShouldUpdateProjection();
         }
 
-        private void OnOtherBlockRemoved(Subgrid subgrid, MySlimBlock block)
+        private void OnOtherBlockRemoved(Subgrid subgrid, MySlimBlock slimBlock)
         {
-            ShouldUpdateProjection();
+            if (slimBlock.FatBlock is MyMechanicalConnectionBlockBase)
+                ForceUpdateProjection();
+            else
+                ShouldUpdateProjection();
+        }
+
+        private void OnBlockIntegrityChanged(Subgrid subgrid, MySlimBlock slimBlock)
+        {
+            if (slimBlock.FatBlock is MyMechanicalConnectionBlockBase baseBlock && baseBlock.IsFunctional)
+                ForceUpdateProjection();
         }
 
         private void OnBuiltGridRegistered(Subgrid subgrid)
@@ -826,8 +839,9 @@ namespace MultigridProjector.Logic
 
             if (topSubgrid.HasBuilt) return;
 
-            if (loneTopPart && topConnection.Block.CubeGrid.GridSizeEnum != topSubgrid.GridSizeEnum)
+            if (loneTopPart && (topConnection.Block.CubeGrid.GridSizeEnum != topSubgrid.GridSizeEnum || !baseConnection.Block.IsFunctional))
             {
+                // Remove head if the grid size is wrong or if the base is not functional yet.aw
                 // This is an ugly workaround to remove the newly built head of wrong size,
                 // then building a new one of the proper size on the next simulation frame.
                 // It is required, because the patched MyMechanicalConnectionBlockBase.CreateTopPart
