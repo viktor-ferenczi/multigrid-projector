@@ -1,8 +1,8 @@
 using System;
 using HarmonyLib;
 using MultigridProjector.Extensions;
+using Sandbox.Game.Multiplayer;
 using MultigridProjector.Utilities;
-using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 
 namespace MultigridProjector.Patches
@@ -12,7 +12,7 @@ namespace MultigridProjector.Patches
     [HarmonyPatch("Remap")]
     [EnsureOriginal("bce65541")]
     // ReSharper disable once InconsistentNaming
-    public class MyProjectorBase_Remap
+    public static class MyProjectorBase_Remap
     {
         // ReSharper disable once InconsistentNaming
         private static bool Prefix(MyProjectorBase __instance)
@@ -21,7 +21,14 @@ namespace MultigridProjector.Patches
 
             try
             {
-                Remap(projector);
+                if (!Sync.IsServer)
+                    return false;
+                
+                projector.RemapObjectBuilders();
+                
+                // Call patched SetNewBlueprint
+                var methodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint");
+                methodInfo.Invoke(projector, new object[] {projector.GetOriginalGridBuilders()});
             }
             catch (Exception e)
             {
@@ -30,23 +37,6 @@ namespace MultigridProjector.Patches
 
             // Never run the original handler, because that breaks subgrid connections with inconsistent remapping of Entity IDs
             return false;
-        }
-
-        private static void Remap(MyProjectorBase projector)
-        {
-            if (!Sandbox.Game.Multiplayer.Sync.IsServer)
-                return;
-
-            var gridBuilders = projector.GetOriginalGridBuilders();
-            if (gridBuilders == null || gridBuilders.Count <= 0)
-                return;
-
-            // Consistent remapping of all grids to keep sub-grid relations intact
-            MyEntities.RemapObjectBuilderCollection(gridBuilders);
-
-            // Call patched SetNewBlueprint
-            var methodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint");
-            methodInfo.Invoke(projector, new object[] {gridBuilders});
         }
     }
 }

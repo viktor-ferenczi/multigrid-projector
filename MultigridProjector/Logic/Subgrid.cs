@@ -22,18 +22,19 @@ namespace MultigridProjector.Logic
         public delegate void SubgridBaseEvent(Subgrid subgrid, BaseConnection baseConnection);
         public delegate void SubgridTopEvent(Subgrid subgrid, TopConnection baseConnection);
 
-        public event SubgridBaseEvent OnBaseAdded;
-        public event SubgridBaseEvent OnBaseRemoved;
-        public event SubgridTopEvent OnTopAdded;
-        public event SubgridTopEvent OnTopRemoved;
-        public event SubgridTerminalBlockEvent OnTerminalBlockAdded;
-        public event SubgridTerminalBlockEvent OnTerminalBlockRemoved;
-        public event SubgridBlockEvent OnOtherBlockAdded;
-        public event SubgridBlockEvent OnOtherBlockRemoved;
-        public event SubgridEvent OnBuiltGridRegistered;
-        public event SubgridEvent OnBuiltGridUnregistered;
-        public event SubgridEvent OnBuiltGridSplit;
-        public event SubgridEvent OnBuiltGridClose;
+        public event SubgridBaseEvent BaseAddedEvent;
+        public event SubgridBaseEvent BaseRemovedEvent;
+        public event SubgridTopEvent TopAddedEvent;
+        public event SubgridTopEvent TopRemovedEvent;
+        public event SubgridTerminalBlockEvent TerminalBlockAddedEvent;
+        public event SubgridTerminalBlockEvent TerminalBlockRemovedEvent;
+        public event SubgridBlockEvent OtherBlockAddedEvent;
+        public event SubgridBlockEvent OtherBlockRemovedEvent;
+        public event SubgridBlockEvent BlockIntegrityChangedEvent;
+        public event SubgridEvent BuiltGridRegisteredEvent;
+        public event SubgridEvent BuiltGridUnregisteredEvent;
+        public event SubgridEvent BuiltGridSplitEvent;
+        public event SubgridEvent BuiltGridCloseEvent;
 
         // Mechanical base blocks on this subgrid by cube position
         public readonly Dictionary<Vector3I, BaseConnection> BaseConnections = new Dictionary<Vector3I, BaseConnection>();
@@ -134,7 +135,7 @@ namespace MultigridProjector.Logic
                 ConnectGridEvents();
             }
 
-            OnBuiltGridRegistered?.Invoke(this);
+            BuiltGridRegisteredEvent?.Invoke(this);
         }
 
         public void UnregisterBuiltGrid(bool dispose = false)
@@ -165,11 +166,12 @@ namespace MultigridProjector.Logic
             foreach (var previewSlimBlock in PreviewGrid.CubeBlocks)
                 BlockStates[previewSlimBlock.Position] = BlockState.NotBuildable;
             
-            OnBuiltGridUnregistered?.Invoke(this);
+            BuiltGridUnregisteredEvent?.Invoke(this);
         }
 
         private void ConnectGridEvents()
         {
+            BuiltGrid.OnBlockIntegrityChanged += OnBlockIntegrityChangedWithErrorHandler;
             BuiltGrid.OnBlockAdded += OnBlockAddedWithErrorHandler;
             BuiltGrid.OnBlockRemoved += OnBlockRemovedWithErrorHandler;
             BuiltGrid.OnGridSplit += OnGridSplitWithErrorHandler;
@@ -178,12 +180,25 @@ namespace MultigridProjector.Logic
 
         private void DisconnectGridEvents()
         {
+            BuiltGrid.OnBlockIntegrityChanged -= OnBlockIntegrityChangedWithErrorHandler;
             BuiltGrid.OnBlockAdded -= OnBlockAddedWithErrorHandler;
             BuiltGrid.OnBlockRemoved -= OnBlockRemovedWithErrorHandler;
             BuiltGrid.OnGridSplit -= OnGridSplitWithErrorHandler;
             BuiltGrid.OnClosing -= OnGridClosingWithErrorHandler;
         }
 
+        private void OnBlockIntegrityChangedWithErrorHandler(MySlimBlock obj)
+        {
+            try
+            {
+                OnBlockIntegrityChanged(obj);
+            }
+            catch (Exception e)
+            {
+                PluginLog.Error(e);
+            }
+        }
+        
         private void OnBlockAddedWithErrorHandler(MySlimBlock obj)
         {
             try
@@ -232,6 +247,38 @@ namespace MultigridProjector.Logic
             }
         }
 
+        private void OnBlockIntegrityChanged(MySlimBlock slimBlock)
+        {
+            if (!HasBuilt) return;
+
+            if (!TryGetPreviewByBuiltBlock(slimBlock, out var previewSlimBlock))
+                return;
+
+            if (!BlockStates.TryGetValue(previewSlimBlock.Position, out var blockState))
+                return;
+
+            switch (blockState)
+            {
+                case BlockState.BeingBuilt:
+                    if (slimBlock.Integrity < previewSlimBlock.Integrity)
+                        break;
+                    
+                    UpdateRequested = true;
+                    BlockStates[previewSlimBlock.Position] = BlockState.BeingBuilt;
+                    break;
+                
+                case BlockState.FullyBuilt:
+                    if (slimBlock.Integrity >= previewSlimBlock.Integrity)
+                        break;
+                    
+                    UpdateRequested = true;
+                    BlockStates[previewSlimBlock.Position] = BlockState.FullyBuilt;
+                    break;
+            }
+
+            BlockIntegrityChangedEvent?.Invoke(this, slimBlock);
+        }
+        
         private void OnBlockAdded(MySlimBlock slimBlock)
         {
             if (!HasBuilt) return;
@@ -247,22 +294,22 @@ namespace MultigridProjector.Logic
                 case MyMechanicalConnectionBlockBase baseBlock:
                     if (!BaseConnections.TryGetValue(previewSlimBlock.Position, out var baseConnection)) break;
                     baseConnection.Block = baseBlock;
-                    OnBaseAdded?.Invoke(this, baseConnection);
-                    OnTerminalBlockAdded?.Invoke(this, baseBlock);
+                    BaseAddedEvent?.Invoke(this, baseConnection);
+                    TerminalBlockAddedEvent?.Invoke(this, baseBlock);
                     break;
 
                 case MyAttachableTopBlockBase topBlock:
                     if (!TopConnections.TryGetValue(previewSlimBlock.Position, out var topConnection)) break;
                     topConnection.Block = topBlock;
-                    OnTopAdded?.Invoke(this, topConnection);
+                    TopAddedEvent?.Invoke(this, topConnection);
                     break;
 
                 case MyTerminalBlock terminalBlock:
-                    OnTerminalBlockAdded?.Invoke(this, terminalBlock);
+                    TerminalBlockAddedEvent?.Invoke(this, terminalBlock);
                     break;
 
                 default:
-                    OnOtherBlockAdded?.Invoke(this, slimBlock);
+                    OtherBlockAddedEvent?.Invoke(this, slimBlock);
                     break;
             }
         }
@@ -282,23 +329,23 @@ namespace MultigridProjector.Logic
                 case MyMechanicalConnectionBlockBase baseBlock:
                     if (!BaseConnections.TryGetValue(previewSlimBlock.Position, out var baseConnection)) break;
                     baseConnection.Block = null;
-                    OnBaseRemoved?.Invoke(this, baseConnection);
-                    OnTerminalBlockRemoved?.Invoke(this, baseBlock);
+                    BaseRemovedEvent?.Invoke(this, baseConnection);
+                    TerminalBlockRemovedEvent?.Invoke(this, baseBlock);
                     break;
 
                 case MyAttachableTopBlockBase _:
                     if (!TopConnections.TryGetValue(previewSlimBlock.Position, out var topConnection)) break;
                     topConnection.Block = null;
-                    OnTopRemoved?.Invoke(this, topConnection);
+                    TopRemovedEvent?.Invoke(this, topConnection);
                     break;
 
                 case MyTerminalBlock terminalBlock:
                     // It may not be a terminal block built from the projection, but that's okay for our use case
-                    OnTerminalBlockRemoved?.Invoke(this, terminalBlock);
+                    TerminalBlockRemovedEvent?.Invoke(this, terminalBlock);
                     break;
 
                 default:
-                    OnOtherBlockRemoved?.Invoke(this, slimBlock);
+                    OtherBlockRemovedEvent?.Invoke(this, slimBlock);
                     break;
             }
         }
@@ -332,7 +379,7 @@ namespace MultigridProjector.Logic
             }
 
             if (gridKept)
-                OnBuiltGridSplit?.Invoke(this);
+                BuiltGridSplitEvent?.Invoke(this);
             else
                 UnregisterBuiltGrid();
         }
@@ -343,7 +390,7 @@ namespace MultigridProjector.Logic
                 return;
 
             UnregisterBuiltGrid();
-            OnBuiltGridClose?.Invoke(this);
+            BuiltGridCloseEvent?.Invoke(this);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

@@ -1,29 +1,27 @@
 using System;
-using System.Reflection;
+using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
-using Torch.Managers.PatchManager;
-using VRageMath;
+using Sandbox.Game.Entities.Cube;
 
-namespace MultigridProjectorServer
+namespace MultigridProjector.Patches
 {
-    [PatchShim]
-    // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
-    public static class MyProjectorBase_BuildInternal
+    [HarmonyPatch(typeof(MyProjectorBase))]
+    [HarmonyPatch("Build")]
+    [EnsureOriginal("56be06c3")]
+    // ReSharper disable once InconsistentNaming
+    public static class MyProjectorBase_Build
     {
-        public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("BuildInternal", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyProjectorBase_BuildInternal).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
-
-        // [Server]
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyProjectorBase __instance,
-            Vector3I cubeBlockPosition,
+            MySlimBlock cubeBlock,
             long owner,
             long builder,
             bool requestInstant,
-            long builtBy)
+            ref long builtBy)
         {
             var projector = __instance;
 
@@ -33,15 +31,18 @@ namespace MultigridProjectorServer
                 if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
                     return true;
 
-                // We use the builtBy field to pass the subgrid index
-                projection.BuildInternal(cubeBlockPosition, owner, builder, requestInstant, builtBy);
+                if (!projection.TryFindPreviewGrid(cubeBlock.CubeGrid, out var gridIndex))
+                    return false;
+
+                // Deliver the subgrid index via the builtBy field, the owner will be used instead in BuildInternal
+                builtBy = gridIndex;
+                return true;
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
+                return false;
             }
-
-            return false;
         }
     }
 }

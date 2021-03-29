@@ -1,6 +1,5 @@
 using System;
 using HarmonyLib;
-using MultigridProjector.Extensions;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities;
@@ -27,27 +26,12 @@ namespace MultigridProjector.Patches
 
             try
             {
-                Init(projector, objectBuilder);
+                MultigridProjection.ProjectorInit(projector, objectBuilder);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
             }
-        }
-
-        private static void Init(MyProjectorBase projector, MyObjectBuilder_CubeBlock objectBuilder)
-        {
-            if (projector.CubeGrid == null || !projector.AllowWelding)
-                return;
-
-            if (!(objectBuilder is MyObjectBuilder_ProjectorBase projectorBuilder))
-                return;
-
-            var gridBuilders = projectorBuilder.ProjectedGrids;
-            if (gridBuilders == null || gridBuilders.Count < 1)
-                return;
-
-            projector.SetOriginalGridBuilders(gridBuilders);
         }
     }
 }
