@@ -55,7 +55,7 @@ namespace MultigridProjector.Logic
             if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
                 return BlockState.Unknown;
 
-            if (!subgrid.BlockStates.TryGetValue(position, out var blockState))
+            if (!subgrid.TryGetBlockState(position, out var blockState))
                 return BlockState.Unknown;
 
             return blockState;
@@ -66,25 +66,10 @@ namespace MultigridProjector.Logic
             if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
                 return false;
 
-            foreach (var (position, blockState) in IterBlockStates(subgrid, box, mask))
+            foreach (var (position, blockState) in subgrid.IterBlockStates(box, mask))
                 blockStates[position] = blockState;
 
             return true;
-        }
-
-        private static IEnumerable<(Vector3I, BlockState)> IterBlockStates(Subgrid subgrid, BoundingBoxI box, int mask)
-        {
-            // Optimization
-            var full = box.Min == Vector3I.MinValue && box.Max == Vector3I.MaxValue;
-
-            foreach (var (position, blockState) in subgrid.BlockStates)
-            {
-                if (((int) blockState & mask) == 0)
-                    continue;
-
-                if (full || box.Contains(position) == ContainmentType.Contains)
-                    yield return (position, blockState);
-            }
         }
 
         public Dictionary<Vector3I, BlockLocation> GetBaseConnections(long projectorId, int subgridIndex)
@@ -135,7 +120,7 @@ namespace MultigridProjector.Logic
             if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
                 return false;
 
-            foreach (var (position, blockState) in IterBlockStates(subgrid, box, mask))
+            foreach (var (position, blockState) in subgrid.IterBlockStates(box, mask))
                 blockStates[position] = (int)blockState;
             
             return true;

@@ -9,7 +9,7 @@ namespace MultigridProjector.Extensions
 {
     public static class MyBlockGroupExtensions
     {
-        public static HashSet<MyTerminalBlock> GetBlocks(this MyBlockGroup blockGroup)
+        public static HashSet<MyTerminalBlock> GetTerminalBlocks(this MyBlockGroup blockGroup)
         {
             var value = AccessTools.Field(typeof(MyBlockGroup), "Blocks").GetValue(blockGroup);
             return (HashSet<MyTerminalBlock>) value;

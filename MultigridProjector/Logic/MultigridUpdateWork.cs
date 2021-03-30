@@ -77,65 +77,7 @@ namespace MultigridProjector.Logic
             foreach (var subgrid in Subgrids)
             {
                 if(_stop) break;
-
-                if(!subgrid.UpdateRequested) continue;
-                subgrid.UpdateRequested = false;
-
-                var previewGrid = subgrid.PreviewGrid;
-
-                var stats = subgrid.Stats;
-                stats.Clear();
-                stats.TotalBlocks += previewGrid.CubeBlocks.Count;
-
-                var blockStates = subgrid.BlockStates;
-
-                // Optimization: Shortcut the case when there are no blocks yet
-                if (!subgrid.HasBuilt)
-                {
-                    foreach (var previewBlock in previewGrid.CubeBlocks)
-                    {
-                        blockStates[previewBlock.Position] = BlockState.NotBuildable;
-                        stats.RegisterRemainingBlock(previewBlock);
-                    }
-
-                    continue;
-                }
-
-                foreach (var previewBlock in previewGrid.CubeBlocks)
-                {
-                    if(subgrid.TryGetBuiltBlockByPreview(previewBlock, out var builtSlimBlock))
-                    {
-                        // Partially or fully built
-                        var fullyBuilt = builtSlimBlock.Integrity >= previewBlock.Integrity;
-                        blockStates[previewBlock.Position] = fullyBuilt ? BlockState.FullyBuilt : BlockState.BeingBuilt;
-                        
-                        // What has not built to the level required by the blueprint is considered as remaining
-                        if(!fullyBuilt)
-                            stats.RegisterRemainingBlock(previewBlock);
-                        
-                        continue;
-                    }
-
-                    // This block hasn't been built yet
-                    stats.RegisterRemainingBlock(previewBlock);
-
-                    if (builtSlimBlock != null)
-                    {
-                        // A different block was built there
-                        blockStates[previewBlock.Position] = BlockState.Mismatch;
-                        continue;
-                    }
-
-                    if (Projector.CanBuild(previewBlock))
-                    {
-                        // Block is buildable
-                        blockStates[previewBlock.Position] = BlockState.Buildable;
-                        stats.BuildableBlocks++;
-                        continue;
-                    }
-
-                    blockStates[previewBlock.Position] = BlockState.NotBuildable;
-                }
+                subgrid.UpdateBlockStatesBackgroundWork(Projector);
             }
         }
 
@@ -144,42 +86,7 @@ namespace MultigridProjector.Logic
             foreach (var subgrid in Subgrids)
             {
                 if(_stop) break;
-
-                var blockStates = subgrid.BlockStates;
-
-                foreach (var (position, baseConnection) in subgrid.BaseConnections)
-                {
-                    switch (blockStates[position])
-                    {
-                        case BlockState.BeingBuilt:
-                        case BlockState.FullyBuilt:
-                            if (baseConnection.Found != null) break;
-                            if (subgrid.TryGetBuiltBlockByPreview(baseConnection.Preview.SlimBlock, out var builtBlock))
-                                baseConnection.Found = (MyMechanicalConnectionBlockBase) builtBlock.FatBlock;
-                            else
-                                baseConnection.Found = null;
-                            break;
-                        default:
-                            baseConnection.Found = null;
-                            break;
-                    }
-                }
-
-                foreach (var (position, topConnection) in subgrid.TopConnections)
-                {
-                    switch (blockStates[position])
-                    {
-                        case BlockState.BeingBuilt:
-                        case BlockState.FullyBuilt:
-                            if (topConnection.Found != null) break;
-                            if (subgrid.TryGetBuiltBlockByPreview(topConnection.Preview.SlimBlock, out var builtBlock))
-                                topConnection.Found = (MyAttachableTopBlockBase)builtBlock.FatBlock;
-                            break;
-                        default:
-                            topConnection.Found = null;
-                            break;
-                    }
-                }
+                subgrid.FindBuiltMechanicalConnectionsBackgroundWork();
             }
         }
 

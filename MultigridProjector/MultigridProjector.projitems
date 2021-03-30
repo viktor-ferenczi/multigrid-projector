@@ -13,6 +13,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Api\BlockState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Api\IMultigridProjectorApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Api\MultigridProjectorModAgent.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensions\Constants.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\MyMotorStatorExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\BlockMinLocation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\MultigridProjectorApiProvider.cs" />

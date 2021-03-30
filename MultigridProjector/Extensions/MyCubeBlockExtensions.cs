@@ -4,6 +4,7 @@ using HarmonyLib;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
+using VRage.Game;
 using VRageMath;
 
 namespace MultigridProjector.Extensions
@@ -11,11 +12,19 @@ namespace MultigridProjector.Extensions
     public static class MyCubeBlockExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool HasTheSameDefinition(this MySlimBlock block, MySlimBlock other)
+        public static bool HasSameDefinition(this MySlimBlock block, MySlimBlock other)
         {
             return block.BlockDefinition.Id == other.BlockDefinition.Id;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static bool IsMatchingBuilder(this MySlimBlock previewBlock, MyObjectBuilder_CubeBlock blockBuilder)
+        {
+            return previewBlock.BlockDefinition.Id == blockBuilder.GetId() && 
+                   previewBlock.Orientation.Forward == blockBuilder.BlockOrientation.Forward && 
+                   previewBlock.Orientation.Up == blockBuilder.BlockOrientation.Up;
+        }
+        
         private static readonly MethodInfo RecreateTopInfo = AccessTools.DeclaredMethod(typeof(MyMechanicalConnectionBlockBase), "RecreateTop");
         public static void RecreateTop(this MyMechanicalConnectionBlockBase stator, long? builderId = null, bool smallToLarge = false, bool instantBuild = false)
         {
