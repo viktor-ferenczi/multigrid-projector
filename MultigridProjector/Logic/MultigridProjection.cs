@@ -524,16 +524,12 @@ namespace MultigridProjector.Logic
 
         public void RescanFullProjection()
         {
-            if (!Initialized || Projector.Closed)
-                return;
-
-            if (Subgrids.Count < 1)
+            if (!Initialized || Projector.Closed || Subgrids.Count < 1)
                 return;
 
             foreach (var subgrid in Subgrids)
             {
                 subgrid.UnregisterBuiltGrid();
-                subgrid.UpdateRequested = true;
             }
 
             Subgrids[0].RegisterBuiltGrid(Projector.CubeGrid);
@@ -754,7 +750,7 @@ namespace MultigridProjector.Logic
             if (_showOnlyBuildable != Projector.GetShowOnlyBuildable())
                 UpdatePreviewBlockVisuals(false);
             
-            if(Subgrids.Any(s => s.UpdateRequested))
+            if(Subgrids.Any(s => s.IsUpdateRequested))
                 ForceUpdateProjection();
             
             UpdateGridTransformations();

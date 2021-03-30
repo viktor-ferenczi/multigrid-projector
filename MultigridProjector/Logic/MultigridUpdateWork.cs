@@ -72,7 +72,7 @@ namespace MultigridProjector.Logic
             _allGridsProcessed = true;
         }
 
-        public void UpdateBlockStatesAndCollectStatistics(WorkData workData = null)
+        private void UpdateBlockStatesAndCollectStatistics(WorkData workData = null)
         {
             foreach (var subgrid in Subgrids)
             {
@@ -86,7 +86,8 @@ namespace MultigridProjector.Logic
             foreach (var subgrid in Subgrids)
             {
                 if(_stop) break;
-                subgrid.FindBuiltMechanicalConnectionsBackgroundWork();
+                subgrid.FindBuiltBaseConnectionsBackgroundWork();
+                subgrid.FindBuiltTopConnectionsBackgroundWork();
             }
         }
 

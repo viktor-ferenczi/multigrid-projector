@@ -32,12 +32,11 @@ namespace MultigridProjector.Logic
         public bool HasBuilt => BuiltGrid != null;
         public MyCubeSize GridSizeEnum => PreviewGrid.GridSizeEnum;
 
+        // Welding state statistics collected by the background worker
+        public readonly ProjectionStats Stats = new ProjectionStats();
+
         // Indicates whether the built grid is connected to the projector
         public bool IsConnectedToProjector = false;
-
-        // Requests a rescan of the grid's blocks
-        public volatile bool UpdateRequested = true;
-        public BoundingBoxI UpdateBox = BoundingBoxI.CreateInvalid();
 
         // Mechanical base blocks on this subgrid by cube position
         public readonly Dictionary<Vector3I, BaseConnection> BaseConnections = new Dictionary<Vector3I, BaseConnection>();
@@ -54,8 +53,14 @@ namespace MultigridProjector.Logic
         // Block state matching the current visual
         private readonly Dictionary<Vector3I, BlockState> _visualBlockStates;
 
-        // Welding state statistics collected by the background worker
-        public readonly ProjectionStats Stats = new ProjectionStats();
+        // Requests rescanning the preview blocks inside a specified bounding box
+        private BoundingBoxI _updateBox = Constants.MaxBoundingBoxI;
+        public bool IsUpdateRequested => _updateBox.IsValid;
+
+        // Requests updating the preview block visuals inside a specified bounding box
+        private BoundingBoxI _updateVisualsBox = Constants.InvalidBoundingBoxI;
+
+        #region "Initialization and disposal"
 
         public Subgrid(MultigridProjection projection, int index)
         {
@@ -79,7 +84,7 @@ namespace MultigridProjector.Logic
             BaseConnections.Clear();
             TopConnections.Clear();
 
-            UnregisterBuiltGrid(true);
+            UnregisterBuiltGrid();
         }
 
         private void CreateMechanicalConnections(MultigridProjection projection)
@@ -113,7 +118,11 @@ namespace MultigridProjector.Logic
             var baseBlock = projection.PreviewBaseBlocks[baseMinLocation];
             TopConnections[slimBlock.Position] = new TopConnection(topBlock, new BlockLocation(baseMinLocation.GridIndex, baseBlock.Position));
         }
-        
+
+        #endregion
+
+        #region "Accessors"
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetBlockBuilder(Vector3I previewBlockMinPosition, out MyObjectBuilder_CubeBlock blockBuilder)
         {
@@ -125,16 +134,29 @@ namespace MultigridProjector.Logic
         {
             return _blockStates.TryGetValue(position, out blockState);
         }
-        
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool HasBuildableBlockAtPosition(Vector3I position)
         {
             using (BuiltGridLock.Read())
             {
-                return HasBuilt && _blockStates.TryGetValue(position, out var blockState) && blockState == BlockState.Buildable; 
+                return HasBuilt && _blockStates.TryGetValue(position, out var blockState) && blockState == BlockState.Buildable;
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RequestUpdate()
+        {
+            _updateBox = Constants.MaxBoundingBoxI;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RequestUpdate(BoundingBoxI box)
+        {
+            _updateBox = box;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IEnumerable<(Vector3I, BlockState)> IterBlockStates(BoundingBoxI box, int mask)
         {
             // Optimization
@@ -149,19 +171,48 @@ namespace MultigridProjector.Logic
                     yield return (position, blockState);
             }
         }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool TryGetMatchingBuiltBlock(MySlimBlock builtSlimBlock, out MySlimBlock previewSlimBlock)
+        {
+            previewSlimBlock = PreviewGrid.GetOverlappingBlock(builtSlimBlock);
+            if (previewSlimBlock == null) return false;
+            return builtSlimBlock.BlockDefinition.Id == previewSlimBlock.BlockDefinition.Id;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private bool TryGetBuiltBlockByPreview(MySlimBlock previewSlimBlock, out MySlimBlock builtSlimBlock)
+        {
+            using (BuiltGridLock.Read())
+            {
+                builtSlimBlock = BuiltGrid.GetOverlappingBlock(previewSlimBlock);
+            }
+
+            if (builtSlimBlock == null) return false;
+            return builtSlimBlock.BlockDefinition.Id == previewSlimBlock.BlockDefinition.Id;
+        }
         
+        #endregion
+
+        #region "Built Grid Registration"
+
         public void RegisterBuiltGrid(MyCubeGrid grid)
         {
+            if (HasBuilt)
+                throw new Exception($"Duplicate registration of built grid: {grid.DisplayName} [{grid.EntityId}]; existing: {BuiltGrid.DisplayName} [{BuiltGrid.EntityId}]");
+
             using (BuiltGridLock.Write())
             {
                 BuiltGrid = grid;
-                UpdateRequested = true;
+
+                RequestUpdate();
+                _updateBox = Constants.MaxBoundingBoxI;
 
                 ConnectGridEvents();
             }
         }
 
-        public void UnregisterBuiltGrid(bool dispose = false)
+        public void UnregisterBuiltGrid()
         {
             if (!HasBuilt)
                 return;
@@ -171,11 +222,8 @@ namespace MultigridProjector.Logic
                 DisconnectGridEvents();
 
                 BuiltGrid = null;
-                UpdateRequested = false;
 
-                // Projector shutdown optimization
-                if (dispose)
-                    return;
+                RequestUpdate();
 
                 foreach (var baseConnection in BaseConnections.Values)
                     baseConnection.ClearBuiltBlock();
@@ -183,12 +231,11 @@ namespace MultigridProjector.Logic
                 foreach (var topConnection in TopConnections.Values)
                     topConnection.ClearBuiltBlock();
             }
-
-            Stats.Clear();
-
-            foreach (var previewSlimBlock in PreviewGrid.CubeBlocks)
-                _blockStates[previewSlimBlock.Position] = BlockState.NotBuildable;
         }
+
+        #endregion
+
+        #region "Grid Events"
 
         private void ConnectGridEvents()
         {
@@ -283,7 +330,7 @@ namespace MultigridProjector.Logic
                 case BlockState.BeingBuilt:
                     if (slimBlock.Integrity >= previewSlimBlock.Integrity)
                     {
-                        UpdateRequested = true;
+                        RequestUpdate();
                         _blockStates[previewSlimBlock.Position] = BlockState.FullyBuilt;
                     }
 
@@ -292,7 +339,7 @@ namespace MultigridProjector.Logic
                 case BlockState.FullyBuilt:
                     if (slimBlock.Integrity < previewSlimBlock.Integrity)
                     {
-                        UpdateRequested = true;
+                        RequestUpdate();
                         _blockStates[previewSlimBlock.Position] = BlockState.BeingBuilt;
                     }
 
@@ -307,7 +354,7 @@ namespace MultigridProjector.Logic
             var previewSlimBlock = PreviewGrid.GetOverlappingBlock(slimBlock);
 
             // FIXME: Optimize by limiting the update only to the volume around the block added
-            UpdateRequested = true;
+            RequestUpdate();
 
             if (slimBlock.FatBlock is MyTerminalBlock terminalBlock)
             {
@@ -344,7 +391,7 @@ namespace MultigridProjector.Logic
             var previewSlimBlock = PreviewGrid.GetOverlappingBlock(slimBlock);
 
             // FIXME: Optimize by limiting the update only to the volume around the block removed
-            UpdateRequested = true;
+            RequestUpdate();
 
             if (slimBlock.FatBlock is MyTerminalBlock terminalBlock)
             {
@@ -372,33 +419,13 @@ namespace MultigridProjector.Logic
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TryGetMatchingBuiltBlock(MySlimBlock builtSlimBlock, out MySlimBlock previewSlimBlock)
-        {
-            previewSlimBlock = PreviewGrid.GetOverlappingBlock(builtSlimBlock);
-            if (previewSlimBlock == null) return false;
-            return builtSlimBlock.BlockDefinition.Id == previewSlimBlock.BlockDefinition.Id;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetBuiltBlockByPreview(MySlimBlock previewSlimBlock, out MySlimBlock builtSlimBlock)
-        {
-            using (BuiltGridLock.Read())
-            {
-                builtSlimBlock = BuiltGrid.GetOverlappingBlock(previewSlimBlock);
-            }
-
-            if (builtSlimBlock == null) return false;
-            return builtSlimBlock.BlockDefinition.Id == previewSlimBlock.BlockDefinition.Id;
-        }
-
         private void OnGridSplit(MyCubeGrid grid1, MyCubeGrid grid2)
         {
             bool gridKept;
             using (BuiltGridLock.Read())
             {
                 gridKept = grid1 == BuiltGrid || grid2 == BuiltGrid;
-                UpdateRequested = true;
+                RequestUpdate();
             }
 
             if (!gridKept)
@@ -413,29 +440,9 @@ namespace MultigridProjector.Logic
             UnregisterBuiltGrid();
         }
 
-        // FIXME: Refactor this to be reusable for auto-aligning the projection to a block!
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void GetBlockOrientationQuaternion(MySlimBlock previewBlock, out Quaternion orientationQuaternion)
-        {
-            // Orientation of the preview grid relative to the built grid
-            var wm = PreviewGrid.WorldMatrix.GetOrientation();
-            using (BuiltGridLock.Read())
-            {
-                if (BuiltGrid == null)
-                {
-                    orientationQuaternion = Quaternion.Identity;
-                    return;
-                }
-
-                wm *= MatrixD.Invert(BuiltGrid.WorldMatrix.GetOrientation());
-            }
-
-            orientationQuaternion = wm.ToPositionAndOrientation().Orientation;
-
-            // Apply the block's own orientation on the grid
-            previewBlock.Orientation.GetQuaternion(out var previewBlockOrientation);
-            orientationQuaternion *= previewBlockOrientation;
-        }
+        #endregion
+        
+        #region "Preview Block Visuals"
 
         public void HidePreviewGrid(MyProjectorBase projector)
         {
@@ -448,11 +455,17 @@ namespace MultigridProjector.Logic
 
         public void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable, bool allowOptimization)
         {
-            if (PreviewGrid == null)
+            if (PreviewGrid == null || !IsUpdateRequested)
                 return;
+
+            var box = _updateVisualsBox;
+            _updateVisualsBox = Constants.InvalidBoundingBoxI;
 
             foreach (var slimBlock in PreviewGrid.CubeBlocks)
             {
+                if (allowOptimization && box.Contains(slimBlock.Position) != ContainmentType.Contains)
+                    continue;
+
                 var state = _blockStates[slimBlock.Position];
 
                 // Optimization
@@ -497,6 +510,10 @@ namespace MultigridProjector.Logic
             projector.SetTransparency(cubeBlock, 1f);
         }
 
+        #endregion
+
+        #region "Named Groups"
+
         private void AddBlockToGroups(MyTerminalBlock terminalBlock)
         {
             if (PreviewGrid == null || terminalBlock.CubeGrid.Closed)
@@ -539,74 +556,86 @@ namespace MultigridProjector.Logic
             }
         }
 
+        #endregion
+
+        #region "Background Work"
+
         public void UpdateBlockStatesBackgroundWork(MyProjectorBase projector)
         {
-            if (!UpdateRequested) return;
-            UpdateRequested = false;
+            Stats.Clear();
+            Stats.TotalBlocks += PreviewGrid.CubeBlocks.Count;
 
-            var previewGrid = PreviewGrid;
+            if (HasBuilt)
+                UpdatePreviewBackgroundWork(projector);
+            else
+                ResetPreviewBackgroundWork();
+        }
 
-            var stats = Stats;
-            stats.Clear();
-            stats.TotalBlocks += previewGrid.CubeBlocks.Count;
-
-            var blockStates = _blockStates;
-
-            // Optimization: Shortcut the case when there are no blocks yet
-            if (!HasBuilt)
+        private void ResetPreviewBackgroundWork()
+        {
+            foreach (var previewBlock in PreviewGrid.CubeBlocks)
             {
-                foreach (var previewBlock in previewGrid.CubeBlocks)
-                {
-                    blockStates[previewBlock.Position] = BlockState.NotBuildable;
-                    stats.RegisterRemainingBlock(previewBlock);
-                }
-                return;
+                _blockStates[previewBlock.Position] = BlockState.NotBuildable;
+                Stats.RegisterRemainingBlock(previewBlock);
             }
 
-            foreach (var previewBlock in previewGrid.CubeBlocks)
+            RequestUpdate(Constants.InvalidBoundingBoxI);
+            _updateVisualsBox = Constants.MaxBoundingBoxI;
+        }
+
+        private void UpdatePreviewBackgroundWork(MyProjectorBase projector)
+        {
+            var box = _updateBox;
+            if (!box.IsValid) return;
+
+            _updateVisualsBox = box;
+            _updateBox = Constants.InvalidBoundingBoxI;
+
+            foreach (var previewBlock in PreviewGrid.CubeBlocks)
             {
+                if (box.Contains(previewBlock.Position) != ContainmentType.Contains)
+                    continue;
+
                 if (TryGetBuiltBlockByPreview(previewBlock, out var builtSlimBlock))
                 {
                     // Partially or fully built
                     var fullyBuilt = builtSlimBlock.Integrity >= previewBlock.Integrity;
-                    blockStates[previewBlock.Position] = fullyBuilt ? BlockState.FullyBuilt : BlockState.BeingBuilt;
+                    _blockStates[previewBlock.Position] = fullyBuilt ? BlockState.FullyBuilt : BlockState.BeingBuilt;
 
                     // What has not built to the level required by the blueprint is considered as remaining
                     if (!fullyBuilt)
-                        stats.RegisterRemainingBlock(previewBlock);
+                        Stats.RegisterRemainingBlock(previewBlock);
 
                     continue;
                 }
 
                 // This block hasn't been built yet
-                stats.RegisterRemainingBlock(previewBlock);
+                Stats.RegisterRemainingBlock(previewBlock);
 
                 if (builtSlimBlock != null)
                 {
                     // A different block was built there
-                    blockStates[previewBlock.Position] = BlockState.Mismatch;
+                    _blockStates[previewBlock.Position] = BlockState.Mismatch;
                     continue;
                 }
 
                 if (projector.CanBuild(previewBlock))
                 {
                     // Block is buildable
-                    blockStates[previewBlock.Position] = BlockState.Buildable;
-                    stats.BuildableBlocks++;
+                    _blockStates[previewBlock.Position] = BlockState.Buildable;
+                    Stats.BuildableBlocks++;
                     continue;
                 }
 
-                blockStates[previewBlock.Position] = BlockState.NotBuildable;
+                _blockStates[previewBlock.Position] = BlockState.NotBuildable;
             }
         }
 
-        public void FindBuiltMechanicalConnectionsBackgroundWork()
+        public void FindBuiltBaseConnectionsBackgroundWork()
         {
-            var blockStates = _blockStates;
-
             foreach (var (position, baseConnection) in BaseConnections)
             {
-                switch (blockStates[position])
+                switch (_blockStates[position])
                 {
                     case BlockState.BeingBuilt:
                     case BlockState.FullyBuilt:
@@ -621,22 +650,51 @@ namespace MultigridProjector.Logic
                         break;
                 }
             }
+        }
 
+        public void FindBuiltTopConnectionsBackgroundWork()
+        {
             foreach (var (position, topConnection) in TopConnections)
             {
-                switch (blockStates[position])
+                switch (_blockStates[position])
                 {
                     case BlockState.BeingBuilt:
                     case BlockState.FullyBuilt:
                         if (topConnection.Found != null) break;
                         if (TryGetBuiltBlockByPreview(topConnection.Preview.SlimBlock, out var builtBlock))
-                            topConnection.Found = (MyAttachableTopBlockBase)builtBlock.FatBlock;
+                            topConnection.Found = (MyAttachableTopBlockBase) builtBlock.FatBlock;
                         break;
                     default:
                         topConnection.Found = null;
                         break;
                 }
             }
+        }
+
+        #endregion
+
+        // FIXME: Refactor this to be reusable for auto-aligning the projection to a block!
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void GetBlockOrientationQuaternion(MySlimBlock previewBlock, out Quaternion orientationQuaternion)
+        {
+            // Orientation of the preview grid relative to the built grid
+            var wm = PreviewGrid.WorldMatrix.GetOrientation();
+            using (BuiltGridLock.Read())
+            {
+                if (BuiltGrid == null)
+                {
+                    orientationQuaternion = Quaternion.Identity;
+                    return;
+                }
+
+                wm *= MatrixD.Invert(BuiltGrid.WorldMatrix.GetOrientation());
+            }
+
+            orientationQuaternion = wm.ToPositionAndOrientation().Orientation;
+
+            // Apply the block's own orientation on the grid
+            previewBlock.Orientation.GetQuaternion(out var previewBlockOrientation);
+            orientationQuaternion *= previewBlockOrientation;
         }
     }
 }
