@@ -10,7 +10,6 @@ using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
 using VRage.Game;
 using VRage.Game.Entity;
-using VRage.ObjectBuilders;
 using VRageMath;
 
 namespace MultigridProjector.Logic
@@ -59,6 +58,7 @@ namespace MultigridProjector.Logic
 
         // Requests updating the preview block visuals inside a specified bounding box
         private BoundingBoxI _updateVisualsBox = Constants.InvalidBoundingBoxI;
+        public bool IsUpdateVisualsRequested => _updateVisualsBox.IsValid;
 
         #region "Initialization and disposal"
 
@@ -153,21 +153,30 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RequestUpdate(BoundingBoxI box)
         {
-            _updateBox = box;
+            _updateBox.Include(box);
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void RequestVisualsUpdate()
+        {
+            _updateVisualsBox = Constants.MaxBoundingBoxI;
+        }
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void RequestVisualsUpdate(BoundingBoxI box)
+        {
+            _updateVisualsBox.Include(box);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IEnumerable<(Vector3I, BlockState)> IterBlockStates(BoundingBoxI box, int mask)
         {
-            // Optimization
-            var full = box == Constants.MaxBoundingBoxI;
-
             foreach (var (position, blockState) in _blockStates)
             {
                 if (((int) blockState & mask) == 0)
                     continue;
 
-                if (full || box.Contains(position) == ContainmentType.Contains)
+                if (box.Contains(position) == ContainmentType.Contains)
                     yield return (position, blockState);
             }
         }
@@ -191,7 +200,7 @@ namespace MultigridProjector.Logic
             if (builtSlimBlock == null) return false;
             return builtSlimBlock.BlockDefinition.Id == previewSlimBlock.BlockDefinition.Id;
         }
-        
+
         #endregion
 
         #region "Built Grid Registration"
@@ -441,8 +450,17 @@ namespace MultigridProjector.Logic
         }
 
         #endregion
-        
+
         #region "Preview Block Visuals"
+
+        public void ResetNotBuildableVisuals()
+        {
+            foreach (var slimBlock in PreviewGrid.CubeBlocks)
+            {
+                if (_visualBlockStates[slimBlock.Position] == BlockState.NotBuildable)
+                    _visualBlockStates[slimBlock.Position] = BlockState.Unknown;
+            }
+        }
 
         public void HidePreviewGrid(MyProjectorBase projector)
         {
@@ -453,23 +471,31 @@ namespace MultigridProjector.Logic
                 projector.HideCube(slimBlock);
         }
 
-        public void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable, bool allowOptimization)
+        public void UpdatePreviewBlockVisualsAsNeeded(MyProjectorBase projector, bool showOnlyBuildable)
         {
-            if (PreviewGrid == null || !IsUpdateRequested)
+            if (PreviewGrid == null)
+                return;
+
+            if (!IsUpdateVisualsRequested)
                 return;
 
             var box = _updateVisualsBox;
             _updateVisualsBox = Constants.InvalidBoundingBoxI;
 
+            UpdatePreviewBlockVisuals(projector, showOnlyBuildable, box);
+        }
+
+        public void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable, BoundingBoxI box)
+        {
             foreach (var slimBlock in PreviewGrid.CubeBlocks)
             {
-                if (allowOptimization && box.Contains(slimBlock.Position) != ContainmentType.Contains)
+                if (box.Contains(slimBlock.Position) != ContainmentType.Contains)
                     continue;
 
                 var state = _blockStates[slimBlock.Position];
 
                 // Optimization
-                if (allowOptimization && _visualBlockStates.TryGetValue(slimBlock.Position, out var visual) && visual == state) continue;
+                if (_visualBlockStates.TryGetValue(slimBlock.Position, out var visual) && visual == state) continue;
 
                 switch (state)
                 {
@@ -562,6 +588,9 @@ namespace MultigridProjector.Logic
 
         public void UpdateBlockStatesBackgroundWork(MyProjectorBase projector)
         {
+            if (!IsUpdateRequested)
+                return;
+
             Stats.Clear();
             Stats.TotalBlocks += PreviewGrid.CubeBlocks.Count;
 
@@ -580,7 +609,7 @@ namespace MultigridProjector.Logic
             }
 
             RequestUpdate(Constants.InvalidBoundingBoxI);
-            _updateVisualsBox = Constants.MaxBoundingBoxI;
+            RequestVisualsUpdate(Constants.MaxBoundingBoxI);
         }
 
         private void UpdatePreviewBackgroundWork(MyProjectorBase projector)
@@ -588,7 +617,7 @@ namespace MultigridProjector.Logic
             var box = _updateBox;
             if (!box.IsValid) return;
 
-            _updateVisualsBox = box;
+            RequestVisualsUpdate(box);
             _updateBox = Constants.InvalidBoundingBoxI;
 
             foreach (var previewBlock in PreviewGrid.CubeBlocks)

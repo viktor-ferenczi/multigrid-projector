@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using MultigridProjector.Api;
-using MultigridProjector.Extensions;
+using System.Threading;
 using MultigridProjector.Utilities;
 using ParallelTasks;
 using Sandbox.Game.Entities.Blocks;
@@ -24,6 +22,7 @@ namespace MultigridProjector.Logic
         private Task _task;
         private volatile bool _stop;
         private bool _allGridsProcessed;
+        private bool ShouldStop => _stop || !_projection.Initialized || Projector.Closed;
 
         public bool IsComplete => _task.IsComplete;
 
@@ -37,7 +36,7 @@ namespace MultigridProjector.Logic
 
         public void Dispose()
         {
-            _stop = true;
+            Cancel();
             if (!_task.IsComplete)
             {
                 _task.Wait(true);
@@ -48,15 +47,24 @@ namespace MultigridProjector.Logic
 
         public void Start()
         {
-            if (!IsComplete) return;
+            if (!IsComplete) 
+                return;
 
             _allGridsProcessed = false;
             _task = Parallel.Start(this, OnComplete);
         }
 
+        public void Cancel()
+        {
+            if (IsComplete)
+                return;
+            
+            _stop = true;
+        }
+
         public void DoWork(WorkData workData = null)
         {
-            if (_stop || Projector.Closed) return;
+            if (ShouldStop) return;
 
             try
             {
@@ -76,7 +84,7 @@ namespace MultigridProjector.Logic
         {
             foreach (var subgrid in Subgrids)
             {
-                if(_stop) break;
+                if(ShouldStop) break;
                 subgrid.UpdateBlockStatesBackgroundWork(Projector);
             }
         }
@@ -85,8 +93,10 @@ namespace MultigridProjector.Logic
         {
             foreach (var subgrid in Subgrids)
             {
-                if(_stop) break;
+                if(ShouldStop) break;
                 subgrid.FindBuiltBaseConnectionsBackgroundWork();
+                
+                if(ShouldStop) break;
                 subgrid.FindBuiltTopConnectionsBackgroundWork();
             }
         }
@@ -95,6 +105,8 @@ namespace MultigridProjector.Logic
         {
             if (_allGridsProcessed)
                 OnUpdateWorkCompleted?.Invoke();
+            else
+                PluginLog.Error("Projection preview update failed, not updating visuals, artifacts may occur");
         }
     }
 }

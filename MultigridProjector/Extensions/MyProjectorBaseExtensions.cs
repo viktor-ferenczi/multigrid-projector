@@ -204,16 +204,6 @@ namespace MultigridProjector.Extensions
             ShouldUpdateProjectionFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo FrameCountFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_frameCount");
-        public static int GetFrameCount(this MyProjectorBase projector)
-        {
-            return (int)FrameCountFieldInfo.GetValue(projector);
-        }
-        public static void SetFrameCount(this MyProjectorBase projector, int value)
-        {
-            FrameCountFieldInfo.SetValue(projector, value);
-        }
-
         private static readonly FieldInfo LastUpdateFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_lastUpdate");
         public static int GetLastUpdate(this MyProjectorBase projector)
         {

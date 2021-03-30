@@ -26,7 +26,7 @@ namespace MultigridProjector.Patches
                 if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
                     return;
 
-                projection.RescanFullProjection();
+                projection.OnOffsetsChanged();
             }
             catch (Exception e)
             {

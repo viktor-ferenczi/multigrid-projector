@@ -19,6 +19,8 @@ namespace MultigridProjector.Patches
             MyCubeGrid parentNode, 
             MyCubeGrid childNode)
         {
+            // FIXME: This is most likely not needed anymore. Look for the warning below in server/client logs. Remove this patch if not happening.
+            
             // Crash fix on cutting mechanical groups. It only prevents the crash, does not properly fix the root cause,
             // which is most likely in the original server code base.
             
