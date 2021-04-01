@@ -14,6 +14,7 @@ namespace MultigridProjector.Patches
     {
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyMechanicalConnectionBlockBase).GetMethod("RaiseAttachedEntityChanged", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Suffixes.Add(typeof (MyMechanicalConnectionBlockBase_RaiseAttachedEntityChanged).GetMethod(nameof(Suffix), BindingFlags.Static | BindingFlags.NonPublic));
         
+        [ServerOnly]
         private static void Suffix(
             // ReSharper disable once InconsistentNaming
             // ReSharper disable once UnusedParameter.Global
@@ -25,7 +26,7 @@ namespace MultigridProjector.Patches
             {
                 if (!MultigridProjection.TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out _)) return;
 
-                projection.ForceUpdateProjection();
+                projection.RaiseAttachedEntityChanged();
             }
             catch (Exception e)
             {

@@ -9,7 +9,7 @@ using HarmonyLib;
 
 namespace MultigridProjector.Utilities
 {
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method | AttributeTargets.Delegate, AllowMultiple = true)]
+    [AttributeUsage(AttributeTargets.Class)]
     public class EnsureOriginal : Attribute
     {
         public readonly string[] AllowedHexDigests;

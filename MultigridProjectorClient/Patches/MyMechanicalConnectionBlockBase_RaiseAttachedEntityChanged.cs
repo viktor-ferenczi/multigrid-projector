@@ -13,6 +13,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyMechanicalConnectionBlockBase_RaiseAttachedEntityChanged
     {
+        [ClientOnly]
         private static void Postfix(
             // ReSharper disable once InconsistentNaming
             // ReSharper disable once UnusedParameter.Global
@@ -24,7 +25,7 @@ namespace MultigridProjector.Patches
             {
                 if (!MultigridProjection.TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out _)) return;
 
-                projection.ForceUpdateProjection();
+                projection.RaiseAttachedEntityChanged();
             }
             catch (Exception e)
             {

@@ -22,6 +22,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RecreateTop.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\EnsureOriginal.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\ExecLocation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\IPluginLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\MultigridProjectorConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\PluginLog.cs" />

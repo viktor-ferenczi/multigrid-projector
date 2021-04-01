@@ -99,24 +99,19 @@
         <Compile Include="MultigridProjectorPlugin.cs" />
         <Compile Include="Patches\MyMechanicalConnectionBlockBase_CreateTopPartAndAttach.cs" />
         <Compile Include="Patches\MyMechanicalConnectionBlockBase_RaiseAttachedEntityChanged.cs" />
-        <Compile Include="Patches\MyProjectorBase_Build.cs" />
         <Compile Include="Patches\MyProjectorBase_BuildInternal.cs" />
         <Compile Include="Patches\MyProjectorBase_CanBuild.cs" />
         <Compile Include="Patches\MyProjectorBase_GetObjectBuilderCubeBlock.cs" />
         <Compile Include="Patches\MyProjectorBase_Init.cs" />
-        <Compile Include="Patches\MyProjectorBase_InitFromObjectBuilder.cs" />
         <Compile Include="Patches\MyProjectorBase_InitializeClipboard.cs" />
         <Compile Include="Patches\MyProjectorBase_OnBlockAdded.cs" />
         <Compile Include="Patches\MyProjectorBase_OnBlockRemoved.cs" />
-        <Compile Include="Patches\MyProjectorBase_OnOffsetsChanged.cs" />
         <Compile Include="Patches\MyProjectorBase_Remap.cs" />
         <Compile Include="Patches\MyProjectorBase_RemoveProjection.cs" />
         <Compile Include="Patches\MyProjectorBase_UpdateAfterSimulation.cs" />
-        <Compile Include="Patches\MyProjectorBase_UpdateProjection.cs" />
         <Compile Include="Patches\MyProjectorBase_UpdateStats.cs" />
         <Compile Include="Patches\MyProjectorClipboard_UpdateGridTransformations.cs" />
         <Compile Include="Patches\MyShipWelder_FindProjectedBlocks.cs" />
-        <Compile Include="Patches\MyWelder_FindProjectedBlock.cs" />
         <Compile Include="PluginLogger.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>

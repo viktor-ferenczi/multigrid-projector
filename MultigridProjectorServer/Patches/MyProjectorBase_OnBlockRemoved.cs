@@ -14,6 +14,7 @@ namespace MultigridProjector.Patches
     {
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("previewGrid_OnBlockRemoved", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyProjectorBase_OnBlockRemoved).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
         
+        [ServerOnly]
         // ReSharper disable once UnusedMember.Local
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming

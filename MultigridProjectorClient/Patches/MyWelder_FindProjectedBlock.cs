@@ -15,6 +15,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyWelder_FindProjectedBlock
     {
+        [ClientOnly]
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyCasterComponent rayCaster,

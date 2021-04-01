@@ -14,6 +14,7 @@ namespace MultigridProjector.Patches
     {
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("RemoveProjection", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyProjectorBase_RemoveProjection).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
         
+        [ServerOnly]
         // ReSharper disable once InconsistentNaming
         // ReSharper disable once UnusedMember.Local
         private static bool Prefix(MyProjectorBase __instance, bool keepProjection)

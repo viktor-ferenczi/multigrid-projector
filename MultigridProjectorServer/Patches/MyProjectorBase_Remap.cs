@@ -16,6 +16,7 @@ namespace MultigridProjector.Patches
     {
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("Remap", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyProjectorBase_Remap).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
         
+        [ServerOnly]
         // ReSharper disable once InconsistentNaming
         private static bool Prefix(MyProjectorBase __instance)
         {
@@ -23,8 +24,9 @@ namespace MultigridProjector.Patches
 
             try
             {
-                if (!Sync.IsServer)
-                    return false;
+                // Unnecessary:
+                // if (!Sync.IsServer)
+                //     return false;
                 
                 projector.RemapObjectBuilders();
                 

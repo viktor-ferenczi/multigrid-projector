@@ -15,6 +15,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_Init
     {
+        [ClientOnly]
         // ReSharper disable once UnusedMember.Local
         private static void Postfix(
             // ReSharper disable once InconsistentNaming

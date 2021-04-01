@@ -16,6 +16,7 @@ namespace MultigridProjector.Patches
     {
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("Init", BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public)).Suffixes.Add(typeof (MyProjectorBase_Init).GetMethod(nameof(Suffix), BindingFlags.Static | BindingFlags.NonPublic));
         
+        [ServerOnly]
         // ReSharper disable once UnusedMember.Local
         private static void Suffix(
             // ReSharper disable once InconsistentNaming

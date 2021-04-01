@@ -13,6 +13,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_OnOffsetsChanged
     {
+        [ClientOnly]
         // ReSharper disable once InconsistentNaming
         private static void Postfix(MyProjectorBase __instance)
         {

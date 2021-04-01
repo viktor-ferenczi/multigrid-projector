@@ -14,6 +14,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_Remap
     {
+        [ClientOnly]
         // ReSharper disable once InconsistentNaming
         private static bool Prefix(MyProjectorBase __instance)
         {

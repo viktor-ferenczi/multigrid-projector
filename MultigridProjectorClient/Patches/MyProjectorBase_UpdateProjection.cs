@@ -1,6 +1,4 @@
-using System;
 using HarmonyLib;
-using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 
@@ -17,17 +15,8 @@ namespace MultigridProjector.Patches
         // ReSharper disable once UnusedMember.Local
         private static bool Prefix(MyProjectorBase __instance)
         {
-            var projector = __instance;
-
-            try
-            {
-                return MultigridProjection.MyProjectorBase_UpdateProjection(projector);
-            }
-            catch (Exception e)
-            {
-                PluginLog.Error(e);
-            }
-
+            // Disallow any use of the original ProjectorUpdateWork
+            // In theory this is not called at all, just in case.
             return false;
         }
     }

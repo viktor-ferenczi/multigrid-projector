@@ -8,6 +8,7 @@ using MultigridProjector.Extensions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
+using Sandbox.Game.Multiplayer;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
@@ -60,7 +61,7 @@ namespace MultigridProjector.Logic
         private BoundingBoxI _updateVisualsBox = Constants.InvalidBoundingBoxI;
         public bool IsUpdateVisualsRequested => _updateVisualsBox.IsValid;
 
-        #region "Initialization and disposal"
+        #region Initialization and disposal
 
         public Subgrid(MultigridProjection projection, int index)
         {
@@ -121,7 +122,7 @@ namespace MultigridProjector.Logic
 
         #endregion
 
-        #region "Accessors"
+        #region Accessors
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryGetBlockBuilder(Vector3I previewBlockMinPosition, out MyObjectBuilder_CubeBlock blockBuilder)
@@ -185,8 +186,7 @@ namespace MultigridProjector.Logic
         private bool TryGetMatchingBuiltBlock(MySlimBlock builtSlimBlock, out MySlimBlock previewSlimBlock)
         {
             previewSlimBlock = PreviewGrid.GetOverlappingBlock(builtSlimBlock);
-            if (previewSlimBlock == null) return false;
-            return builtSlimBlock.BlockDefinition.Id == previewSlimBlock.BlockDefinition.Id;
+            return previewSlimBlock != null && builtSlimBlock.BlockDefinition.Id == previewSlimBlock.BlockDefinition.Id;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -197,13 +197,35 @@ namespace MultigridProjector.Logic
                 builtSlimBlock = BuiltGrid.GetOverlappingBlock(previewSlimBlock);
             }
 
-            if (builtSlimBlock == null) return false;
-            return builtSlimBlock.BlockDefinition.Id == previewSlimBlock.BlockDefinition.Id;
+            return builtSlimBlock != null && builtSlimBlock.BlockDefinition.Id == previewSlimBlock.BlockDefinition.Id;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void GetBlockOrientationQuaternion(MySlimBlock previewBlock, out Quaternion orientationQuaternion)
+        {
+            // Orientation of the preview grid relative to the built grid
+            var wm = PreviewGrid.WorldMatrix.GetOrientation();
+            using (BuiltGridLock.Read())
+            {
+                if (BuiltGrid == null)
+                {
+                    orientationQuaternion = Quaternion.Identity;
+                    return;
+                }
+
+                wm *= MatrixD.Invert(BuiltGrid.WorldMatrix.GetOrientation());
+            }
+
+            orientationQuaternion = wm.ToPositionAndOrientation().Orientation;
+
+            // Apply the block's own orientation on the grid
+            previewBlock.Orientation.GetQuaternion(out var previewBlockOrientation);
+            orientationQuaternion *= previewBlockOrientation;
+        }
+        
         #endregion
 
-        #region "Built Grid Registration"
+        #region Built Grid Registration
 
         public void RegisterBuiltGrid(MyCubeGrid grid)
         {
@@ -244,7 +266,7 @@ namespace MultigridProjector.Logic
 
         #endregion
 
-        #region "Grid Events"
+        #region Grid Events
 
         private void ConnectGridEvents()
         {
@@ -264,6 +286,7 @@ namespace MultigridProjector.Logic
             BuiltGrid.OnClosing -= OnGridClosingWithErrorHandler;
         }
 
+        [ServerOnly]
         private void OnBlockIntegrityChangedWithErrorHandler(MySlimBlock obj)
         {
             try
@@ -276,6 +299,7 @@ namespace MultigridProjector.Logic
             }
         }
 
+        [Everywhere]
         private void OnBlockAddedWithErrorHandler(MySlimBlock obj)
         {
             try
@@ -288,6 +312,7 @@ namespace MultigridProjector.Logic
             }
         }
 
+        [Everywhere]
         private void OnBlockRemovedWithErrorHandler(MySlimBlock obj)
         {
             try
@@ -300,6 +325,7 @@ namespace MultigridProjector.Logic
             }
         }
 
+        [Everywhere]
         private void OnGridSplitWithErrorHandler(MyCubeGrid arg1, MyCubeGrid arg2)
         {
             try
@@ -312,6 +338,7 @@ namespace MultigridProjector.Logic
             }
         }
 
+        [Everywhere]
         private void OnGridClosingWithErrorHandler(MyEntity obj)
         {
             try
@@ -324,6 +351,7 @@ namespace MultigridProjector.Logic
             }
         }
 
+        [ServerOnly]
         private void OnBlockIntegrityChanged(MySlimBlock slimBlock)
         {
             if (!HasBuilt) return;
@@ -393,6 +421,7 @@ namespace MultigridProjector.Logic
             }
         }
 
+        [ServerOnly]
         private void OnBlockRemoved(MySlimBlock slimBlock)
         {
             if (!HasBuilt) return;
@@ -450,20 +479,14 @@ namespace MultigridProjector.Logic
         }
 
         #endregion
-
-        #region "Preview Block Visuals"
-
-        public void ResetNotBuildableVisuals()
-        {
-            foreach (var slimBlock in PreviewGrid.CubeBlocks)
-            {
-                if (_visualBlockStates[slimBlock.Position] == BlockState.NotBuildable)
-                    _visualBlockStates[slimBlock.Position] = BlockState.Unknown;
-            }
-        }
+        
+        #region Preview Block Visuals
 
         public void HidePreviewGrid(MyProjectorBase projector)
         {
+            if (Sync.IsDedicated)
+                return;
+            
             if (PreviewGrid == null)
                 return;
 
@@ -471,8 +494,23 @@ namespace MultigridProjector.Logic
                 projector.HideCube(slimBlock);
         }
 
+        public void ResetNotBuildableVisuals()
+        {
+            if (Sync.IsDedicated)
+                return;
+            
+            foreach (var slimBlock in PreviewGrid.CubeBlocks)
+            {
+                if (_visualBlockStates[slimBlock.Position] == BlockState.NotBuildable)
+                    _visualBlockStates[slimBlock.Position] = BlockState.Unknown;
+            }
+        }
+
         public void UpdatePreviewBlockVisualsAsNeeded(MyProjectorBase projector, bool showOnlyBuildable)
         {
+            if (Sync.IsDedicated)
+                return;
+            
             if (PreviewGrid == null)
                 return;
 
@@ -485,7 +523,7 @@ namespace MultigridProjector.Logic
             UpdatePreviewBlockVisuals(projector, showOnlyBuildable, box);
         }
 
-        public void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable, BoundingBoxI box)
+        private void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable, BoundingBoxI box)
         {
             foreach (var slimBlock in PreviewGrid.CubeBlocks)
             {
@@ -538,8 +576,9 @@ namespace MultigridProjector.Logic
 
         #endregion
 
-        #region "Named Groups"
+        #region Named Groups
 
+        [ServerOnly]
         private void AddBlockToGroups(MyTerminalBlock terminalBlock)
         {
             if (PreviewGrid == null || terminalBlock.CubeGrid.Closed)
@@ -555,6 +594,7 @@ namespace MultigridProjector.Logic
             }
         }
 
+        [ServerOnly]
         private void RemoveBlockFromGroups(MyTerminalBlock terminalBlock)
         {
             if (PreviewGrid == null || terminalBlock.CubeGrid.Closed)
@@ -584,7 +624,7 @@ namespace MultigridProjector.Logic
 
         #endregion
 
-        #region "Background Work"
+        #region Background Work
 
         public void UpdateBlockStatesBackgroundWork(MyProjectorBase projector)
         {
@@ -617,6 +657,9 @@ namespace MultigridProjector.Logic
             var box = _updateBox;
             if (!box.IsValid) return;
 
+            if (box != Constants.MaxBoundingBoxI)
+                throw new Exception("Any limited bounding box would result in partial (broken) statistics, currently. Needs to update statistics update code to support this optimization!");
+            
             RequestVisualsUpdate(box);
             _updateBox = Constants.InvalidBoundingBoxI;
 
@@ -701,29 +744,5 @@ namespace MultigridProjector.Logic
         }
 
         #endregion
-
-        // FIXME: Refactor this to be reusable for auto-aligning the projection to a block!
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void GetBlockOrientationQuaternion(MySlimBlock previewBlock, out Quaternion orientationQuaternion)
-        {
-            // Orientation of the preview grid relative to the built grid
-            var wm = PreviewGrid.WorldMatrix.GetOrientation();
-            using (BuiltGridLock.Read())
-            {
-                if (BuiltGrid == null)
-                {
-                    orientationQuaternion = Quaternion.Identity;
-                    return;
-                }
-
-                wm *= MatrixD.Invert(BuiltGrid.WorldMatrix.GetOrientation());
-            }
-
-            orientationQuaternion = wm.ToPositionAndOrientation().Orientation;
-
-            // Apply the block's own orientation on the grid
-            previewBlock.Orientation.GetQuaternion(out var previewBlockOrientation);
-            orientationQuaternion *= previewBlockOrientation;
-        }
     }
 }
