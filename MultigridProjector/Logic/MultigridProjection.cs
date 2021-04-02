@@ -411,7 +411,7 @@ namespace MultigridProjector.Logic
 
             _scanIndex++;
 
-            PluginLog.Debug($"Projector {Projector.DisplayName} [{Projector.EntityId}] preview scan #{_scanIndex} completed");
+            PluginLog.Debug($"{Projector.CustomName} [{Projector.EntityId}] scan #{_scanIndex}");
 
             Projector.SetLastUpdate(MySandboxGame.TotalGamePlayTimeInMilliseconds);
 
