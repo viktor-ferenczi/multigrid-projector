@@ -329,7 +329,8 @@ namespace MultigridProjector.Logic
                 return;
             }
 
-            if (!_updateWork.IsComplete) return;
+            if (!_updateWork.IsComplete)
+                return;
 
             Projector.SetShouldUpdateProjection(false);
             Projector.SetForceUpdateProjection(false);
@@ -416,7 +417,7 @@ namespace MultigridProjector.Logic
 
             // Clients must follow replicated grid changes from the server, therefore they need regular updates
             // FIXME: Optimize this case by listening on grid/block change events somehow
-            if(!Sync.IsServer)
+            if (!Sync.IsServer)
                 ShouldUpdateProjection();
 
             Clipboard.HasPreviewBBox = false;
@@ -807,6 +808,12 @@ namespace MultigridProjector.Logic
                 ForceUpdateProjection();
 
             var shouldUpdateProjection = Projector.GetShouldUpdateProjection() && MySandboxGame.TotalGamePlayTimeInMilliseconds - Projector.GetLastUpdate() >= 2000;
+            if (shouldUpdateProjection)
+            {
+                foreach (var subgrid in Subgrids)
+                    subgrid.RequestUpdate();
+            }
+
             if (shouldUpdateProjection || Projector.GetForceUpdateProjection())
             {
                 Projector.SetHiddenBlock(null);

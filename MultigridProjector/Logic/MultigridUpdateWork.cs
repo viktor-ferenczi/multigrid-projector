@@ -37,6 +37,7 @@ namespace MultigridProjector.Logic
         public void Dispose()
         {
             Cancel();
+
             if (!_task.IsComplete)
             {
                 _task.Wait(true);
@@ -50,6 +51,7 @@ namespace MultigridProjector.Logic
             if (!IsComplete) 
                 return;
 
+            _stop = false;
             _allGridsProcessed = false;
             _task = Parallel.Start(this, OnComplete);
         }

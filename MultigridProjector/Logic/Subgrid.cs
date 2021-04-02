@@ -159,7 +159,7 @@ namespace MultigridProjector.Logic
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void RequestUpdate()
+        public void RequestUpdate()
         {
             IsUpdateRequested = true;
         }
