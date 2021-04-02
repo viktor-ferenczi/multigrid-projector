@@ -794,20 +794,20 @@ namespace MultigridProjector.Logic
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void UpdateAfterSimulation()
+        private void UpdateAfterSimulation()
         {
             if (!Initialized || Projector.Closed)
                 return;
 
             UpdateGridTransformations();
 
+            if (!_updateWork.IsComplete) return;
+
             if (IsUpdateRequested)
                 ForceUpdateProjection();
 
-            if (!_updateWork.IsComplete) return;
-
-            if (Projector.GetForceUpdateProjection() ||
-                (Projector.GetShouldUpdateProjection() && MySandboxGame.TotalGamePlayTimeInMilliseconds - Projector.GetLastUpdate() >= 2000))
+            var shouldUpdateProjection = Projector.GetShouldUpdateProjection() && MySandboxGame.TotalGamePlayTimeInMilliseconds - Projector.GetLastUpdate() >= 2000;
+            if (shouldUpdateProjection || Projector.GetForceUpdateProjection())
             {
                 Projector.SetHiddenBlock(null);
                 StartUpdateWork();

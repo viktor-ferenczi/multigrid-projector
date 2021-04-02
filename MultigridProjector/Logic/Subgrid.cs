@@ -333,6 +333,10 @@ namespace MultigridProjector.Logic
             if (!HasBuilt)
                 return;
 
+            var previewSlimBlock = PreviewGrid.GetOverlappingBlock(slimBlock);
+            if (previewSlimBlock == null)
+                return;
+
             RequestUpdate();
         }
 
@@ -342,6 +346,8 @@ namespace MultigridProjector.Logic
             if (!HasBuilt) return;
 
             var previewSlimBlock = PreviewGrid.GetOverlappingBlock(slimBlock);
+            if (previewSlimBlock == null)
+                return;
 
             // FIXME: Optimize by limiting the update only to the volume around the block added
             RequestUpdate();
@@ -354,9 +360,6 @@ namespace MultigridProjector.Logic
                 // terminalBlock.CheckConnectionChanged += CheckConnectionChanged;
                 // CheckConnectionChanged just invoked ShouldUpdateProjection();
             }
-
-            if (previewSlimBlock == null)
-                return;
 
             switch (slimBlock.FatBlock)
             {
@@ -380,6 +383,8 @@ namespace MultigridProjector.Logic
             if (!HasBuilt) return;
 
             var previewSlimBlock = PreviewGrid.GetOverlappingBlock(slimBlock);
+            if (previewSlimBlock == null)
+                return;
 
             // FIXME: Optimize by limiting the update only to the volume around the block removed
             RequestUpdate();
@@ -392,9 +397,6 @@ namespace MultigridProjector.Logic
                 // terminalBlock.CheckConnectionChanged -= CheckConnectionChanged;
                 // CheckConnectionChanged just invoked ShouldUpdateProjection();
             }
-
-            if (previewSlimBlock == null)
-                return;
 
             switch (slimBlock.FatBlock)
             {
@@ -526,9 +528,7 @@ namespace MultigridProjector.Logic
             foreach (var projectedBlock in _blocks.Values)
             {
                 projectedBlock.DetectBlock(projector, BuiltGrid);
-
-                if(projectedBlock.State != BlockState.FullyBuilt)
-                    Stats.RegisterRemainingBlock(projectedBlock.Preview);
+                Stats.RegisterBlock(projectedBlock.Preview, projectedBlock.State);
             }
         }
 
