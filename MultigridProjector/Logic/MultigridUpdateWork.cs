@@ -54,7 +54,7 @@ namespace MultigridProjector.Logic
             _task = Parallel.Start(this, OnComplete);
         }
 
-        public void Cancel()
+        private void Cancel()
         {
             if (IsComplete)
                 return;
@@ -77,7 +77,7 @@ namespace MultigridProjector.Logic
                 return;
             }
 
-            _allGridsProcessed = true;
+            _allGridsProcessed = !ShouldStop;
         }
 
         private void UpdateBlockStatesAndCollectStatistics(WorkData workData = null)
@@ -103,10 +103,10 @@ namespace MultigridProjector.Logic
 
         private void OnComplete()
         {
-            if (_allGridsProcessed)
-                OnUpdateWorkCompleted?.Invoke();
-            else
-                PluginLog.Error("Projection preview update failed, not updating visuals, artifacts may occur");
+            if (!_allGridsProcessed)
+                return;
+
+            OnUpdateWorkCompleted?.Invoke();
         }
     }
 }

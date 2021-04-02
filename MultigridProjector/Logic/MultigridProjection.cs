@@ -59,7 +59,7 @@ namespace MultigridProjector.Logic
         public bool Initialized { get; private set; }
 
         private bool IsUpdateRequested => Initialized && Subgrids.Any(subgrid => subgrid.IsUpdateRequested);
-        private bool IsBuildCompleted => Initialized && _stats.IsBuildCompleted && !IsUpdateRequested;
+        private bool IsBuildCompleted => Initialized && _stats.IsBuildCompleted;
 
         // Mechanical connection block locations in the preview grids by EntityId
         // public readonly Dictionary<long, BlockLocation> MechanicalConnectionBlockLocations = new Dictionary<long, BlockLocation>();
@@ -79,6 +79,13 @@ namespace MultigridProjector.Logic
         // Offset and rotation for change detection
         private Vector3I _projectionOffset;
         private Vector3I _projectionRotation;
+
+        // Scan index, increased every time the preview grids are successfully scanned for block changes
+        private long _scanIndex;
+        public bool HasScanned => _scanIndex > 0;
+
+        // Controls when the plugin and Mod API can access projector information already
+        public bool IsValidForApi => Initialized && HasScanned;
 
         private static MultigridProjection Create(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
         {
@@ -379,20 +386,7 @@ namespace MultigridProjector.Logic
             if (_showOnlyBuildable == showOnlyBuildable) return;
             _showOnlyBuildable = showOnlyBuildable;
 
-            ResetNotBuildableVisuals();
-            ForceUpdateProjection();
-        }
-
-        private void ResetNotBuildableVisuals()
-        {
-            if (Sync.IsDedicated)
-                return;
-
-            foreach (var subgrid in Subgrids)
-            {
-                subgrid.ResetNotBuildableVisuals();
-                subgrid.RequestVisualsUpdate();
-            }
+            UpdatePreviewBlockVisuals();
         }
 
         [Everywhere]
@@ -414,26 +408,27 @@ namespace MultigridProjector.Logic
             if (Projector.Closed || !Initialized)
                 return;
 
+            _scanIndex++;
+
+            PluginLog.Debug($"Projector {Projector.DisplayName} [{Projector.EntityId}] preview scan #{_scanIndex} completed");
+
             Projector.SetLastUpdate(MySandboxGame.TotalGamePlayTimeInMilliseconds);
+
+            // Clients must follow replicated grid changes from the server, therefore they need regular updates
+            // FIXME: Optimize this case by listening on grid/block change events somehow
+            if(!Sync.IsServer)
+                ShouldUpdateProjection();
 
             Clipboard.HasPreviewBBox = false;
 
             UpdateMechanicalConnections();
 
-            // The definitive source of statistics is the server side, clients receive the statistics via MP communication
-            if (Sync.IsServer)
-            {
-                AggregateStatistics();
-                UpdateProjectorStats();
-            }
-
-            if (Sync.IsDedicated)
-                SendStatsToClients();
+            AggregateStatistics();
+            UpdateProjectorStats();
 
             if (!Sync.IsDedicated)
             {
                 UpdatePreviewBlockVisuals();
-
                 Projector.UpdateSounds();
                 Projector.SetEmissiveStateWorking();
             }
@@ -456,11 +451,6 @@ namespace MultigridProjector.Logic
                 _stats.Add(subgrid.Stats);
         }
 
-        private void SendStatsToClients()
-        {
-            throw new NotImplementedException();
-        }
-
         [Everywhere]
         public void UpdateProjectorStats()
         {
@@ -478,7 +468,7 @@ namespace MultigridProjector.Logic
                 return;
 
             foreach (var subgrid in Subgrids)
-                subgrid.UpdatePreviewBlockVisualsAsNeeded(Projector, _showOnlyBuildable);
+                subgrid.UpdatePreviewBlockVisuals(Projector, _showOnlyBuildable);
         }
 
         // FIXME: Refactor, simplify
@@ -840,23 +830,23 @@ namespace MultigridProjector.Logic
 
             // Find the subgrid to build on
             var subgrid = Subgrids[(int) subgridIndex];
-
-            // Sanity check: The latest known block states must allow for welding the block, ignore the build request if the block is unconfirmed
-            if (!subgrid.HasBuildableBlockAtPosition(previewCubeBlockPosition))
-                return;
-
             var previewGrid = subgrid.PreviewGrid;
             if (previewGrid == null)
                 return;
+            if (!subgrid.HasBuilt)
+                return;
 
-            // The subgrid must have a built grid registered already (they are registered as top/base blocks are built) 
+            // The subgrid must have a built grid registered already (they are registered as top/base blocks are built)
             MyCubeGrid builtGrid;
             using (subgrid.BuiltGridLock.Read())
             {
                 builtGrid = subgrid.BuiltGrid;
             }
-
             if (builtGrid == null)
+                return;
+
+            // Sanity check: The latest known block states must allow for welding the block, ignore the build request if the block is unconfirmed
+            if (!subgrid.HasBuildableBlockAtPosition(previewCubeBlockPosition))
                 return;
 
             // Can the player build this block?
@@ -891,7 +881,7 @@ namespace MultigridProjector.Logic
             var location = new MyCubeGrid.MyBlockLocation(previewBlock.BlockDefinition.Id, min, max, builtPos, previewBlockQuaternion, 0L, owner);
 
             // Optimization: Fast lookup of blueprint block builders at the expense of some additional memory consumption
-            if (!subgrid.TryGetBlockBuilder(previewBlock.Min, out var blockBuilder))
+            if (!subgrid.TryGetBlockBuilder(previewBlock.Position, out var blockBuilder))
                 return;
 
             // Sanity check: The preview block must match the blueprint block builder both by definition and orientation

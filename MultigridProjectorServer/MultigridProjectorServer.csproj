@@ -99,6 +99,7 @@
         <Compile Include="MultigridProjectorPlugin.cs" />
         <Compile Include="Patches\MyMechanicalConnectionBlockBase_CreateTopPartAndAttach.cs" />
         <Compile Include="Patches\MyMechanicalConnectionBlockBase_RaiseAttachedEntityChanged.cs" />
+        <Compile Include="Patches\MyProjectorBase_Build.cs" />
         <Compile Include="Patches\MyProjectorBase_BuildInternal.cs" />
         <Compile Include="Patches\MyProjectorBase_CanBuild.cs" />
         <Compile Include="Patches\MyProjectorBase_GetObjectBuilderCubeBlock.cs" />

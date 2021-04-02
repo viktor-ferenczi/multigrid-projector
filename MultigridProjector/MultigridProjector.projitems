@@ -15,8 +15,10 @@
     <Compile Include="$(MSBuildThisFileDirectory)Api\MultigridProjectorModAgent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\Constants.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\MyMotorStatorExtensions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\ProjectedBlock.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\BlockMinLocation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\MultigridProjectorApiProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\VisualState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyCubeGrid_TestPlacementAreaCube.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyGridPhysicalHierarchy_BreakLink.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.cs" />
