@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using MultigridProjector.Api;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities.Cube;
 
@@ -29,8 +30,11 @@ namespace MultigridProjector.Logic
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void RegisterRemainingBlock(MySlimBlock slimBlock)
+        public void RegisterBlock(MySlimBlock slimBlock, BlockState blockState)
         {
+            if (blockState == BlockState.FullyBuilt)
+                return;
+
             RemainingBlocks++;
 
             var fatBlock = slimBlock.FatBlock;

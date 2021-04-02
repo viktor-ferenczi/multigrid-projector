@@ -33,7 +33,7 @@ namespace MultigridProjectorClient.Patches
         // multiplayer event handler is patched. It happens even if everything is prefect with the patch. It crashes before even executing the
         // Prefix method, so no way to fix that without changing Harmony itself. Just use a transpiler and redirect to a static method replacement.
 
-        // [Server]
+        [ServerOnly]
         public static void BuildInternal(
             // ReSharper disable once InconsistentNaming
             MyProjectorBase __instance,

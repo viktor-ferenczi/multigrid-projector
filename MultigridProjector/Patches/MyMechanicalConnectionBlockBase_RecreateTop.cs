@@ -29,7 +29,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyMechanicalConnectionBlockBase_RecreateTop
     {
-        // [Server]
+        [ServerOnly]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
             var code = instructions.ToList();

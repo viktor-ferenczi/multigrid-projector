@@ -16,11 +16,11 @@ namespace MultigridProjector.Logic
         private static MultigridProjectorApiProvider _api;
         public static IMultigridProjectorApi Api => _api ?? (_api = new MultigridProjectorApiProvider());
 
-        public string Version => "0.2.4";
+        public string Version => "0.2.5";
 
         public int GetSubgridCount(long projectorId)
         {
-            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.Initialized)
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.IsValidForApi)
                 return 0;
 
             return projection.GridCount;
@@ -28,7 +28,7 @@ namespace MultigridProjector.Logic
 
         public List<MyObjectBuilder_CubeGrid> GetOriginalGridBuilders(long projectorId)
         {
-            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.Initialized)
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.IsValidForApi)
                 return null;
 
             return projection.Projector.GetOriginalGridBuilders();
@@ -36,7 +36,7 @@ namespace MultigridProjector.Logic
 
         public IMyCubeGrid GetPreviewGrid(long projectorId, int subgridIndex)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
                 return null;
 
             return subgrid.PreviewGrid;
@@ -44,7 +44,7 @@ namespace MultigridProjector.Logic
 
         public IMyCubeGrid GetBuiltGrid(long projectorId, int subgridIndex)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
                 return null;
 
             return subgrid.BuiltGrid;
@@ -52,10 +52,10 @@ namespace MultigridProjector.Logic
 
         public BlockState GetBlockState(long projectorId, int subgridIndex, Vector3I position)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
                 return BlockState.Unknown;
 
-            if (!subgrid.BlockStates.TryGetValue(position, out var blockState))
+            if (!subgrid.TryGetBlockState(position, out var blockState))
                 return BlockState.Unknown;
 
             return blockState;
@@ -63,33 +63,18 @@ namespace MultigridProjector.Logic
 
         public bool GetBlockStates(Dictionary<Vector3I, BlockState> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
                 return false;
 
-            foreach (var (position, blockState) in IterBlockStates(subgrid, box, mask))
+            foreach (var (position, blockState) in subgrid.IterBlockStates(box, mask))
                 blockStates[position] = blockState;
 
             return true;
         }
 
-        private static IEnumerable<(Vector3I, BlockState)> IterBlockStates(Subgrid subgrid, BoundingBoxI box, int mask)
-        {
-            // Optimization
-            var full = box.Min == Vector3I.MinValue && box.Max == Vector3I.MaxValue;
-
-            foreach (var (position, blockState) in subgrid.BlockStates)
-            {
-                if (((int) blockState & mask) == 0)
-                    continue;
-
-                if (full || box.Contains(position) == ContainmentType.Contains)
-                    yield return (position, blockState);
-            }
-        }
-
         public Dictionary<Vector3I, BlockLocation> GetBaseConnections(long projectorId, int subgridIndex)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
                 return null;
 
             return subgrid.BaseConnections
@@ -98,7 +83,7 @@ namespace MultigridProjector.Logic
 
         public Dictionary<Vector3I, BlockLocation> GetTopConnections(long projectorId, int subgridIndex)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
                 return null;
 
             return subgrid.TopConnections
@@ -132,10 +117,10 @@ namespace MultigridProjector.Logic
 
         private static bool ModApiGetBlockStates(Dictionary<Vector3I, int> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out _, out var subgrid))
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
                 return false;
 
-            foreach (var (position, blockState) in IterBlockStates(subgrid, box, mask))
+            foreach (var (position, blockState) in subgrid.IterBlockStates(box, mask))
                 blockStates[position] = (int)blockState;
             
             return true;

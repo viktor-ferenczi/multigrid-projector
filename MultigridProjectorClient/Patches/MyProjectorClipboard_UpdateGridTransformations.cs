@@ -14,7 +14,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorClipboard_UpdateGridTransformations
     {
-        // Client only!
+        [ClientOnly]
         // ReSharper disable once UnusedMember.Local
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
@@ -29,7 +29,7 @@ namespace MultigridProjector.Patches
                 if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
                     return true;
 
-                // Alignment is needed on server side as well, so it was moved into UpdateAfterSimulation
+                // Preview grid alignment is needed on server side as well, so it was moved into UpdateAfterSimulation
             }
             catch (Exception e)
             {

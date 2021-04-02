@@ -19,7 +19,7 @@ namespace MultigridProjector.Patches
 
         private static readonly FieldInfo ProjectorFieldInfo = AccessTools.Field(typeof(MyProjectorClipboard), "m_projector");
 
-        // Client only!
+        [ServerOnly]
         // ReSharper disable once UnusedMember.Local
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming

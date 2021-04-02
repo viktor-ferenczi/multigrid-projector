@@ -13,7 +13,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyMechanicalConnectionBlockBase_CreateTopPartAndAttach
     {
-        // [Server]
+        [ServerOnly]
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyMechanicalConnectionBlockBase __instance,

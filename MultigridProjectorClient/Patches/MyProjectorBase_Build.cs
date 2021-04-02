@@ -14,6 +14,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_Build
     {
+        [ClientOnly]
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyProjectorBase __instance,

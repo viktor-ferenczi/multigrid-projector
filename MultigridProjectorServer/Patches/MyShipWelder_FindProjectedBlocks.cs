@@ -22,6 +22,7 @@ namespace MultigridProjector.Patches
         private static readonly FieldInfo DetectorSphereFieldInfo = AccessTools.Field(typeof(MyShipWelder), "m_detectorSphere");
         private static readonly FieldInfo ProjectedBlockFieldInfo = AccessTools.Field(typeof(MyShipWelder), "m_projectedBlock");
         
+        [ServerOnly]
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             // ReSharper disable once UnusedParameter.Global

@@ -18,6 +18,12 @@ namespace MultigridProjector.Extensions
             return RayCastBlocksAllOrderedInfo.Invoke(obj, new object[] {worldStart, worldEnd}) as List<MyCube>;
         }
 
+        private static readonly FieldInfo BlockGroupsInfo = AccessTools.Field(typeof(MyCubeGrid), "BlockGroups");
+        public static List<MyBlockGroup> GetBlockGroups(this MyCubeGrid grid)
+        {
+            return (List<MyBlockGroup>)BlockGroupsInfo.GetValue(grid);
+        }
+        
         private static readonly MethodInfo AddGroupInfo = AccessTools.DeclaredMethod(typeof(MyCubeGrid), "AddGroup", new []{typeof(MyBlockGroup)});
         public static void AddGroup(this MyCubeGrid obj, MyBlockGroup group)
         {

@@ -14,6 +14,7 @@ namespace MultigridProjectorServer
     {
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("InitializeClipboard", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyProjectorBase_InitializeClipboard).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
 
+        [ServerOnly]
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyProjectorBase __instance)

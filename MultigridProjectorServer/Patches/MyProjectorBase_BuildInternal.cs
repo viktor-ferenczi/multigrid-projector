@@ -15,7 +15,7 @@ namespace MultigridProjectorServer
     {
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("BuildInternal", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyProjectorBase_BuildInternal).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
 
-        // [Server]
+        [ServerOnly]
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyProjectorBase __instance,

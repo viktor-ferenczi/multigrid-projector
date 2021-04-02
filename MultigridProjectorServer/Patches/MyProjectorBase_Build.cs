@@ -14,6 +14,9 @@ namespace MultigridProjector.Patches
     public static class MyProjectorBase_Build
     {
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("Build", BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public)).Prefixes.Add(typeof (MyProjectorBase_Build).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
+
+        // Called by the ShipWelder to build blocks and any server side mods
+        [ServerOnly]
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyProjectorBase __instance,

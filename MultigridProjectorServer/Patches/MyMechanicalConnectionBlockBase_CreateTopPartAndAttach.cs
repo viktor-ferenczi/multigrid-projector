@@ -14,7 +14,7 @@ namespace MultigridProjector.Patches
     {
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyMechanicalConnectionBlockBase).GetMethod("CreateTopPartAndAttach", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyMechanicalConnectionBlockBase_CreateTopPartAndAttach).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
         
-        // [Server]
+        [ServerOnly]
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
             MyMechanicalConnectionBlockBase __instance,
