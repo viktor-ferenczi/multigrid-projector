@@ -23,9 +23,9 @@ namespace MultigridProjector.Logic
         public bool BuiltOnlyArmorBlocks => Valid && BuiltBlocks == BuiltArmorBlocks;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Clear()
+        public void Clear(int totalBlocks=0)
         {
-            TotalBlocks = 0;
+            TotalBlocks = totalBlocks;
             RemainingBlocks = 0;
             BuiltArmorBlocks = 0;
             RemainingArmorBlocks = 0;

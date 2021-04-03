@@ -230,6 +230,8 @@ namespace MultigridProjector.Logic
 
                 BuiltGrid = null;
 
+                Stats.Clear(PreviewGrid.CubeBlocks.Count);
+
                 foreach (var projectedBlock in _blocks.Values)
                     projectedBlock.Clear();
 
@@ -529,8 +531,7 @@ namespace MultigridProjector.Logic
 
             IsUpdateRequested = false;
 
-            Stats.Clear();
-            Stats.TotalBlocks += PreviewGrid.CubeBlocks.Count;
+            Stats.Clear(PreviewGrid.CubeBlocks.Count);
 
             foreach (var projectedBlock in _blocks.Values)
             {

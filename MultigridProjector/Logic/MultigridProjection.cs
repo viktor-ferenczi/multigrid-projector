@@ -571,7 +571,7 @@ namespace MultigridProjector.Logic
             Projector.SetShouldUpdateTexts(true);
         }
 
-        public void ForceUpdateProjection()
+        private void ForceUpdateProjection()
         {
             Projector.SetForceUpdateProjection(true);
             Projector.SetShouldUpdateTexts(true);
@@ -581,6 +581,8 @@ namespace MultigridProjector.Logic
         {
             if (!Initialized || Projector.Closed || Subgrids.Count < 1)
                 return;
+
+            _stats.Clear();
 
             foreach (var subgrid in Subgrids)
             {
@@ -884,7 +886,7 @@ namespace MultigridProjector.Logic
             if (_requestRemap && previewFatBlock != null)
             {
                 _requestRemap = false;
-                PluginLog.Info($"Remapping blueprint loaded into projector {Projector.CustomName} [{Projector.EntityId}] in preparation for building it again (this is NOT an error)");
+                PluginLog.Debug($"Remapping blueprint loaded into projector {Projector.CustomName} [{Projector.EntityId}] in preparation for building it again");
                 MyEntities.RemapObjectBuilderCollection(GridBuilders);
             }
 
