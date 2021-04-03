@@ -1330,7 +1330,7 @@ namespace MultigridProjector.Logic
         }
 
         [ClientOnly]
-        public static bool ProjectorLoadBlueprint(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
+        public static bool InitFromObjectBuilder(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
         {
             if (gridBuilders == null)
                 return true;

@@ -24,7 +24,7 @@ namespace MultigridProjector.Patches
         {
             try
             {
-                return MultigridProjection.ProjectorLoadBlueprint(__instance, gridsObs);
+                return MultigridProjection.InitFromObjectBuilder(__instance, gridsObs);
             }
             catch (Exception e)
             {
