@@ -230,13 +230,16 @@ namespace MultigridProjector.Logic
 
                 BuiltGrid = null;
 
-                RequestUpdate();
+                foreach (var projectedBlock in _blocks.Values)
+                    projectedBlock.Clear();
 
                 foreach (var baseConnection in BaseConnections.Values)
                     baseConnection.ClearBuiltBlock();
 
                 foreach (var topConnection in TopConnections.Values)
                     topConnection.ClearBuiltBlock();
+
+                RequestUpdate();
             }
         }
 

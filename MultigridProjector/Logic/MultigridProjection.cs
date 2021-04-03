@@ -350,30 +350,18 @@ namespace MultigridProjector.Logic
                 subgrid.HidePreviewGrid(Projector);
         }
 
-        [ClientOnly]
-        public void OnOffsetsChanged()
-        {
-            if (Projector.ProjectionOffset == _projectionOffset &&
-                Projector.ProjectionRotation == _projectionRotation)
-                return;
-
-            _projectionOffset = Projector.ProjectionOffset;
-            _projectionRotation = Projector.ProjectionRotation;
-
-            RescanFullProjection();
-        }
-
         [Everywhere]
         private void OnPropertiesChanged(MyTerminalBlock obj)
         {
             if (Projector.Closed || !Initialized)
                 return;
 
-            HandleKeepProjectionChange();
-            HandleShowOnlyBuildableChange();
+            DetectKeepProjectionChange();
+            DetectShowOnlyBuildableChange();
+            DetectOffsetRotationChange();
         }
 
-        private void HandleKeepProjectionChange()
+        private void DetectKeepProjectionChange()
         {
             var keepProjection = Projector.GetKeepProjection();
             if (_keepProjection == keepProjection) return;
@@ -384,13 +372,25 @@ namespace MultigridProjector.Logic
                 Projector.RequestRemoveProjection();
         }
 
-        private void HandleShowOnlyBuildableChange()
+        private void DetectShowOnlyBuildableChange()
         {
             var showOnlyBuildable = Projector.GetShowOnlyBuildable();
             if (_showOnlyBuildable == showOnlyBuildable) return;
             _showOnlyBuildable = showOnlyBuildable;
 
             UpdatePreviewBlockVisuals();
+        }
+
+        private void DetectOffsetRotationChange()
+        {
+            if (Projector.ProjectionOffset == _projectionOffset &&
+                Projector.ProjectionRotation == _projectionRotation)
+                return;
+
+            _projectionOffset = Projector.ProjectionOffset;
+            _projectionRotation = Projector.ProjectionRotation;
+
+            RescanFullProjection();
         }
 
         [Everywhere]
@@ -854,6 +854,7 @@ namespace MultigridProjector.Logic
             {
                 builtGrid = subgrid.BuiltGrid;
             }
+
             if (builtGrid == null)
                 return;
 
