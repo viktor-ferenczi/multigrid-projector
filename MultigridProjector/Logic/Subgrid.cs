@@ -44,7 +44,7 @@ namespace MultigridProjector.Logic
         // Mechanical top blocks on this subgrid by cube position
         public readonly Dictionary<Vector3I, TopConnection> TopConnections = new Dictionary<Vector3I, TopConnection>();
 
-        // Requests rescanning the preview blocks
+        // Requests rescanning the preview blocks, the initial true value starts the first scan
         public bool IsUpdateRequested = true;
 
         // Projected and built block states, built block changes are detected by the background worker, visuals are updated by the main thread
