@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Runtime.CompilerServices;
 using Sandbox.Common.ObjectBuilders;
 using VRage.Game;
@@ -7,18 +6,6 @@ namespace MultigridProjector.Extensions
 {
     public static class MyObjectBuilderExtensions
     {
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static int CountConnectedTopBlocks(this MyObjectBuilder_CubeGrid gridBuilder)
-        {
-            return gridBuilder.CubeBlocks.Count(bb => bb.IsConnectedTopBlock());
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool IsConnectedTopBlock(this MyObjectBuilder_CubeBlock blockBuilder)
-        {
-            return blockBuilder is MyObjectBuilder_AttachableTopBlockBase topBlock && topBlock.ParentEntityId != 0;
-        }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void PrepareForProjection(this MyObjectBuilder_CubeGrid gridBuilder)
         {
