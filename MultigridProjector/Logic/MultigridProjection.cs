@@ -1372,7 +1372,7 @@ namespace MultigridProjector.Logic
             }
 
             // Prevent re-initializing an existing multigrid projection
-            if (MultigridProjection.TryFindProjectionByProjector(projector, out _))
+            if (TryFindProjectionByProjector(projector, out _))
                 return false;
 
             // Ensure compatible grid size between the projector and the first subgrid to be built

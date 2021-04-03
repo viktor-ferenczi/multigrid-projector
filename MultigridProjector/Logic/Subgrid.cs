@@ -36,7 +36,7 @@ namespace MultigridProjector.Logic
         public readonly ProjectionStats Stats = new ProjectionStats();
 
         // Indicates whether the built grid is connected to the projector
-        public bool IsConnectedToProjector = false;
+        public bool IsConnectedToProjector;
 
         // Mechanical base blocks on this subgrid by cube position
         public readonly Dictionary<Vector3I, BaseConnection> BaseConnections = new Dictionary<Vector3I, BaseConnection>();
