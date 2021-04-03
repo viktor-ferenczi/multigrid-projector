@@ -24,6 +24,9 @@ namespace MultigridProjector.Logic
         // Preview block on the projected grid
         public readonly MySlimBlock Preview;
 
+        // Preview block visual state
+        private VisualState _visual = VisualState.None;
+
         // Position of the block on the built grid (not valid for the preview grid)
         private Vector3I BuiltPosition { get; set; } = Vector3I.MinValue;
         private bool HasBuiltGrid => BuiltPosition.X != int.MinValue;
@@ -40,9 +43,6 @@ namespace MultigridProjector.Logic
         {
             if (builtGrid == null)
             {
-                if (!HasBuiltGrid)
-                    return;
-
                 SlimBlock = null;
                 State = BlockState.NotBuildable;
                 BuiltPosition = Vector3I.MinValue;
@@ -80,38 +80,46 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void UpdateVisual(MyProjectorBase projector, bool showOnlyBuildable)
         {
-            switch (State)
+            var visual = GetVisualState(showOnlyBuildable);
+            if (visual == _visual)
+                return;
+
+            _visual = visual;
+
+            switch (visual)
             {
-                case BlockState.Unknown:
+                case VisualState.Hidden:
                     Hide(projector);
                     break;
 
-                case BlockState.NotBuildable:
-                    if (showOnlyBuildable)
-                        Hide(projector);
-                    else
-                        ShowNotBuildable(projector);
+                case VisualState.Hologram:
+                    ShowHologram(projector);
                     break;
 
-                case BlockState.Buildable:
-                    ShowBuildable(projector);
-                    break;
-
-                case BlockState.BeingBuilt:
-                    Hide(projector);
-                    break;
-
-                case BlockState.FullyBuilt:
-                    Hide(projector);
-                    break;
-
-                case BlockState.Mismatch:
-                    if (showOnlyBuildable)
-                        Hide(projector);
-                    else
-                        ShowNotBuildable(projector);
+                case VisualState.Transparent:
+                    ShowTransparent(projector);
                     break;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private VisualState GetVisualState(bool showOnlyBuildable)
+        {
+            switch (State)
+            {
+                case BlockState.NotBuildable:
+                case BlockState.Mismatch:
+                    return showOnlyBuildable ? VisualState.Hidden : VisualState.Hologram;
+
+                case BlockState.Buildable:
+                    return VisualState.Transparent;
+
+                case BlockState.BeingBuilt:
+                case BlockState.FullyBuilt:
+                    return VisualState.Hidden;
+            }
+
+            return VisualState.Hidden;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -121,15 +129,15 @@ namespace MultigridProjector.Logic
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ShowBuildable(MyProjectorBase projector)
+        private void ShowHologram(MyProjectorBase projector)
         {
-            projector.SetTransparency(Preview, -0.5f);
+            projector.SetTransparency(Preview, 0.5f);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void ShowNotBuildable(MyProjectorBase projector)
+        private void ShowTransparent(MyProjectorBase projector)
         {
-            projector.SetTransparency(Preview, 0.5f);
+            projector.SetTransparency(Preview, -0.5f);
         }
     }
 }

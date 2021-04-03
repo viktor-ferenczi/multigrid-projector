@@ -44,7 +44,7 @@ namespace MultigridProjector.Logic
         // Mechanical top blocks on this subgrid by cube position
         public readonly Dictionary<Vector3I, TopConnection> TopConnections = new Dictionary<Vector3I, TopConnection>();
 
-        // Requests rescanning the preview blocks
+        // Requests rescanning the preview blocks, the initial true value starts the first scan
         public bool IsUpdateRequested = true;
 
         // Projected and built block states, built block changes are detected by the background worker, visuals are updated by the main thread
@@ -345,12 +345,14 @@ namespace MultigridProjector.Logic
         {
             if (!HasBuilt) return;
 
+            // Must refresh the preview, even if the block added does not overlap any preview blocks.
+            // Failing to do so may cause the first block not to be weldable due to the lack of refresh.
+            // FIXME: Optimize by limiting the update only to the volume around the block added
+            RequestUpdate();
+
             var previewSlimBlock = PreviewGrid.GetOverlappingBlock(slimBlock);
             if (previewSlimBlock == null)
                 return;
-
-            // FIXME: Optimize by limiting the update only to the volume around the block added
-            RequestUpdate();
 
             if (slimBlock.FatBlock is MyTerminalBlock terminalBlock)
             {
@@ -382,12 +384,14 @@ namespace MultigridProjector.Logic
         {
             if (!HasBuilt) return;
 
+            // Must refresh the preview, even if the block removed does not overlap any preview blocks.
+            // Failing to do so may cause blocks still showing up weldable due to the lack of refresh.
+            // FIXME: Optimize by limiting the update only to the volume around the block removed
+            RequestUpdate();
+
             var previewSlimBlock = PreviewGrid.GetOverlappingBlock(slimBlock);
             if (previewSlimBlock == null)
                 return;
-
-            // FIXME: Optimize by limiting the update only to the volume around the block removed
-            RequestUpdate();
 
             if (slimBlock.FatBlock is MyTerminalBlock terminalBlock)
             {
