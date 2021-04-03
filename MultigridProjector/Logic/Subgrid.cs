@@ -47,6 +47,12 @@ namespace MultigridProjector.Logic
         // Requests rescanning the preview blocks, the initial true value starts the first scan
         public bool IsUpdateRequested = true;
 
+        // Indicates whether the preview grid is supported for welding, e.g. connected to the first preview grid
+        public bool Supported;
+
+        // Indicates whether an unsupported preview grid has already been hidden
+        private bool _hidden;
+
         // Projected and built block states, built block changes are detected by the background worker, visuals are updated by the main thread
         private readonly Dictionary<Vector3I, ProjectedBlock> _blocks;
 
@@ -448,6 +454,33 @@ namespace MultigridProjector.Logic
 
         #region Preview Block Visuals
 
+        public void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable)
+        {
+            if (Sync.IsDedicated)
+                return;
+
+            if (PreviewGrid == null)
+                return;
+
+            if (!Supported)
+            {
+                HideUnsupportedPreviewGrid(projector);
+                return;
+            }
+
+            foreach (var projectedBlock in _blocks.Values)
+                projectedBlock.UpdateVisual(projector, showOnlyBuildable);
+        }
+
+        private void HideUnsupportedPreviewGrid(MyProjectorBase projector)
+        {
+            if (_hidden)
+                return;
+
+            HidePreviewGrid(projector);
+            _hidden = true;
+        }
+
         public void HidePreviewGrid(MyProjectorBase projector)
         {
             if (Sync.IsDedicated)
@@ -458,18 +491,6 @@ namespace MultigridProjector.Logic
 
             foreach (var slimBlock in PreviewGrid.CubeBlocks)
                 projector.HideCube(slimBlock);
-        }
-
-        public void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable)
-        {
-            if (Sync.IsDedicated)
-                return;
-
-            if (PreviewGrid == null)
-                return;
-
-            foreach (var projectedBlock in _blocks.Values)
-                projectedBlock.UpdateVisual(projector, showOnlyBuildable);
         }
 
         #endregion
@@ -526,7 +547,7 @@ namespace MultigridProjector.Logic
 
         public void UpdateBlockStatesBackgroundWork(MyProjectorBase projector)
         {
-            if (!IsUpdateRequested)
+            if (!IsUpdateRequested || !Supported)
                 return;
 
             IsUpdateRequested = false;
@@ -542,6 +563,9 @@ namespace MultigridProjector.Logic
 
         public void FindBuiltBaseConnectionsBackgroundWork()
         {
+            if (!Supported)
+                return;
+
             foreach (var (position, baseConnection) in BaseConnections)
             {
                 var projectedBlock = _blocks[position];
@@ -562,6 +586,9 @@ namespace MultigridProjector.Logic
 
         public void FindBuiltTopConnectionsBackgroundWork()
         {
+            if (!Supported)
+                return;
+
             foreach (var (position, topConnection) in TopConnections)
             {
                 var projectedBlock = _blocks[position];

@@ -131,6 +131,7 @@ namespace MultigridProjector.Logic
             MapBlueprintBlocks();
             MapPreviewBlocks();
             CreateSubgrids();
+            MarkSupportedSubgrids();
             CreateUpdateWork();
 
             Projector.PropertiesChanged += OnPropertiesChanged;
@@ -225,6 +226,47 @@ namespace MultigridProjector.Logic
                 Subgrids.Add(new Subgrid(this, gridIndex));
 
             Subgrids[0].RegisterBuiltGrid(Projector.CubeGrid);
+        }
+
+        private void MarkSupportedSubgrids()
+        {
+            Subgrids[0].Supported = true;
+
+            foreach (var _ in Subgrids)
+            {
+                var modified = 0;
+
+                foreach (var subgrid in Subgrids)
+                {
+                    if(!subgrid.Supported)
+                        continue;
+
+                    foreach (var baseConnection in subgrid.BaseConnections.Values)
+                    {
+                        var topSubgrid = Subgrids[baseConnection.TopLocation.GridIndex];
+                        if(topSubgrid.Supported)
+                            continue;
+
+                        topSubgrid.Supported = true;
+                        modified++;
+                        break;
+                    }
+
+                    foreach (var topConnection in subgrid.TopConnections.Values)
+                    {
+                        var baseSubgrid = Subgrids[topConnection.BaseLocation.GridIndex];
+                        if(baseSubgrid.Supported)
+                            continue;
+
+                        baseSubgrid.Supported = true;
+                        modified++;
+                        break;
+                    }
+                }
+
+                if(modified == 0)
+                    break;
+            }
         }
 
         private void CreateUpdateWork()
@@ -1249,49 +1291,45 @@ namespace MultigridProjector.Logic
 
             // Flood fill along the connected mechanical connections
             Subgrids[0].IsConnectedToProjector = true;
-            for (var connected = 1; connected < Subgrids.Count;)
+            for (var connectedSubgrids = 1; connectedSubgrids < Subgrids.Count;)
             {
-                var modified = 0;
+                var connectedBefore = connectedSubgrids;
+
                 foreach (var subgrid in Subgrids)
                 {
-                    if (subgrid.IsConnectedToProjector || !subgrid.HasBuilt)
+                    if (!subgrid.IsConnectedToProjector || !subgrid.HasBuilt)
                         continue;
 
                     foreach (var baseConnection in subgrid.BaseConnections.Values)
                     {
                         var topConnection = GetCounterparty(baseConnection, out var topSubgrid);
+                        if (topSubgrid.IsConnectedToProjector)
+                            continue;
+
                         if (!IsConnected(baseConnection, topConnection))
                             continue;
 
-                        if (!topSubgrid.IsConnectedToProjector)
-                            continue;
-
-                        subgrid.IsConnectedToProjector = true;
-                        modified += 1;
-                        connected += 1;
+                        topSubgrid.IsConnectedToProjector = true;
+                        connectedSubgrids += 1;
                         break;
                     }
-
-                    if (subgrid.IsConnectedToProjector)
-                        continue;
 
                     foreach (var topConnection in subgrid.TopConnections.Values)
                     {
                         var baseConnection = GetCounterparty(topConnection, out var baseSubgrid);
+                        if (baseSubgrid.IsConnectedToProjector)
+                            continue;
+
                         if (!IsConnected(baseConnection, topConnection))
                             continue;
 
-                        if (!baseSubgrid.IsConnectedToProjector)
-                            continue;
-
-                        subgrid.IsConnectedToProjector = true;
-                        modified += 1;
-                        connected += 1;
+                        baseSubgrid.IsConnectedToProjector = true;
+                        connectedSubgrids += 1;
                         break;
                     }
                 }
 
-                if (modified == 0)
+                if (connectedSubgrids == connectedBefore)
                     break;
             }
         }
