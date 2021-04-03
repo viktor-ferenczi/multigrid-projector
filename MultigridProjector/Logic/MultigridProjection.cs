@@ -84,6 +84,9 @@ namespace MultigridProjector.Logic
         private long _scanIndex;
         public bool HasScanned => _scanIndex > 0;
 
+        // Requests a remap operation on building the next functional (non-armor) block
+        private bool _requestRemap;
+
         // Controls when the plugin and Mod API can access projector information already
         public bool IsValidForApi => Initialized && HasScanned;
 
@@ -423,9 +426,11 @@ namespace MultigridProjector.Logic
             Clipboard.HasPreviewBBox = false;
 
             UpdateMechanicalConnections();
-
             AggregateStatistics();
             UpdateProjectorStats();
+
+            if (Sync.IsServer && _stats.BuiltOnlyArmorBlocks)
+                _requestRemap = true;
 
             if (!Sync.IsDedicated)
             {
@@ -871,6 +876,16 @@ namespace MultigridProjector.Logic
             // FIXME: Potential optimization opportunity on the non-projecting grids
 
             var previewFatBlock = previewBlock.FatBlock;
+
+            // Allow rebuilding the blueprint without EntityId collisions without power-cycling the projector,
+            // relies on the detection of cutting down the built grids by the lack of functional blocks, see
+            // where _requestRemap is set to true
+            if (_requestRemap && previewFatBlock != null)
+            {
+                _requestRemap = false;
+                PluginLog.Info($"Remapping blueprint loaded into projector {Projector.CustomName} [{Projector.EntityId}] in preparation for building it again (this is NOT an error)");
+                MyEntities.RemapObjectBuilderCollection(GridBuilders);
+            }
 
             var previewMin = previewFatBlock?.Min ?? previewBlock.Position;
             var previewMax = previewFatBlock?.Max ?? previewBlock.Position;

@@ -11,18 +11,23 @@ namespace MultigridProjector.Logic
     {
         public int TotalBlocks;
         public int RemainingBlocks;
+        public int BuiltArmorBlocks;
         public int RemainingArmorBlocks;
         public int BuildableBlocks;
 
         public readonly Dictionary<MyCubeBlockDefinition, int> RemainingBlocksPerType = new Dictionary<MyCubeBlockDefinition, int>();
 
-        public bool IsBuildCompleted => TotalBlocks > 0 && RemainingBlocks == 0;
+        public bool Valid => TotalBlocks > 0;
+        public bool IsBuildCompleted => Valid && RemainingBlocks == 0;
+        public int BuiltBlocks => TotalBlocks - RemainingBlocks;
+        public bool BuiltOnlyArmorBlocks => Valid && BuiltBlocks == BuiltArmorBlocks;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()
         {
             TotalBlocks = 0;
             RemainingBlocks = 0;
+            BuiltArmorBlocks = 0;
             RemainingArmorBlocks = 0;
             BuildableBlocks = 0;
 
@@ -33,7 +38,11 @@ namespace MultigridProjector.Logic
         public void RegisterBlock(MySlimBlock slimBlock, BlockState blockState)
         {
             if (blockState == BlockState.FullyBuilt)
+            {
+                if (slimBlock.FatBlock == null)
+                    BuiltArmorBlocks++;
                 return;
+            }
 
             RemainingBlocks++;
 
@@ -53,6 +62,7 @@ namespace MultigridProjector.Logic
         {
             TotalBlocks += other.TotalBlocks;
             RemainingBlocks += other.RemainingBlocks;
+            BuiltArmorBlocks += other.BuiltArmorBlocks;
             RemainingArmorBlocks += other.RemainingArmorBlocks;
             BuildableBlocks += other.BuildableBlocks;
 
