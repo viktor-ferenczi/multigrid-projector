@@ -1,5 +1,5 @@
+using System.Linq;
 using System.Runtime.CompilerServices;
-using Sandbox.Common.ObjectBuilders;
 using VRage.Game;
 
 namespace MultigridProjector.Extensions
@@ -22,15 +22,32 @@ namespace MultigridProjector.Extensions
             blockBuilder.Owner = 0L;
             blockBuilder.ShareMode = MyOwnershipShareModeEnum.None;
 
-            // We need to keep the EntityId to map mechanical connections
-            // blockBuilder.EntityId = 0L;
+            // We need to keep the EntityId value to map mechanical connections.
+            // Initial remapping and BuildInternal both avoid EntityID collisions.
 
-            // We do not turn off functional blocks, so they can start working right after being welded
-            // if (blockBuilder is MyObjectBuilder_FunctionalBlock functionalBlockBuilder)
-            //     functionalBlockBuilder.Enabled = false;
+            if(blockBuilder is MyObjectBuilder_ProjectorBase projectorBuilder)
+                RemoveBlueprintFromSelfRepairProjector(projectorBuilder);
+        }
 
-            // FIXME: Remove nested projections above a certain depth (like 2). Useful for repair projectors, prevents DoS attack on servers.
-            // FIXME: Consider disabling auto-lock on landing legs, would be useful for printer walls. Make it configurable.
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void RemoveBlueprintFromSelfRepairProjector(MyObjectBuilder_ProjectorBase projectorBuilder)
+        {
+            var firstGridBuilder = projectorBuilder.ProjectedGrids?.FirstOrDefault();
+            if (firstGridBuilder == null)
+                return;
+
+            foreach (var projectedProjectorBuilder in firstGridBuilder.CubeBlocks.OfType<MyObjectBuilder_ProjectorBase>())
+            {
+                // Projection of the repair projector itself?
+                if (projectedProjectorBuilder.SubtypeId != projectorBuilder.SubtypeId ||
+                    projectedProjectorBuilder.CustomName != projectorBuilder.CustomName)
+                    continue;
+
+                // Clear out the nested self-repair projection
+                projectorBuilder.ProjectedGrid = null;
+                projectorBuilder.ProjectedGrids = null;
+                break;
+            }
         }
     }
 }

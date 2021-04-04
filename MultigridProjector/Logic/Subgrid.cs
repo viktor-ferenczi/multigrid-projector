@@ -54,7 +54,7 @@ namespace MultigridProjector.Logic
         private bool _hidden;
 
         // Projected and built block states, built block changes are detected by the background worker, visuals are updated by the main thread
-        private readonly Dictionary<Vector3I, ProjectedBlock> _blocks;
+        private Dictionary<Vector3I, ProjectedBlock> _blocks;
 
         #region Initialization and disposal
 
@@ -65,6 +65,21 @@ namespace MultigridProjector.Logic
             GridBuilder = projection.GridBuilders[index];
             PreviewGrid = projection.PreviewGrids[index];
 
+            DisableFunctionalBlocks();
+            CreateBlockModels();
+
+            CreateMechanicalConnections(projection);
+        }
+
+        private void DisableFunctionalBlocks()
+        {
+            // Disable all functional blocks in the preview to avoid side effects, prevents ghost subgrids from projectors
+            foreach (var functionalBlock in PreviewGrid.GetFatBlocks<MyFunctionalBlock>())
+                functionalBlock.Enabled = false;
+        }
+
+        private void CreateBlockModels()
+        {
             var blockBuilders = GridBuilder
                 .CubeBlocks
                 .ToDictionary(bb => new Vector3I(bb.Min.X, bb.Min.Y, bb.Min.Z));
@@ -73,8 +88,6 @@ namespace MultigridProjector.Logic
                 .ToDictionary(
                     previewBlock => previewBlock.Position,
                     previewBlock => new ProjectedBlock(previewBlock, blockBuilders[previewBlock.Min]));
-
-            CreateMechanicalConnections(projection);
         }
 
         public void Dispose()
