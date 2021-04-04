@@ -885,21 +885,16 @@ namespace MultigridProjector.Logic
         }
 
         [ServerOnly]
-        public void BuildInternal(Vector3I previewCubeBlockPosition, long owner, long builder, bool requestInstant, long subgridIndex)
+        public void BuildInternal(Vector3I previewCubeBlockPosition, long owner, long builder, bool requestInstant, long builtBy)
         {
             if (!Initialized || Projector.Closed || Subgrids.Count == 0)
                 return;
 
-            // Negative values are reserved, ignore them
-            if (subgridIndex < 0)
-                return;
-
             // Allow welding only on the first subgrid if the client does not have the MGP plugin installed or an MGP unaware mod sends in a request
-            if (subgridIndex >= Subgrids.Count)
-                subgridIndex = 0;
+            var subgridIndex = builtBy >= 0 && builtBy < GridCount ? (int) builtBy : 0;
 
             // Find the subgrid to build on
-            var subgrid = Subgrids[(int) subgridIndex];
+            var subgrid = Subgrids[subgridIndex];
             var previewGrid = subgrid.PreviewGrid;
             if (previewGrid == null)
                 return;
@@ -927,7 +922,7 @@ namespace MultigridProjector.Logic
             if (previewBlock == null || !Projector.AllowWelding || !MySession.Static.GetComponent<MySessionComponentDLC>().HasDefinitionDLC(previewBlock.BlockDefinition, steamId))
             {
                 var myMultiplayerServerBase = MyMultiplayer.Static as MyMultiplayerServerBase;
-                myMultiplayerServerBase?.ValidationFailed(MyEventContext.Current.Sender.Value, false);
+                myMultiplayerServerBase?.ValidationFailed(MyEventContext.Current.Sender.Value, false, stackTrace: false, additionalInfo: $"MultigridProjection.BuildInternal: previewCubeBlockPosition={previewCubeBlockPosition}; owner={owner}; builder={builder}; requestInstant={requestInstant}; builtBy={builtBy}; subgridIndex={subgridIndex}; previewBlock={previewBlock}; Projector.AllowWelding={Projector.AllowWelding}");
                 return;
             }
 
