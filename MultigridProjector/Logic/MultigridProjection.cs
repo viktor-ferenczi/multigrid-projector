@@ -84,6 +84,9 @@ namespace MultigridProjector.Logic
         private long _scanIndex;
         public bool HasScanned => _scanIndex > 0;
 
+        // Requests a remap operation on building the next functional (non-armor) block
+        private bool _requestRemap;
+
         // Controls when the plugin and Mod API can access projector information already
         public bool IsValidForApi => Initialized && HasScanned;
 
@@ -128,6 +131,7 @@ namespace MultigridProjector.Logic
             MapBlueprintBlocks();
             MapPreviewBlocks();
             CreateSubgrids();
+            MarkSupportedSubgrids();
             CreateUpdateWork();
 
             Projector.PropertiesChanged += OnPropertiesChanged;
@@ -222,6 +226,47 @@ namespace MultigridProjector.Logic
                 Subgrids.Add(new Subgrid(this, gridIndex));
 
             Subgrids[0].RegisterBuiltGrid(Projector.CubeGrid);
+        }
+
+        private void MarkSupportedSubgrids()
+        {
+            Subgrids[0].Supported = true;
+
+            foreach (var _ in Subgrids)
+            {
+                var modified = 0;
+
+                foreach (var subgrid in Subgrids)
+                {
+                    if(!subgrid.Supported)
+                        continue;
+
+                    foreach (var baseConnection in subgrid.BaseConnections.Values)
+                    {
+                        var topSubgrid = Subgrids[baseConnection.TopLocation.GridIndex];
+                        if(topSubgrid.Supported)
+                            continue;
+
+                        topSubgrid.Supported = true;
+                        modified++;
+                        break;
+                    }
+
+                    foreach (var topConnection in subgrid.TopConnections.Values)
+                    {
+                        var baseSubgrid = Subgrids[topConnection.BaseLocation.GridIndex];
+                        if(baseSubgrid.Supported)
+                            continue;
+
+                        baseSubgrid.Supported = true;
+                        modified++;
+                        break;
+                    }
+                }
+
+                if(modified == 0)
+                    break;
+            }
         }
 
         private void CreateUpdateWork()
@@ -347,30 +392,18 @@ namespace MultigridProjector.Logic
                 subgrid.HidePreviewGrid(Projector);
         }
 
-        [ClientOnly]
-        public void OnOffsetsChanged()
-        {
-            if (Projector.ProjectionOffset == _projectionOffset &&
-                Projector.ProjectionRotation == _projectionRotation)
-                return;
-
-            _projectionOffset = Projector.ProjectionOffset;
-            _projectionRotation = Projector.ProjectionRotation;
-
-            RescanFullProjection();
-        }
-
         [Everywhere]
         private void OnPropertiesChanged(MyTerminalBlock obj)
         {
             if (Projector.Closed || !Initialized)
                 return;
 
-            HandleKeepProjectionChange();
-            HandleShowOnlyBuildableChange();
+            DetectKeepProjectionChange();
+            DetectShowOnlyBuildableChange();
+            DetectOffsetRotationChange();
         }
 
-        private void HandleKeepProjectionChange()
+        private void DetectKeepProjectionChange()
         {
             var keepProjection = Projector.GetKeepProjection();
             if (_keepProjection == keepProjection) return;
@@ -381,13 +414,25 @@ namespace MultigridProjector.Logic
                 Projector.RequestRemoveProjection();
         }
 
-        private void HandleShowOnlyBuildableChange()
+        private void DetectShowOnlyBuildableChange()
         {
             var showOnlyBuildable = Projector.GetShowOnlyBuildable();
             if (_showOnlyBuildable == showOnlyBuildable) return;
             _showOnlyBuildable = showOnlyBuildable;
 
             UpdatePreviewBlockVisuals();
+        }
+
+        private void DetectOffsetRotationChange()
+        {
+            if (Projector.ProjectionOffset == _projectionOffset &&
+                Projector.ProjectionRotation == _projectionRotation)
+                return;
+
+            _projectionOffset = Projector.ProjectionOffset;
+            _projectionRotation = Projector.ProjectionRotation;
+
+            RescanFullProjection();
         }
 
         [Everywhere]
@@ -423,9 +468,11 @@ namespace MultigridProjector.Logic
             Clipboard.HasPreviewBBox = false;
 
             UpdateMechanicalConnections();
-
             AggregateStatistics();
             UpdateProjectorStats();
+
+            if (Sync.IsServer && _stats.BuiltOnlyArmorBlocks)
+                _requestRemap = true;
 
             if (!Sync.IsDedicated)
             {
@@ -566,7 +613,7 @@ namespace MultigridProjector.Logic
             Projector.SetShouldUpdateTexts(true);
         }
 
-        public void ForceUpdateProjection()
+        private void ForceUpdateProjection()
         {
             Projector.SetForceUpdateProjection(true);
             Projector.SetShouldUpdateTexts(true);
@@ -576,6 +623,8 @@ namespace MultigridProjector.Logic
         {
             if (!Initialized || Projector.Closed || Subgrids.Count < 1)
                 return;
+
+            _stats.Clear();
 
             foreach (var subgrid in Subgrids)
             {
@@ -849,6 +898,7 @@ namespace MultigridProjector.Logic
             {
                 builtGrid = subgrid.BuiltGrid;
             }
+
             if (builtGrid == null)
                 return;
 
@@ -871,6 +921,16 @@ namespace MultigridProjector.Logic
             // FIXME: Potential optimization opportunity on the non-projecting grids
 
             var previewFatBlock = previewBlock.FatBlock;
+
+            // Allow rebuilding the blueprint without EntityId collisions without power-cycling the projector,
+            // relies on the detection of cutting down the built grids by the lack of functional blocks, see
+            // where _requestRemap is set to true
+            if (_requestRemap && previewFatBlock != null)
+            {
+                _requestRemap = false;
+                PluginLog.Debug($"Remapping blueprint loaded into projector {Projector.CustomName} [{Projector.EntityId}] in preparation for building it again");
+                MyEntities.RemapObjectBuilderCollection(GridBuilders);
+            }
 
             var previewMin = previewFatBlock?.Min ?? previewBlock.Position;
             var previewMax = previewFatBlock?.Max ?? previewBlock.Position;
@@ -1231,49 +1291,45 @@ namespace MultigridProjector.Logic
 
             // Flood fill along the connected mechanical connections
             Subgrids[0].IsConnectedToProjector = true;
-            for (var connected = 1; connected < Subgrids.Count;)
+            for (var connectedSubgrids = 1; connectedSubgrids < Subgrids.Count;)
             {
-                var modified = 0;
+                var connectedBefore = connectedSubgrids;
+
                 foreach (var subgrid in Subgrids)
                 {
-                    if (subgrid.IsConnectedToProjector || !subgrid.HasBuilt)
+                    if (!subgrid.IsConnectedToProjector || !subgrid.HasBuilt)
                         continue;
 
                     foreach (var baseConnection in subgrid.BaseConnections.Values)
                     {
                         var topConnection = GetCounterparty(baseConnection, out var topSubgrid);
+                        if (topSubgrid.IsConnectedToProjector)
+                            continue;
+
                         if (!IsConnected(baseConnection, topConnection))
                             continue;
 
-                        if (!topSubgrid.IsConnectedToProjector)
-                            continue;
-
-                        subgrid.IsConnectedToProjector = true;
-                        modified += 1;
-                        connected += 1;
+                        topSubgrid.IsConnectedToProjector = true;
+                        connectedSubgrids += 1;
                         break;
                     }
-
-                    if (subgrid.IsConnectedToProjector)
-                        continue;
 
                     foreach (var topConnection in subgrid.TopConnections.Values)
                     {
                         var baseConnection = GetCounterparty(topConnection, out var baseSubgrid);
+                        if (baseSubgrid.IsConnectedToProjector)
+                            continue;
+
                         if (!IsConnected(baseConnection, topConnection))
                             continue;
 
-                        if (!baseSubgrid.IsConnectedToProjector)
-                            continue;
-
-                        subgrid.IsConnectedToProjector = true;
-                        modified += 1;
-                        connected += 1;
+                        baseSubgrid.IsConnectedToProjector = true;
+                        connectedSubgrids += 1;
                         break;
                     }
                 }
 
-                if (modified == 0)
+                if (connectedSubgrids == connectedBefore)
                     break;
             }
         }
@@ -1304,6 +1360,12 @@ namespace MultigridProjector.Logic
             if (projector.CubeGrid == null || !projector.AllowWelding)
                 return;
 
+            // Projected projector?
+            // Prevents ghost subgrids in case of blueprints with nested projections.
+            // NOTE: projector.CubeGrid.IsPreview is still false, so don't depend on that!
+            if (projector.Physics == null)
+                return;
+
             if (!(objectBuilder is MyObjectBuilder_ProjectorBase projectorBuilder))
                 return;
 
@@ -1315,7 +1377,7 @@ namespace MultigridProjector.Logic
         }
 
         [ClientOnly]
-        public static bool ProjectorLoadBlueprint(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
+        public static bool InitFromObjectBuilder(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
         {
             if (gridBuilders == null)
                 return true;
@@ -1357,7 +1419,7 @@ namespace MultigridProjector.Logic
             }
 
             // Prevent re-initializing an existing multigrid projection
-            if (MultigridProjection.TryFindProjectionByProjector(projector, out _))
+            if (TryFindProjectionByProjector(projector, out _))
                 return false;
 
             // Ensure compatible grid size between the projector and the first subgrid to be built

@@ -39,6 +39,14 @@ namespace MultigridProjector.Logic
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public void Clear()
+        {
+            SlimBlock = null;
+            State = BlockState.Unknown;
+            BuiltPosition = Vector3I.MinValue;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void DetectBlock(MyProjectorBase projector, MyCubeGrid builtGrid)
         {
             if (builtGrid == null)

@@ -100,7 +100,6 @@
         <Compile Include="Patches\MyProjectorBase_InitializeClipboard.cs" />
         <Compile Include="Patches\MyProjectorBase_OnBlockAdded.cs" />
         <Compile Include="Patches\MyProjectorBase_OnBlockRemoved.cs" />
-        <Compile Include="Patches\MyProjectorBase_OnOffsetsChanged.cs" />
         <Compile Include="Patches\MyProjectorBase_Remap.cs" />
         <Compile Include="Patches\MyProjectorBase_RemoveProjection.cs" />
         <Compile Include="Patches\MyProjectorBase_UpdateAfterSimulation.cs" />
