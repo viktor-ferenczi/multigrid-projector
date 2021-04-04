@@ -26,27 +26,26 @@ namespace MultigridProjector.Extensions
             // Initial remapping and BuildInternal both avoid EntityID collisions.
 
             if(blockBuilder is MyObjectBuilder_ProjectorBase projectorBuilder)
-                RemoveBlueprintFromSelfRepairProjector(projectorBuilder);
+                RemoveNestedRepairBlueprints(projectorBuilder);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void RemoveBlueprintFromSelfRepairProjector(MyObjectBuilder_ProjectorBase projectorBuilder)
+        private static void RemoveNestedRepairBlueprints(MyObjectBuilder_ProjectorBase projectorBuilder)
         {
             var firstGridBuilder = projectorBuilder.ProjectedGrids?.FirstOrDefault();
             if (firstGridBuilder == null)
                 return;
 
-            foreach (var projectedProjectorBuilder in firstGridBuilder.CubeBlocks.OfType<MyObjectBuilder_ProjectorBase>())
+            foreach (var nestedProjectorBuilder in firstGridBuilder.CubeBlocks.OfType<MyObjectBuilder_ProjectorBase>())
             {
-                // Projection of the repair projector itself?
-                if (projectedProjectorBuilder.SubtypeId != projectorBuilder.SubtypeId ||
-                    projectedProjectorBuilder.CustomName != projectorBuilder.CustomName)
+                // Repair projector?
+                if (nestedProjectorBuilder.SubtypeId != projectorBuilder.SubtypeId ||
+                    nestedProjectorBuilder.CustomName != projectorBuilder.CustomName)
                     continue;
 
-                // Clear out the nested self-repair projection
-                projectorBuilder.ProjectedGrid = null;
-                projectorBuilder.ProjectedGrids = null;
-                break;
+                // Clear out the nested blueprint
+                nestedProjectorBuilder.ProjectedGrid = null;
+                nestedProjectorBuilder.ProjectedGrids = null;
             }
         }
     }
