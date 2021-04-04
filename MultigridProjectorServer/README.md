@@ -1,5 +1,3 @@
-# Multigrid Projector
-
 Server side companion for the [Multigrid Projector](https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416) client plugin.
 
 Allows for projecting and welding blueprints of multiple subgrids.
@@ -19,6 +17,7 @@ Enjoy!
 - [Patreon](https://www.patreon.com/semods)
 - [Test world](https://steamcommunity.com/sharedfiles/filedetails/?id=2420963329)
 - [Source code](https://github.com/viktor-ferenczi/multigrid-projector)
+- [Mod API Test](https://steamcommunity.com/sharedfiles/filedetails/?id=2433810091)
 - [Bug reports](https://discord.gg/x3Z8Ug5YkQ)
 
 Please [support me on Patreon](https://www.patreon.com/semods) if you would like to receive regular updates to this plugin as new game versions are released.

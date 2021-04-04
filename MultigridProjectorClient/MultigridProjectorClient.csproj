@@ -110,6 +110,7 @@
         <Compile Include="Patches\MyWelder_FindProjectedBlock.cs" />
         <Compile Include="PluginLogger.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Content Include="steam_description.txt" />
     </ItemGroup>
     <ItemGroup>
       <Content Include="deploy_debug.bat" />
