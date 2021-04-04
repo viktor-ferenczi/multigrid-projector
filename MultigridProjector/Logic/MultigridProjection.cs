@@ -37,7 +37,7 @@ namespace MultigridProjector.Logic
     public class MultigridProjection
     {
         public static readonly RwLockDictionary<long, MultigridProjection> Projections = new RwLockDictionary<long, MultigridProjection>();
-        public static readonly HashSet<long> ProjectorsWithBlueprintLoadedByHand = new HashSet<long>();
+        public static readonly HashSet<long> ProjectorsWithBlueprintLoaded = new HashSet<long>();
 
         public readonly MyProjectorBase Projector;
         public readonly MyProjectorClipboard Clipboard;
@@ -279,10 +279,10 @@ namespace MultigridProjector.Logic
 
         private void AutoAlignBlueprint()
         {
-            if (!ProjectorsWithBlueprintLoadedByHand.Contains(Projector.EntityId))
+            if (!ProjectorsWithBlueprintLoaded.Contains(Projector.EntityId))
                 return;
 
-            ProjectorsWithBlueprintLoadedByHand.Remove(Projector.EntityId);
+            ProjectorsWithBlueprintLoaded.Remove(Projector.EntityId);
 
             if(Projector.AlignToRepairProjector(PreviewGrids[0]))
                 MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", $"Aligned repair projection: {Projector.CustomName}");
@@ -1439,6 +1439,9 @@ namespace MultigridProjector.Logic
             var compatibleGridSize = gridBuilders[0].GridSizeEnum == projector.CubeGrid.GridSizeEnum;
             if (!compatibleGridSize)
                 return true;
+
+            // Sign up for repair projection auto alignment
+            ProjectorsWithBlueprintLoaded.Add(projector.EntityId);
 
             // Prepare the blueprint for being projected for welding
             gridBuilders.PrepareForProjection();
