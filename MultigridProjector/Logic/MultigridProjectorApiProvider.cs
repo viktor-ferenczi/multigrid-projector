@@ -90,6 +90,22 @@ namespace MultigridProjector.Logic
                 .ToDictionary(pair => pair.Key, pair => pair.Value.BaseLocation);
         }
 
+        public long GetScanNumber(long projectorId)
+        {
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.IsValidForApi)
+                return 0;
+
+            return projection.ScanNumber;
+        }
+
+        public string GetYaml(long projectorId)
+        {
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.IsValidForApi)
+                return "";
+
+            return projection.GetYaml();
+        }
+
         #endregion
 
         #region ModApi
@@ -111,6 +127,8 @@ namespace MultigridProjector.Logic
             (Func<Dictionary<Vector3I, int>, long, int, BoundingBoxI, int, bool>) ModApiGetBlockStates,
             (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) ModApiGetBaseConnections,
             (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) ModApiGetTopConnections,
+            (Func<long, long>) Api.GetScanNumber,
+            (Func<long, string>) Api.GetYaml,
         });
 
         private static int ModApiGetBlockState(long projectorId, int subgridIndex, Vector3I position) => (int) Api.GetBlockState(projectorId, subgridIndex, position);

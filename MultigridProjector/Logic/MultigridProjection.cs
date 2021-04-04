@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Text;
 using HarmonyLib;
 using MultigridProjector.Utilities;
 using MultigridProjector.Extensions;
@@ -81,9 +82,12 @@ namespace MultigridProjector.Logic
         private Vector3I _projectionOffset;
         private Vector3I _projectionRotation;
 
-        // Scan index, increased every time the preview grids are successfully scanned for block changes
-        private long _scanIndex;
-        public bool HasScanned => _scanIndex > 0;
+        // Scan sequence number, increased every time the preview grids are successfully scanned for block changes
+        public long ScanNumber;
+        public bool HasScanned => ScanNumber > 0;
+
+        // YAML generated from the current state, cleared when the scan number changes
+        private volatile string _yaml;
 
         // Requests a remap operation on building the next functional (non-armor) block
         private bool _requestRemap;
@@ -468,9 +472,10 @@ namespace MultigridProjector.Logic
             if (Projector.Closed || !Initialized)
                 return;
 
-            _scanIndex++;
+            ScanNumber++;
+            _yaml = null;
 
-            PluginLog.Debug($"{Projector.CustomName} [{Projector.EntityId}] scan #{_scanIndex}");
+            PluginLog.Debug($"{Projector.GetDebugName()} scan #{ScanNumber}");
 
             Projector.SetLastUpdate(MySandboxGame.TotalGamePlayTimeInMilliseconds);
 
@@ -504,6 +509,59 @@ namespace MultigridProjector.Logic
 
             if (!_keepProjection && IsBuildCompleted)
                 Projector.RequestRemoveProjection();
+        }
+
+        public string GetYaml()
+        {
+            if (!HasScanned)
+                return "";
+
+            var yaml = _yaml;
+            if (yaml != null)
+                return yaml;
+
+            var sb = new StringBuilder();
+            sb.AppendLine($"ProjectorEntityId: {Projector.EntityId}");
+            sb.AppendLine($"ProjectorName: {Projector.GetSafeName()}");
+            sb.AppendLine($"ScanNumber: {ScanNumber}");
+            sb.AppendLine($"SubgridCount: {Subgrids.Count}");
+            sb.AppendLine($"Subgrids:");
+            foreach (var subgrid in Subgrids)
+            {
+                if(!subgrid.Supported)
+                    continue;
+
+                sb.AppendLine($"  Index: {subgrid.Index}");
+                sb.AppendLine($"  GridSize: {subgrid.PreviewGrid.GridSize}");
+                sb.AppendLine($"  GridSizeEnum: {subgrid.PreviewGrid.GridSizeEnum}");
+                sb.AppendLine($"  HasBuilt: {subgrid.HasBuilt}");
+                sb.AppendLine($"  BuiltGridEntityId: {(subgrid.HasBuilt ? subgrid.BuiltGrid.EntityId : 0)}");
+                sb.AppendLine($"  PreviewGridEntityId: {subgrid.PreviewGrid.EntityId}");
+                sb.AppendLine($"  BlockCount: {subgrid.Blocks.Count}");
+                sb.AppendLine($"  Blocks:");
+                foreach (var (position, block) in subgrid.Blocks)
+                {
+                    sb.AppendLine($"    - Block: {block.SlimBlock?.FatBlock?.EntityId ?? 0}");
+                    sb.AppendLine($"      State: {block.State}");
+                    sb.AppendLine($"      Position: [{position.FormatYaml()}]");
+                    if (subgrid.BaseConnections.TryGetValue(position, out var baseConnection))
+                    {
+                        sb.AppendLine($"      TopSubgrid: {baseConnection.TopLocation.GridIndex}");
+                        sb.AppendLine($"      TopPosition: {baseConnection.TopLocation.Position}");
+                        sb.AppendLine($"      IsConnected: {IsConnected(baseConnection)}");
+                    }
+                    else if (subgrid.TopConnections.TryGetValue(position, out var topConnection))
+                    {
+                        sb.AppendLine($"      BaseSubgrid: {topConnection.BaseLocation.GridIndex}");
+                        sb.AppendLine($"      BasePosition: {topConnection.BaseLocation.Position}");
+                        sb.AppendLine($"      IsConnected: {IsConnected(topConnection)}");
+                    }
+                }
+            }
+
+            yaml = sb.ToString();
+            _yaml = yaml;
+            return _yaml;
         }
 
         private void AggregateStatistics()

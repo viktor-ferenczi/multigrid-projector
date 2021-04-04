@@ -32,6 +32,8 @@ namespace MultigridProjector.Api
         private readonly MethodInfo _miGetBlockStates;
         private readonly MethodInfo _miGetBaseConnections;
         private readonly MethodInfo _miGetTopConnections;
+        private readonly MethodInfo _miGetScanNumber;
+        private readonly MethodInfo _miGetYaml;
 
         public MultigridProjectorTorchAgent(ITorchSession torchSession)
         {
@@ -56,6 +58,8 @@ namespace MultigridProjector.Api
             _miGetBlockStates = apiType.GetMethod("GetBlockStates", BindingFlags.Instance | BindingFlags.Public);
             _miGetBaseConnections = apiType.GetMethod("GetBaseConnections", BindingFlags.Instance | BindingFlags.Public);
             _miGetTopConnections = apiType.GetMethod("GetTopConnections", BindingFlags.Instance | BindingFlags.Public);
+            _miGetScanNumber = apiType.GetMethod("GetScanNumber", BindingFlags.Instance | BindingFlags.Public);
+            _miGetYaml = apiType.GetMethod("GetYaml", BindingFlags.Instance | BindingFlags.Public);
 
             Plugin = plugin;
         }
@@ -98,6 +102,16 @@ namespace MultigridProjector.Api
         public Dictionary<Vector3I, BlockLocation> GetTopConnections(long projectorId, int subgridIndex)
         {
             return (Dictionary<Vector3I, BlockLocation>) _miGetTopConnections?.Invoke(Api, new object[] {projectorId, subgridIndex});
+        }
+
+        public long GetScanNumber(long projectorId)
+        {
+            return (long) (_miGetScanNumber?.Invoke(Api, new object[] {projectorId}) ?? 0);
+        }
+
+        public string GetYaml(long projectorId)
+        {
+            return (string) (_miGetYaml?.Invoke(Api, new object[] {projectorId}) ?? "");
         }
     }
 }
