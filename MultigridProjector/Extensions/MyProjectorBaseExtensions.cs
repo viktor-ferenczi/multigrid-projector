@@ -2,14 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using Entities.Blocks;
 using HarmonyLib;
+using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
-using Sandbox.Graphics.GUI;
-using VRage;
 using VRage.Game;
 using VRage.Sync;
 using VRageMath;
@@ -271,7 +269,7 @@ namespace MultigridProjector.Extensions
         {
             var projectorBuilder = gridBuilder
                 .CubeBlocks
-                .OfType<MyObjectBuilder_ProjectorBase>()
+                .OfType<MyObjectBuilder_Projector>()
                 .FirstOrDefault(b =>
                     b.SubtypeId == projector.BlockDefinition.Id.SubtypeId &&
                     (b.CustomName ?? b.Name) == projector.GetSafeName());
@@ -282,11 +280,14 @@ namespace MultigridProjector.Extensions
             if (gridBuilder.PositionAndOrientation == null)
                 return false;
 
-            var position = projector.Position;
-            projector.SetProjectionOffset(new Vector3I(position.X, position.Y, position.Z));
-
             projector.Orientation.GetQuaternion(out var q);
-            projector.SetProjectionRotation(new Vector3I(Vector3.Round(2 * Quaternion.Inverse(q).ToRollPitchYaw() / Math.PI)));
+            q = Quaternion.Inverse(q);
+            projector.SetProjectionRotation(new Vector3I(Vector3.Round(q.ToRollPitchYaw() / (0.5f * Math.PI))));
+
+            var root = projector.CubeGrid.GetFirstBlockOfType<MyCubeBlock>();
+            var offset = projector.Position - root.Position;
+            var rotatedOffset = new Vector3I(Vector3.Round(q * offset));
+            projector.SetProjectionOffset(rotatedOffset);
 
             return true;
         }
