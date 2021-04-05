@@ -279,7 +279,7 @@ namespace MultigridProjector.Logic
 
         private void AutoAlignBlueprint()
         {
-            if (!Sync.IsServer)
+            if (Sync.IsServer)
                 return;
 
             if (!ProjectorsWithBlueprintLoaded.Contains(Projector.EntityId))

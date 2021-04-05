@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -323,21 +322,21 @@ namespace MultigridProjector.Extensions
             if (projectorBuilder == null)
                 return false;
 
-            projector.Orientation.GetQuaternion(out var q);
-            var w = Quaternion.Inverse(q);
-            if (!OrientationAlgebra.ProjectionRotationFromForwardAndUp(Base6Directions.GetDirection(w.Forward), Base6Directions.GetDirection(w.Up), out var projectionRotation))
+            projector.Orientation.GetQuaternion(out var gridToProjectorQuaternion);
+            var projectorToGridQuaternion = Quaternion.Inverse(gridToProjectorQuaternion);
+            if (!OrientationAlgebra.ProjectionRotationFromForwardAndUp(Base6Directions.GetDirection(projectorToGridQuaternion.Forward), Base6Directions.GetDirection(projectorToGridQuaternion.Up), out var projectionRotation))
                 return false;
 
-            var root = projector.CubeGrid.CubeBlocks.FirstOrDefault();
-            if (root == null)
+            var anchorBlock = projector.CubeGrid.CubeBlocks.FirstOrDefault();
+            if (anchorBlock == null)
                 return false;
 
-            var offset = projector.Position - root.Position;
-            var rotatedOffset = new Vector3I(Vector3.Round(w * offset));
-            rotatedOffset = Vector3I.Clamp(rotatedOffset, new Vector3I(-50), new Vector3I(50));
+            var offsetInsideGrid = projector.Position - anchorBlock.Position;
+            var projectionOffset = new Vector3I(Vector3.Round(projectorToGridQuaternion * offsetInsideGrid));
+            projectionOffset = Vector3I.Clamp(projectionOffset, new Vector3I(-50), new Vector3I(50));
 
+            projector.SetProjectionOffset(projectionOffset);
             projector.SetProjectionRotation(projectionRotation);
-            projector.SetProjectionOffset(rotatedOffset);
 
             return true;
         }
