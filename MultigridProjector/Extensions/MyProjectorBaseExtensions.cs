@@ -8,6 +8,7 @@ using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
+using Sandbox.ModAPI.Ingame;
 using VRage.Game;
 using VRage.Sync;
 using VRageMath;
@@ -260,21 +261,11 @@ namespace MultigridProjector.Extensions
             return (Vector3I) ProjectionRotationFieldInfo.GetValue(projector);
         }
 
-        public static void SetProjectionRotation(this MyProjectorBase projector, Vector3I rotation)
-        {
-            ProjectionRotationFieldInfo.SetValue(projector, rotation);
-        }
-
         private static readonly FieldInfo ProjectionOffsetFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_projectionOffset");
 
         public static Vector3I GetProjectionOffset(this MyProjectorBase projector)
         {
             return (Vector3I) ProjectionOffsetFieldInfo.GetValue(projector);
-        }
-
-        public static void SetProjectionOffset(this MyProjectorBase projector, Vector3I offset)
-        {
-            ProjectionOffsetFieldInfo.SetValue(projector, offset);
         }
 
         private static readonly PropertyInfo IsActivatingFieldInfo = AccessTools.Property(typeof(MyProjectorBase), "IsActivating");
@@ -335,9 +326,10 @@ namespace MultigridProjector.Extensions
             var projectionOffset = new Vector3I(Vector3.Round(projectorToGridQuaternion * offsetInsideGrid));
             projectionOffset = Vector3I.Clamp(projectionOffset, new Vector3I(-50), new Vector3I(50));
 
-            projector.SetProjectionRotation(projectionRotation);
-            projector.SetProjectionOffset(projectionOffset);
-            projector.RaisePropertiesChanged();
+            var p = (IMyProjector) projector;
+            p.ProjectionOffset = projectionOffset;
+            p.ProjectionRotation = projectionRotation;
+            p.UpdateOffsetAndRotation();
 
             return true;
         }
