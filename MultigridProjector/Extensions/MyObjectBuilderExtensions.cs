@@ -1,6 +1,5 @@
 using System.Linq;
 using System.Runtime.CompilerServices;
-using Sandbox.Common.ObjectBuilders;
 using VRage.Game;
 
 namespace MultigridProjector.Extensions
