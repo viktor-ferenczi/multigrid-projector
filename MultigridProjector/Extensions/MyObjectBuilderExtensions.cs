@@ -40,6 +40,7 @@ namespace MultigridProjector.Extensions
             {
                 // Repair projector?
                 if (nestedProjectorBuilder.SubtypeId != projectorBuilder.SubtypeId ||
+                    nestedProjectorBuilder.Name != projectorBuilder.Name ||
                     nestedProjectorBuilder.CustomName != projectorBuilder.CustomName)
                     continue;
 

@@ -1,6 +1,9 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using HarmonyLib;
+using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
@@ -219,6 +222,20 @@ namespace MultigridProjector.Extensions
         {
             return (Vector3I)ProjectionRotationFieldInfo.GetValue(projector);
         }
+        public static void SetProjectionRotation(this MyProjectorBase projector, Vector3I rotation)
+        {
+            ProjectionRotationFieldInfo.SetValue(projector, rotation);
+        }
+
+        private static readonly FieldInfo ProjectionOffsetFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_projectionOffset");
+        public static Vector3I GetProjectionOffset(this MyProjectorBase projector)
+        {
+            return (Vector3I)ProjectionOffsetFieldInfo.GetValue(projector);
+        }
+        public static void SetProjectionOffset(this MyProjectorBase projector, Vector3I offset)
+        {
+            ProjectionOffsetFieldInfo.SetValue(projector, offset);
+        }
 
         private static readonly PropertyInfo IsActivatingFieldInfo = AccessTools.Property(typeof(MyProjectorBase), "IsActivating");
         public static void SetIsActivating(this MyProjectorBase projector, bool value)
@@ -237,7 +254,7 @@ namespace MultigridProjector.Extensions
         {
             SetRotationMethodInfo.Invoke(projector, new object[]{ clipboard, rotation });
         }
-        
+
         public static void RemapObjectBuilders(this MyProjectorBase projector)
         {
             var gridBuilders = projector.GetOriginalGridBuilders();
@@ -246,6 +263,33 @@ namespace MultigridProjector.Extensions
 
             // Consistent remapping of all grids to keep sub-grid relations intact
             MyEntities.RemapObjectBuilderCollection(gridBuilders);
+        }
+
+        public static bool AlignToRepairProjector(this MyProjectorBase projector, MyObjectBuilder_CubeGrid gridBuilder)
+        {
+            var projectorBuilder = gridBuilder
+                .CubeBlocks
+                .OfType<MyObjectBuilder_Projector>()
+                .FirstOrDefault(b =>
+                    b.SubtypeId == projector.BlockDefinition.Id.SubtypeId &&
+                    (b.CustomName ?? b.Name) == projector.GetSafeName());
+
+            if (projectorBuilder == null)
+                return false;
+
+            if (gridBuilder.PositionAndOrientation == null)
+                return false;
+
+            projector.Orientation.GetQuaternion(out var q);
+            q = Quaternion.Inverse(q);
+            projector.SetProjectionRotation(new Vector3I(Vector3.Round(q.ToRollPitchYaw() / (0.5f * Math.PI))));
+
+            var root = projector.CubeGrid.GetFirstBlockOfType<MyCubeBlock>();
+            var offset = projector.Position - root.Position;
+            var rotatedOffset = new Vector3I(Vector3.Round(q * offset));
+            projector.SetProjectionOffset(rotatedOffset);
+
+            return true;
         }
     }
 }

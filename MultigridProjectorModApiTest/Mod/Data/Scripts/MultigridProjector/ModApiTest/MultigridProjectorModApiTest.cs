@@ -68,9 +68,9 @@ namespace MultigridProjector.ModApiTest
         private void LogBlueprintDetails(long projectorEntityId, List<MyObjectBuilder_CubeGrid> gridBuilders)
         {
             MyLog.Default.WriteLineAndConsole("==================================================================");
-            MyLog.Default.WriteLineAndConsole($"Multigrid Projector Mod API Test blueprint info: {_projector.BlockDefinition.SubtypeName} {_projector.DisplayName} [{projectorEntityId}]");
+            MyLog.Default.WriteLineAndConsole($"Multigrid Projector Mod API Test blueprint info: {_projector.BlockDefinition.SubtypeName} {_projector.CustomName ?? _projector.DisplayNameText ?? _projector.DisplayName} [{projectorEntityId}]");
             MyLog.Default.WriteLineAndConsole("==================================================================");
-            MyLog.Default.WriteLineAndConsole($"Projecting grid: {_projector.CubeGrid.DisplayName} [{_projector.CubeGrid.EntityId}]");
+            MyLog.Default.WriteLineAndConsole($"Projecting grid: {_projector.CubeGrid.CustomName ?? _projector.CubeGrid.DisplayName} [{_projector.CubeGrid.EntityId}]");
 
             if (gridBuilders == null)
             {
@@ -92,10 +92,10 @@ namespace MultigridProjector.ModApiTest
                 MyLog.Default.WriteLineAndConsole("---------------");
 
                 var previewGrid = Mgp.GetPreviewGrid(projectorEntityId, subgridIndex);
-                MyLog.Default.WriteLineAndConsole($"Preview grid: {previewGrid.DisplayName} [{previewGrid.EntityId}]");
+                MyLog.Default.WriteLineAndConsole($"Preview grid: {previewGrid.CustomName ?? previewGrid.DisplayName} [{previewGrid.EntityId}]");
 
                 var builtGrid = Mgp.GetBuiltGrid(projectorEntityId, subgridIndex);
-                MyLog.Default.WriteLineAndConsole(builtGrid == null ? "No built grid for this subgrid" : $"Built grid: {builtGrid.DisplayName} [{builtGrid.EntityId}]");
+                MyLog.Default.WriteLineAndConsole(builtGrid == null ? "No built grid for this subgrid" : $"Built grid: {builtGrid.CustomName ?? builtGrid.DisplayName} [{builtGrid.EntityId}]");
 
                 MyLog.Default.WriteLineAndConsole("");
 

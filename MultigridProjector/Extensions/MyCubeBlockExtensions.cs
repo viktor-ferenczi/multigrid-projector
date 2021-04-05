@@ -12,6 +12,18 @@ namespace MultigridProjector.Extensions
     public static class MyCubeBlockExtensions
     {
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string GetSafeName(this MyCubeBlock block)
+        {
+            return block?.DisplayNameText ?? block?.DisplayName ?? block?.Name ?? "";
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string GetDebugName(this MyCubeBlock block)
+        {
+            return $"{block.GetSafeName()} [{block.EntityId}]";
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool HasSameDefinition(this MySlimBlock block, MySlimBlock other)
         {
             return block.BlockDefinition.Id == other.BlockDefinition.Id;

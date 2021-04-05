@@ -227,7 +227,7 @@ namespace MultigridProjector.Logic
         public void RegisterBuiltGrid(MyCubeGrid grid)
         {
             if (HasBuilt)
-                throw new Exception($"Duplicate registration of built grid: {grid.DisplayName} [{grid.EntityId}]; existing: {BuiltGrid.DisplayName} [{BuiltGrid.EntityId}]");
+                throw new Exception($"Duplicate registration of built grid: {grid.GetDebugName()}; existing: {BuiltGrid.GetDebugName()}");
 
             using (BuiltGridLock.Write())
             {

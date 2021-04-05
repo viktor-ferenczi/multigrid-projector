@@ -12,6 +12,18 @@ namespace MultigridProjector.Extensions
 {
     public static class MyCubeGridExtensions
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string GetSafeName(this MyCubeGrid grid)
+        {
+            return grid?.DisplayNameText ?? grid?.DisplayName ?? grid?.Name ?? "";
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static string GetDebugName(this MyCubeGrid grid)
+        {
+            return $"{grid.GetSafeName()} [{grid.EntityId}]";
+        }
+
         private static readonly MethodInfo RayCastBlocksAllOrderedInfo = AccessTools.DeclaredMethod(typeof(MyCubeGrid), "RayCastBlocksAllOrdered");
         public static List<MyCube> RayCastBlocksAllOrdered(this MyCubeGrid obj, Vector3D worldStart, Vector3D worldEnd)
         {
