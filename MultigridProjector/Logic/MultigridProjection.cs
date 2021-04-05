@@ -279,13 +279,14 @@ namespace MultigridProjector.Logic
 
         private void AutoAlignBlueprint()
         {
+            // This condition will be True only on the client which loaded the blueprint
             if (!ProjectorsWithBlueprintLoaded.Contains(Projector.EntityId))
                 return;
 
             ProjectorsWithBlueprintLoaded.Remove(Projector.EntityId);
 
             if(Projector.AlignToRepairProjector(GridBuilders[0]))
-                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", $"Aligned repair projection: {Projector.CustomName}");
+                PluginLog.Debug($"Aligned repair projection loaded into {Projector.GetDebugName()}");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
