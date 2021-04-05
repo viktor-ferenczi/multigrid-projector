@@ -1,10 +1,15 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
+using Entities.Blocks;
 using HarmonyLib;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
+using Sandbox.Graphics.GUI;
+using VRage;
 using VRage.Game;
 using VRage.Sync;
 using VRageMath;
@@ -262,10 +267,28 @@ namespace MultigridProjector.Extensions
             MyEntities.RemapObjectBuilderCollection(gridBuilders);
         }
 
-        public static bool AlignToRepairProjector(this MyProjectorBase projector, MyCubeGrid previewGrid)
+        public static bool AlignToRepairProjector(this MyProjectorBase projector, MyObjectBuilder_CubeGrid gridBuilder)
         {
-            // !!! FIXME: Finish
-            return false;
+            var projectorBuilder = gridBuilder
+                .CubeBlocks
+                .OfType<MyObjectBuilder_ProjectorBase>()
+                .FirstOrDefault(b =>
+                    b.SubtypeId == projector.BlockDefinition.Id.SubtypeId &&
+                    (b.CustomName ?? b.Name) == projector.GetSafeName());
+
+            if (projectorBuilder == null)
+                return false;
+
+            if (gridBuilder.PositionAndOrientation == null)
+                return false;
+
+            var position = projector.Position;
+            projector.SetProjectionOffset(new Vector3I(position.X, position.Y, position.Z));
+
+            projector.Orientation.GetQuaternion(out var q);
+            projector.SetProjectionRotation(new Vector3I(Vector3.Round(2 * Quaternion.Inverse(q).ToRollPitchYaw() / Math.PI)));
+
+            return true;
         }
     }
 }

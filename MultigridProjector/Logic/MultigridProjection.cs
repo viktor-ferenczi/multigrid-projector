@@ -284,7 +284,7 @@ namespace MultigridProjector.Logic
 
             ProjectorsWithBlueprintLoaded.Remove(Projector.EntityId);
 
-            if(Projector.AlignToRepairProjector(PreviewGrids[0]))
+            if(Projector.AlignToRepairProjector(GridBuilders[0]))
                 MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", $"Aligned repair projection: {Projector.CustomName}");
         }
 
