@@ -335,8 +335,8 @@ namespace MultigridProjector.Extensions
             var projectionOffset = new Vector3I(Vector3.Round(projectorToGridQuaternion * offsetInsideGrid));
             projectionOffset = Vector3I.Clamp(projectionOffset, new Vector3I(-50), new Vector3I(50));
 
-            projector.SetProjectionOffset(projectionOffset);
             projector.SetProjectionRotation(projectionRotation);
+            projector.SetProjectionOffset(projectionOffset);
 
             return true;
         }

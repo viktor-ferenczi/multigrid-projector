@@ -279,9 +279,7 @@ namespace MultigridProjector.Logic
 
         private void AutoAlignBlueprint()
         {
-            if (Sync.IsServer)
-                return;
-
+            // This condition will be True only on the client which loaded the blueprint
             if (!ProjectorsWithBlueprintLoaded.Contains(Projector.EntityId))
                 return;
 
