@@ -272,24 +272,64 @@ namespace MultigridProjector.Extensions
                 .OfType<MyObjectBuilder_Projector>()
                 .FirstOrDefault(b =>
                     b.SubtypeId == projector.BlockDefinition.Id.SubtypeId &&
+                    (Vector3I)b.Min == projector.Min &&
+                    (MyBlockOrientation)b.BlockOrientation == projector.Orientation &&
                     (b.CustomName ?? b.Name) == projector.GetSafeName());
 
             if (projectorBuilder == null)
                 return false;
 
-            if (gridBuilder.PositionAndOrientation == null)
+            projector.Orientation.GetQuaternion(out var q);
+            var w = Quaternion.Inverse(q);
+            if (!CalculateProjectionRotation(Base6Directions.GetDirection(w.Forward), Base6Directions.GetDirection(w.Up), out var projectionRotation))
                 return false;
 
-            projector.Orientation.GetQuaternion(out var q);
-            q = Quaternion.Inverse(q);
-            projector.SetProjectionRotation(new Vector3I(Vector3.Round(q.ToRollPitchYaw() / (0.5f * Math.PI))));
+            var root = projector.CubeGrid.CubeBlocks.FirstOrDefault();
+            if (root == null)
+                return false;
 
-            var root = projector.CubeGrid.GetFirstBlockOfType<MyCubeBlock>();
             var offset = projector.Position - root.Position;
-            var rotatedOffset = new Vector3I(Vector3.Round(q * offset));
+            var rotatedOffset = new Vector3I(Vector3.Round(w * offset));
+            rotatedOffset = Vector3I.Clamp(rotatedOffset, new Vector3I(-50), new Vector3I(50));
+
             projector.SetProjectionOffset(rotatedOffset);
+            projector.SetProjectionRotation(projectionRotation);
 
             return true;
+        }
+
+        private static readonly Vector3I[] CalculateProjectionRotationCache = new Vector3I[36];
+        private static readonly bool[] CalculateProjectionRotationCacheFilled = new bool[36];
+
+        private static bool CalculateProjectionRotation(Base6Directions.Direction forward, Base6Directions.Direction up, out Vector3I rotation)
+        {
+            var cacheIndex = ((int)forward * 6 + (int)up) % 36;
+            if (CalculateProjectionRotationCacheFilled[cacheIndex])
+            {
+                rotation = CalculateProjectionRotationCache[cacheIndex];
+                return true;
+            }
+
+            for (var yaw = -2; yaw <= 2; yaw++)
+            {
+                for (var pitch = -2; pitch <= 2; pitch++)
+                {
+                    for (var roll = -2; roll <= 2; roll++)
+                    {
+                        rotation = new Vector3I(yaw, pitch, roll);
+                        var radians = rotation * MathHelper.ToRadians(90f);
+                        var rot = Quaternion.CreateFromYawPitchRoll(radians.X, radians.Y, radians.Z);
+                        if (forward == Base6Directions.GetDirection(rot.Forward) && up == Base6Directions.GetDirection(rot.Up))
+                        {
+                            CalculateProjectionRotationCache[cacheIndex] = rotation;
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            rotation = Vector3I.Zero;
+            return false;
         }
     }
 }
