@@ -337,6 +337,7 @@ namespace MultigridProjector.Extensions
 
             projector.SetProjectionRotation(projectionRotation);
             projector.SetProjectionOffset(projectionOffset);
+            projector.RaisePropertiesChanged();
 
             return true;
         }
