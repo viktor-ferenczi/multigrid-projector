@@ -16,6 +16,12 @@ After enabling the plugin it will be active for all single player worlds you loa
 
 *Enjoy!*
 
+## Remarks
+
+**If you play on a multiplayer (Torch) server, then both the Torch plugin (on server side) and the client plugin (on the player's machine) must be installed!** Using only the client plugin will not work properly.
+
+**No Dedicated Server plugin has been released yet.** Please let me know on the SE Mods Discord server if you would like to use one. Please also make sure your hosting provider supports using plugins in the first place.
+
 ## Want to know more?
 - [SE Mods Discord](https://discord.gg/PYPFPGf3Ca)
 - [YouTube Channel](https://www.youtube.com/channel/UCc5ar3cW9qoOgdBb1FM_rxQ)
