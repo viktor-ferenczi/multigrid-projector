@@ -82,9 +82,11 @@ namespace MultigridProjector.Logic
         {
             var blockBuilders = GridBuilder
                 .CubeBlocks
-                .ToDictionary(bb => new Vector3I(bb.Min.X, bb.Min.Y, bb.Min.Z));
+                .ToDictionary(bb => (Vector3I) bb.Min);
 
-            _blocks = PreviewGrid.CubeBlocks
+            _blocks = PreviewGrid
+                .CubeBlocks
+                .Where(previewBlock => blockBuilders.ContainsKey(previewBlock.Min))
                 .ToDictionary(
                     previewBlock => previewBlock.Position,
                     previewBlock => new ProjectedBlock(previewBlock, blockBuilders[previewBlock.Min]));
@@ -581,7 +583,9 @@ namespace MultigridProjector.Logic
 
             foreach (var (position, baseConnection) in BaseConnections)
             {
-                var projectedBlock = _blocks[position];
+                if(!_blocks.TryGetValue(position, out var projectedBlock))
+                    continue;
+
                 switch (projectedBlock.State)
                 {
                     case BlockState.BeingBuilt:
@@ -604,7 +608,9 @@ namespace MultigridProjector.Logic
 
             foreach (var (position, topConnection) in TopConnections)
             {
-                var projectedBlock = _blocks[position];
+                if(!_blocks.TryGetValue(position, out var projectedBlock))
+                    continue;
+
                 switch (projectedBlock.State)
                 {
                     case BlockState.BeingBuilt:

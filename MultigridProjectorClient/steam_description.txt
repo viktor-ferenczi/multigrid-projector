@@ -14,8 +14,15 @@
 [*] Enable the Multigrid Projector plugin
 [*] Click on Save, then Restart (below the plugin list)
 [/olist]
+
 After enabling the plugin it will be active for all single player worlds you load and in case of multiplayer if the server or the other client you connect to also has the plugin loaded. Do not add the plugin as a mod to the worlds themselves, it is not required and will not load anyway.
-Enjoy!
+
+[i]Enjoy![/i]
+
+[h2]Remarks[/h2]
+[b]If you play on a multiplayer (Torch) server, then both the Torch plugin (on server side) and the client plugin (on the player's machine) must be installed! [/b] Using only the client plugin will not work properly.
+
+[b]No Dedicated Server plugin has been released yet.[/b] Please let me know on the SE Mods Discord server if you would like to use one. Please also make sure your hosting provider supports using plugins in the first place.
 
 [h2]Want to know more?[/h2]
 [list]

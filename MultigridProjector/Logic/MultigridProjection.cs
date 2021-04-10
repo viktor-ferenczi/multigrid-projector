@@ -1505,7 +1505,16 @@ namespace MultigridProjector.Logic
                 if (gridBuilders == null || gridBuilders.Count != projector.Clipboard.PreviewGrids.Count)
                     return true;
 
-                projection = Create(projector, gridBuilders);
+                try
+                {
+                    projection = Create(projector, gridBuilders);
+                }
+                catch (Exception e)
+                {
+                    PluginLog.Error(e, "Failed to initialize multigrid projection - Removing blueprint to avoid spamming the log.");
+                    ((IMyProjector) projector).SetProjectedGrid(null);
+                    return false;
+                }
                 if (projection == null)
                     return true;
             }
@@ -1516,7 +1525,15 @@ namespace MultigridProjector.Logic
             projector.GameLogic.UpdateAfterSimulation();
 
             // Call custom update logic
-            projection.UpdateAfterSimulation();
+            try
+            {
+                projection.UpdateAfterSimulation();
+            }
+            catch (Exception e)
+            {
+                PluginLog.Error(e, "UpdateAfterSimulation of multigrid projection failed - Removing blueprint to avoid spamming the log.");
+                ((IMyProjector) projector).SetProjectedGrid(null);
+            }
 
             // Based on the original code
 
