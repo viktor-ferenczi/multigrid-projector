@@ -1,4 +1,4 @@
-Server side companion for the [Multigrid Projector](https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416) client plugin.
+Torch Server plugin companion for the [Multigrid Projector](https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416) client plugin.
 
 Allows for projecting and welding blueprints of multiple subgrids.
 
@@ -6,7 +6,9 @@ Allows for projecting and welding blueprints of multiple subgrids.
 - Works both in survival and creative
 - Works both in single player and multiplayer
 
-Players who want to take part in multigrid welding must install the client plugin.
+**Enable the Multigrid Projector plugin on the Torch UI.**
+
+**Players who want to take part in multigrid welding must install the client plugin.**
 
 Please see the [workshop page](https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416) on how to install the client plugin.
 
