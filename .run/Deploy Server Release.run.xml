@@ -6,6 +6,8 @@
     <option name="PARENT_ENVS" value="true" />
     <option name="SCRIPT_NAME" value="deploy_release.bat" />
     <option name="PARAMETERS" value="" />
-    <method v="2" />
+    <method v="2">
+      <option name="Build" default="false" projectName="MultigridProjectorServer" projectPath="file://$PROJECT_DIR$/MultigridProjectorServer/MultigridProjectorServer.csproj" />
+    </method>
   </configuration>
 </component>

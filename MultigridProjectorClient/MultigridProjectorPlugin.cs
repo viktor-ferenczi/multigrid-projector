@@ -11,7 +11,7 @@ namespace MultigridProjectorClient
     // ReSharper disable once UnusedType.Global
     public class MultigridProjectorPlugin : IPlugin
     {
-        private readonly Harmony _harmony = new Harmony("com.spaceengineers.multigridprojector");
+        private Harmony Harmony => new Harmony("com.spaceengineers.multigridprojector");
 
         public void Init(object gameInstance)
         {
@@ -21,7 +21,7 @@ namespace MultigridProjectorClient
             try
             {
                 EnsureOriginal.VerifyAll();
-                _harmony.PatchAll();
+                Harmony.PatchAll();
 
                 MySession.OnLoading += OnLoadSession;
                 // MySession.OnUnloading += OnUnloading;

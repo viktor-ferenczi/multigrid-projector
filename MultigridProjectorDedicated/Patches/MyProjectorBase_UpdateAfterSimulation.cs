@@ -3,33 +3,33 @@ using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
-using VRage.Game;
+using VRage.Game.Entity.EntityComponents.Interfaces;
 
 namespace MultigridProjector.Patches
 {
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyProjectorBase))]
-    [HarmonyPatch("GetObjectBuilderCubeBlock")]
-    [EnsureOriginal("6b6ba5b3")]
+    [HarmonyPatch("UpdateAfterSimulation")]
+    [EnsureOriginal("47184779")]
     // ReSharper disable once InconsistentNaming
-    public static class MyProjectorBase_GetObjectBuilderCubeBlock
+    public static class MyProjectorBase_UpdateAfterSimulation
     {
-        [ClientOnly]
+        [ServerOnly]
         // ReSharper disable once UnusedMember.Local
-        private static void Postfix(
+        private static bool Prefix(
             // ReSharper disable once InconsistentNaming
-            MyProjectorBase __instance,
-            bool copy,
-            // ReSharper disable once InconsistentNaming
-            MyObjectBuilder_CubeBlock __result)
+            MyProjectorBase __instance)
         {
+            var projector = __instance;
+
             try
             {
-                MultigridProjection.GetObjectBuilderOfProjector(__instance, copy, __result);
+                return MultigridProjection.ProjectorUpdateAfterSimulation(projector);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
+                return false;
             }
         }
     }

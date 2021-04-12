@@ -1,0 +1,132 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+    <PropertyGroup>
+        <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+        <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+        <ProjectGuid>{D4F47DCB-9C07-4C1A-BC8C-CE42E87683EE}</ProjectGuid>
+        <OutputType>Library</OutputType>
+        <AppDesignerFolder>Properties</AppDesignerFolder>
+        <RootNamespace>MultigridProjectorDedicated</RootNamespace>
+        <AssemblyName>MultigridProjectorDedicated</AssemblyName>
+        <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
+        <FileAlignment>512</FileAlignment>
+        <LangVersion>default</LangVersion>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+        <PlatformTarget>x64</PlatformTarget>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>full</DebugType>
+        <Optimize>false</Optimize>
+        <OutputPath>bin\Debug\</OutputPath>
+        <DefineConstants>DEBUG;TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+        <PlatformTarget>x64</PlatformTarget>
+        <DebugType>pdbonly</DebugType>
+        <Optimize>true</Optimize>
+        <OutputPath>bin\Release\</OutputPath>
+        <DefineConstants>TRACE</DefineConstants>
+        <ErrorReport>prompt</ErrorReport>
+        <WarningLevel>4</WarningLevel>
+    </PropertyGroup>
+    <ItemGroup>
+        <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\NLog.dll</HintPath>
+        </Reference>
+        <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\Sandbox.Common.dll</HintPath>
+        </Reference>
+        <Reference Include="Sandbox.Game, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\Sandbox.Game.dll</HintPath>
+        </Reference>
+        <Reference Include="Sandbox.Game.XmlSerializers, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\Sandbox.Game.XmlSerializers.dll</HintPath>
+        </Reference>
+        <Reference Include="Sandbox.Graphics, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\Sandbox.Graphics.dll</HintPath>
+        </Reference>
+        <Reference Include="Sandbox.RenderDirect, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\Sandbox.RenderDirect.dll</HintPath>
+        </Reference>
+        <Reference Include="SpaceEngineers.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\SpaceEngineers.Game.dll</HintPath>
+        </Reference>
+        <Reference Include="SpaceEngineers.ObjectBuilders, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+        </Reference>
+        <Reference Include="System" />
+        <Reference Include="System.Core" />
+        <Reference Include="System.Data" />
+        <Reference Include="System.Xml" />
+        <Reference Include="VRage, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.dll</HintPath>
+        </Reference>
+        <Reference Include="VRage.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Game.dll</HintPath>
+        </Reference>
+        <Reference Include="VRage.Input, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Input.dll</HintPath>
+        </Reference>
+        <Reference Include="VRage.Library, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Library.dll</HintPath>
+        </Reference>
+        <Reference Include="VRage.Math, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Math.dll</HintPath>
+        </Reference>
+        <Reference Include="VRage.Network, Version=1.0.53.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Network.dll</HintPath>
+        </Reference>
+        <Reference Include="VRage.Scripting, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+            <HintPath>$(SolutionDir)\TorchDir\DedicatedServer64\VRage.Scripting.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+    <ItemGroup>
+        <Compile Include="MultigridProjectorPlugin.cs" />
+        <Compile Include="MultigridProjectorSession.cs" />
+        <Compile Include="Patches\MyMechanicalConnectionBlockBase_CreateTopPartAndAttach.cs" />
+        <Compile Include="Patches\MyMechanicalConnectionBlockBase_RaiseAttachedEntityChanged.cs" />
+        <Compile Include="Patches\MyProjectorBase_Build.cs" />
+        <Compile Include="Patches\MyProjectorBase_BuildInternal.cs" />
+        <Compile Include="Patches\MyProjectorBase_CanBuild.cs" />
+        <Compile Include="Patches\MyProjectorBase_GetObjectBuilderCubeBlock.cs" />
+        <Compile Include="Patches\MyProjectorBase_Init.cs" />
+        <Compile Include="Patches\MyProjectorBase_InitializeClipboard.cs" />
+        <Compile Include="Patches\MyProjectorBase_OnBlockAdded.cs" />
+        <Compile Include="Patches\MyProjectorBase_OnBlockRemoved.cs" />
+        <Compile Include="Patches\MyProjectorBase_Remap.cs" />
+        <Compile Include="Patches\MyProjectorBase_RemoveProjection.cs" />
+        <Compile Include="Patches\MyProjectorBase_UpdateAfterSimulation.cs" />
+        <Compile Include="Patches\MyProjectorBase_UpdateStats.cs" />
+        <Compile Include="Patches\MyProjectorClipboard_UpdateGridTransformations.cs" />
+        <Compile Include="Patches\MyShipWelder_FindProjectedBlocks.cs" />
+        <Compile Include="PluginLogger.cs" />
+        <Compile Include="Properties\AssemblyInfo.cs" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="manifest.xml">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Content>
+    </ItemGroup>
+    <ItemGroup>
+      <PackageReference Include="Lib.Harmony" Version="2.0.4" />
+      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+    </ItemGroup>
+    <ItemGroup>
+      <Content Include="deploy_debug.bat" />
+      <Content Include="deploy_release.bat" />
+      <Content Include="README.md" />
+    </ItemGroup>
+    <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <Import Project="..\MultigridProjector\MultigridProjector.projitems" Label="Shared" />
+    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
+         Other similar extension points exist, see Microsoft.Common.targets.
+    <Target Name="BeforeBuild">
+    </Target>
+    <Target Name="AfterBuild">
+    </Target>
+    -->
+
+</Project>
