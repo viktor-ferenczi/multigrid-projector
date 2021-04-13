@@ -15,7 +15,6 @@ namespace MultigridProjectorServer
     // ReSharper disable once ClassNeverInstantiated.Global
     public class MultigridProjectorPlugin : TorchPluginBase
     {
-        private static string PluginName => "Multigrid Projector";
         public static MultigridProjectorPlugin Instance { get; private set; }
         private TorchSessionManager _sessionManager;
 
@@ -31,7 +30,7 @@ namespace MultigridProjectorServer
             base.Init(torch);
             Instance = this;
 
-            PluginLog.Logger = new PluginLogger(PluginName);
+            PluginLog.Logger = new PluginLogger(PluginLog.Prefix);
             PluginLog.Prefix = "";
 
             EnsureOriginal.VerifyAll();

@@ -12,18 +12,17 @@ namespace MultigridProjectorDedicated
 
         public void Init(object gameInstance)
         {
+            PluginLog.Logger = new PluginLogger();
+
             PluginLog.Info("Loading");
             try
             {
-                PluginLog.Logger = new PluginLogger();
-                PluginLog.Prefix = "";
-
                 EnsureOriginal.VerifyAll();
                 Harmony.PatchAll();
             }
             catch (Exception e)
             {
-                PluginLog.Error(e, "Failed to load server plugin");
+                PluginLog.Error(e, "Failed to load");
                 throw;
             }
 
