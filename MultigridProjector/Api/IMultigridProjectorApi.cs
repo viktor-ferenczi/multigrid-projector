@@ -7,7 +7,7 @@ namespace MultigridProjector.Api
 {
     public interface IMultigridProjectorApi
     {
-        // Multigrid Projector version: 0.2.10
+        // Multigrid Projector version: 0.3.0
         string Version { get; }
 
         // Returns the number of subgrids in the active projection, returns zero if there is no projection
@@ -33,5 +33,15 @@ namespace MultigridProjector.Api
 
         // Returns the top connections of the blueprint: top position => base subgrid and base part position (only those connected in the blueprint)
         Dictionary<Vector3I, BlockLocation> GetTopConnections(long projectorId, int subgridIndex);
+
+        // Returns the grid scan sequence number, incremented each time the preview grids/blocks change in any way in any of the subgrids.
+        // Reset to zero on loading a blueprint or clearing (or turning OFF) the projector.
+        long GetScanNumber(long projectorId);
+
+        // Returns YAML representation of all information available via API functions.
+        // Returns an empty string if the grid scan sequence number is zero (see above).
+        // The format may change in incompatible ways only on major version increases.
+        // New fields may be introduced without notice with any MGP release as the API changes.
+        string GetYaml(long projectorId);
     }
 }

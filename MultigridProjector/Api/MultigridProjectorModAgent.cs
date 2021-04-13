@@ -26,7 +26,7 @@ namespace MultigridProjector.Api
 
         public int GetSubgridCount(long projectorId)
         {
-            if (!Available)
+            if (!Available || _api.Length < 2)
                 return 0;
 
             var fn = (Func<long, int>) _api[1];
@@ -35,7 +35,7 @@ namespace MultigridProjector.Api
 
         public List<MyObjectBuilder_CubeGrid> GetOriginalGridBuilders(long projectorId)
         {
-            if (!Available)
+            if (!Available || _api.Length < 3)
                 return null;
 
             var fn = (Func<long, List<MyObjectBuilder_CubeGrid>>) _api[2];
@@ -44,7 +44,7 @@ namespace MultigridProjector.Api
 
         public IMyCubeGrid GetPreviewGrid(long projectorId, int subgridIndex)
         {
-            if (!Available)
+            if (!Available || _api.Length < 4)
                 return null;
 
             var fn = (Func<long, int, IMyCubeGrid>) _api[3];
@@ -53,7 +53,7 @@ namespace MultigridProjector.Api
 
         public IMyCubeGrid GetBuiltGrid(long projectorId, int subgridIndex)
         {
-            if (!Available)
+            if (!Available || _api.Length < 5)
                 return null;
 
             var fn = (Func<long, int, IMyCubeGrid>) _api[4];
@@ -62,7 +62,7 @@ namespace MultigridProjector.Api
 
         public BlockState GetBlockState(long projectorId, int subgridIndex, Vector3I position)
         {
-            if (!Available)
+            if (!Available || _api.Length < 6)
                 return BlockState.Unknown;
 
             var fn = (Func<long, int, Vector3I, int>) _api[5];
@@ -71,7 +71,7 @@ namespace MultigridProjector.Api
 
         public bool GetBlockStates(Dictionary<Vector3I, BlockState> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask)
         {
-            if (!Available)
+            if (!Available || _api.Length < 7)
                 return false;
 
             var blockIntStates = new Dictionary<Vector3I, int>();
@@ -87,7 +87,7 @@ namespace MultigridProjector.Api
 
         public Dictionary<Vector3I, BlockLocation> GetBaseConnections(long projectorId, int subgridIndex)
         {
-            if (!Available)
+            if (!Available || _api.Length < 8)
                 return null;
 
             var basePositions = new List<Vector3I>();
@@ -106,7 +106,7 @@ namespace MultigridProjector.Api
 
         public Dictionary<Vector3I, BlockLocation> GetTopConnections(long projectorId, int subgridIndex)
         {
-            if (!Available)
+            if (!Available || _api.Length < 9)
                 return null;
             
             var topPositions = new List<Vector3I>();
@@ -121,6 +121,24 @@ namespace MultigridProjector.Api
                 topConnections[topPositions[i]] = new BlockLocation(gridIndices[i], basePositions[i]);
 
             return topConnections;
+        }
+
+        public long GetScanNumber(long projectorId)
+        {
+            if (!Available || _api.Length < 10)
+                return 0;
+
+            var fn = (Func<long, long>) _api[9];
+            return fn(projectorId);
+        }
+
+        public string GetYaml(long projectorId)
+        {
+            if (!Available || _api.Length < 11)
+                return "";
+
+            var fn = (Func<long, string>) _api[10];
+            return fn(projectorId);
         }
 
         public MultigridProjectorModAgent()

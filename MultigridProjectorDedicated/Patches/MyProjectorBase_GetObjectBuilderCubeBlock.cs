@@ -14,7 +14,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_GetObjectBuilderCubeBlock
     {
-        [ClientOnly]
+        [ServerOnly]
         // ReSharper disable once UnusedMember.Local
         private static void Postfix(
             // ReSharper disable once InconsistentNaming

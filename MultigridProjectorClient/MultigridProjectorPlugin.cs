@@ -4,8 +4,6 @@ using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.World;
 using Sandbox.ModAPI;
-using VRage.Game;
-using VRage.Game.Components;
 using VRage.Plugins;
 
 namespace MultigridProjectorClient
@@ -13,7 +11,7 @@ namespace MultigridProjectorClient
     // ReSharper disable once UnusedType.Global
     public class MultigridProjectorPlugin : IPlugin
     {
-        private readonly Harmony _harmony = new Harmony("com.spaceengineers.multigridprojector");
+        private Harmony Harmony => new Harmony("com.spaceengineers.multigridprojector");
 
         public void Init(object gameInstance)
         {
@@ -23,7 +21,7 @@ namespace MultigridProjectorClient
             try
             {
                 EnsureOriginal.VerifyAll();
-                _harmony.PatchAll();
+                Harmony.PatchAll();
 
                 MySession.OnLoading += OnLoadSession;
                 // MySession.OnUnloading += OnUnloading;
@@ -71,28 +69,6 @@ namespace MultigridProjectorClient
 
         public void Update()
         {
-        }
-
-        // ReSharper disable once UnusedType.Global
-        [MySessionComponentDescriptor(MyUpdateOrder.AfterSimulation)]
-        public class MultigridProjectorSession : MySessionComponentBase
-        {
-
-            public override void Init(MyObjectBuilder_SessionComponent sessionComponent)
-            {
-                if (MultigridProjection.Projections.Count != 0)
-                    PluginLog.Warn($"{MultigridProjection.Projections.Count} projections are active on loading session, there should be none!");
-            }
-
-            protected override void UnloadData()
-            {
-                if (MultigridProjection.Projections.Count != 0)
-                    PluginLog.Warn($"{MultigridProjection.Projections.Count} projections are active on unloading session, there should be none!");
-            }
-
-            public override void UpdateAfterSimulation()
-            {
-            }
         }
     }
 }

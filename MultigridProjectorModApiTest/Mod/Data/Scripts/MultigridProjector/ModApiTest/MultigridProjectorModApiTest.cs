@@ -58,7 +58,7 @@ namespace MultigridProjector.ModApiTest
 
             var projectorEntityId = _projector.EntityId;
             var gridBuilders = Mgp.GetOriginalGridBuilders(projectorEntityId);
-            if (gridBuilders == _gridBuilders) 
+            if (gridBuilders == _gridBuilders || Mgp.GetScanNumber(projectorEntityId) == 0)
                 return;
             
             _gridBuilders = gridBuilders;
@@ -85,11 +85,14 @@ namespace MultigridProjector.ModApiTest
             MyLog.Default.WriteLineAndConsole($"Subgrid count: {subgridCount}");
             MyLog.Default.WriteLineAndConsole($"Subgrids in blueprint: {gridBuilders.Count}");
 
+            var scanNumber = Mgp.GetScanNumber(projectorEntityId);
+            MyLog.Default.WriteLineAndConsole($"Scan number: {scanNumber}");
+
             for (var subgridIndex = 0; subgridIndex < subgridCount; subgridIndex++)
             {
-                MyLog.Default.WriteLineAndConsole("---------------");
+                MyLog.Default.WriteLineAndConsole("-------------------");
                 MyLog.Default.WriteLineAndConsole($"Subgrid #{subgridIndex}");
-                MyLog.Default.WriteLineAndConsole("---------------");
+                MyLog.Default.WriteLineAndConsole("-------------------");
 
                 var previewGrid = Mgp.GetPreviewGrid(projectorEntityId, subgridIndex);
                 MyLog.Default.WriteLineAndConsole($"Preview grid: {previewGrid.CustomName ?? previewGrid.DisplayName} [{previewGrid.EntityId}]");
@@ -128,6 +131,13 @@ namespace MultigridProjector.ModApiTest
                 }
 
             }
+
+            MyLog.Default.WriteLineAndConsole("-------------------");
+            MyLog.Default.WriteLineAndConsole($"YAML representation");
+            MyLog.Default.WriteLineAndConsole("-------------------");
+
+            var yaml = Mgp.GetYaml(projectorEntityId);
+            MyLog.Default.WriteLineAndConsole(yaml);
 
             MyLog.Default.WriteLineAndConsole("==================================================================");
         }

@@ -15,5 +15,10 @@ namespace MultigridProjector.Extensions
         {
             matrix = MatrixD.CreateWorld(po.Position, po.Orientation.Forward, po.Orientation.Up);
         }
+
+        public static string FormatYaml(this Vector3I v)
+        {
+            return $"{v.X}, {v.Y}, {v.Z}";
+        }
     }
 }

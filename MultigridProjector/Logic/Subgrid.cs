@@ -50,11 +50,11 @@ namespace MultigridProjector.Logic
         // Indicates whether the preview grid is supported for welding, e.g. connected to the first preview grid
         public bool Supported;
 
+        // Projected and built block states, built block changes are detected by the background worker, visuals are updated by the main thread
+        public Dictionary<Vector3I, ProjectedBlock> Blocks;
+
         // Indicates whether an unsupported preview grid has already been hidden
         private bool _hidden;
-
-        // Projected and built block states, built block changes are detected by the background worker, visuals are updated by the main thread
-        private Dictionary<Vector3I, ProjectedBlock> _blocks;
 
         #region Initialization and disposal
 
@@ -84,7 +84,7 @@ namespace MultigridProjector.Logic
                 .CubeBlocks
                 .ToDictionary(bb => (Vector3I) bb.Min);
 
-            _blocks = PreviewGrid
+            Blocks = PreviewGrid
                 .CubeBlocks
                 .Where(previewBlock => blockBuilders.ContainsKey(previewBlock.Min))
                 .ToDictionary(
@@ -99,7 +99,7 @@ namespace MultigridProjector.Logic
 
             UnregisterBuiltGrid();
 
-            _blocks.Clear();
+            Blocks.Clear();
         }
 
         private void CreateMechanicalConnections(MultigridProjection projection)
@@ -141,7 +141,7 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryGetProjectedBlock(Vector3I previewPosition, out ProjectedBlock projectedBlock)
         {
-            return _blocks.TryGetValue(previewPosition, out projectedBlock);
+            return Blocks.TryGetValue(previewPosition, out projectedBlock);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -188,7 +188,7 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IEnumerable<(Vector3I, BlockState)> IterBlockStates(BoundingBoxI box, int mask)
         {
-            foreach (var (position, projectedBlock) in _blocks)
+            foreach (var (position, projectedBlock) in Blocks)
             {
                 var blockState = projectedBlock.State;
                 if (((int) blockState & mask) == 0)
@@ -253,7 +253,7 @@ namespace MultigridProjector.Logic
 
                 Stats.Clear(PreviewGrid.CubeBlocks.Count);
 
-                foreach (var projectedBlock in _blocks.Values)
+                foreach (var projectedBlock in Blocks.Values)
                     projectedBlock.Clear();
 
                 foreach (var baseConnection in BaseConnections.Values)
@@ -480,10 +480,11 @@ namespace MultigridProjector.Logic
             if (!Supported)
             {
                 HideUnsupportedPreviewGrid(projector);
+                Blocks.Clear();
                 return;
             }
 
-            foreach (var projectedBlock in _blocks.Values)
+            foreach (var projectedBlock in Blocks.Values)
                 projectedBlock.UpdateVisual(projector, showOnlyBuildable);
         }
 
@@ -569,7 +570,7 @@ namespace MultigridProjector.Logic
 
             Stats.Clear(PreviewGrid.CubeBlocks.Count);
 
-            foreach (var projectedBlock in _blocks.Values)
+            foreach (var projectedBlock in Blocks.Values)
             {
                 projectedBlock.DetectBlock(projector, BuiltGrid);
                 Stats.RegisterBlock(projectedBlock.Preview, projectedBlock.State);
@@ -583,7 +584,7 @@ namespace MultigridProjector.Logic
 
             foreach (var (position, baseConnection) in BaseConnections)
             {
-                if(!_blocks.TryGetValue(position, out var projectedBlock))
+                if(!Blocks.TryGetValue(position, out var projectedBlock))
                     continue;
 
                 switch (projectedBlock.State)
@@ -608,7 +609,7 @@ namespace MultigridProjector.Logic
 
             foreach (var (position, topConnection) in TopConnections)
             {
-                if(!_blocks.TryGetValue(position, out var projectedBlock))
+                if(!Blocks.TryGetValue(position, out var projectedBlock))
                     continue;
 
                 switch (projectedBlock.State)

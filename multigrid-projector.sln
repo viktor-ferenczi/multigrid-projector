@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorClient", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorModApiTest", "MultigridProjectorModApiTest\MultigridProjectorModApiTest.csproj", "{C30BC529-29CC-42C2-9330-4880AC7C3CC5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorDedicated", "MultigridProjectorDedicated\MultigridProjectorDedicated.csproj", "{D9359BA0-9A69-41C3-971D-EB5170ADB97E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
