@@ -532,8 +532,7 @@ namespace MultigridProjector.Logic
                     continue;
 
                 sb.AppendLine($"  Index: {subgrid.Index}");
-                sb.AppendLine($"  GridSize: {subgrid.PreviewGrid.GridSize}");
-                sb.AppendLine($"  GridSizeEnum: {subgrid.PreviewGrid.GridSizeEnum}");
+                sb.AppendLine($"  GridSize: {subgrid.PreviewGrid.GridSizeEnum}");
                 sb.AppendLine($"  HasBuilt: {subgrid.HasBuilt}");
                 sb.AppendLine($"  BuiltGridEntityId: {(subgrid.HasBuilt ? subgrid.BuiltGrid.EntityId : 0)}");
                 sb.AppendLine($"  PreviewGridEntityId: {subgrid.PreviewGrid.EntityId}");
