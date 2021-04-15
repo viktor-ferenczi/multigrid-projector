@@ -42,6 +42,8 @@ Please vote on [Keen's bug ticket](https://support.keenswh.com/spaceengineers/pc
 - Kam Solastor
 - NeonDrip
 - opesoorry
+- jiringgot
+- N CG
 - NeVaR
 - Jimbo
 

@@ -57,6 +57,8 @@ Thank you and enjoy!
 - Kam Solastor
 - NeonDrip
 - opesoorry
+- jiringgot
+- N CG
 - NeVaR
 - Jimbo
 
