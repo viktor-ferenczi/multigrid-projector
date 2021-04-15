@@ -16,7 +16,7 @@ namespace MultigridProjector.Logic
         private static MultigridProjectorApiProvider _api;
         public static IMultigridProjectorApi Api => _api ?? (_api = new MultigridProjectorApiProvider());
 
-        public string Version => "0.3.0";
+        public string Version => "0.3.1";
 
         public int GetSubgridCount(long projectorId)
         {

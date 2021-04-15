@@ -53,6 +53,9 @@ namespace MultigridProjector.Logic
         // Projected and built block states, built block changes are detected by the background worker, visuals are updated by the main thread
         public Dictionary<Vector3I, ProjectedBlock> Blocks;
 
+        // Indicates that the preview grid has been positioned correctly during an update
+        public bool Positioned;
+
         // Indicates whether an unsupported preview grid has already been hidden
         private bool _hidden;
 
