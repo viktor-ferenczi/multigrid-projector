@@ -41,7 +41,6 @@ Please vote on [Keen's bug ticket](https://support.keenswh.com/spaceengineers/pc
 - jiringgot
 - Kam Solastor
 - NeonDrip
-- NeVaR
 - opesoorry
 - NeVaR
 - Jimbo
@@ -59,6 +58,8 @@ Please vote on [Keen's bug ticket](https://support.keenswh.com/spaceengineers/pc
 - Spitfyre.pjs
 - Random000
 - gamemasterellison
+- Babyboarder
+- LordJ
 
 #### Creators
 
@@ -67,6 +68,7 @@ Please vote on [Keen's bug ticket](https://support.keenswh.com/spaceengineers/pc
 - Mike Dude - Guardians SE
 - Fred XVI - Racing maps
 - Kamikaze - M&M mod
+- Keleios
 - LTP
 
 Thank you very much for all your support and hard work on testing the plugin!
