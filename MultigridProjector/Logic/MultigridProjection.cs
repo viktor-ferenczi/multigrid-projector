@@ -511,9 +511,9 @@ namespace MultigridProjector.Logic
                 Projector.RequestRemoveProjection();
         }
 
-        public string GetYaml()
+        public string GetYaml(bool requireScan=true)
         {
-            if (!HasScanned)
+            if (requireScan && !HasScanned)
                 return "";
 
             var yaml = _yaml;
@@ -591,12 +591,16 @@ namespace MultigridProjector.Logic
         }
 
         // FIXME: Refactor, simplify
-        public void UpdateGridTransformations()
+        private void UpdateGridTransformations()
         {
             // Align the preview grids to match any grids has already been built
 
             if (PreviewGrids == null || PreviewGrids.Count == 0 || Subgrids.Count != PreviewGrids.Count)
                 return;
+
+            // Mark all subgrids as not positioned
+            foreach (var subgrid in Subgrids)
+                subgrid.Positioned = false;
 
             var projectorMatrix = Projector.WorldMatrix;
 
@@ -614,11 +618,19 @@ namespace MultigridProjector.Logic
             worldMatrix.Translation += projectionOffset;
             firstPreviewGrid.PositionComp.Scale = 1f;
             firstPreviewGrid.PositionComp.SetWorldMatrix(ref worldMatrix, skipTeleportCheck: true);
+            Subgrids[0].Positioned = true;
 
             // Further subgrids
-            foreach (var (gridIndex, subgrid) in Subgrids.Enumerate())
+            var gridIndex = 0;
+            var gridsToPosition = Subgrids.Count - 1;
+            var maxSteps = gridsToPosition * gridsToPosition;
+            for (var i = 0; gridsToPosition > 0 && i < maxSteps; i++)
             {
-                if (gridIndex == 0)
+                if (++gridIndex >= Subgrids.Count)
+                    gridIndex = 1;
+
+                var subgrid = Subgrids[gridIndex];
+                if (subgrid.Positioned)
                     continue;
 
                 var gridBuilder = subgrid.GridBuilder;
@@ -633,6 +645,8 @@ namespace MultigridProjector.Logic
                 if (topConnection != null && !topConnection.Block.CubeGrid.Closed)
                 {
                     topConnection.Preview.AlignGrid(topConnection.Block);
+                    subgrid.Positioned = true;
+                    gridsToPosition--;
                     continue;
                 }
 
@@ -641,11 +655,13 @@ namespace MultigridProjector.Logic
                 if (baseConnection != null && !baseConnection.Block.CubeGrid.Closed)
                 {
                     baseConnection.Preview.AlignGrid(baseConnection.Block);
+                    subgrid.Positioned = true;
+                    gridsToPosition--;
                     continue;
                 }
 
                 // Align the preview by top block connecting to an already positioned preview with a lower index
-                topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => c.BaseLocation.GridIndex < gridIndex);
+                topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => Subgrids[c.BaseLocation.GridIndex].Positioned);
                 if (topConnection != null)
                 {
                     var baseSubgrid = Subgrids[topConnection.BaseLocation.GridIndex];
@@ -655,12 +671,14 @@ namespace MultigridProjector.Logic
                         baseSubgrid.GridBuilder.PositionAndOrientation.Value.ToMatrixD(out var baseMatrix);
                         var wm = topMatrix * MatrixD.Invert(baseMatrix) * baseSubgrid.PreviewGrid.PositionComp.WorldMatrixRef;
                         subgrid.PreviewGrid.PositionComp.SetWorldMatrix(ref wm, skipTeleportCheck: true);
+                        subgrid.Positioned = true;
+                        gridsToPosition--;
                         continue;
                     }
                 }
 
                 // Align the preview by base block connecting to an already positioned preview with a lower index
-                baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => c.TopLocation.GridIndex < gridIndex);
+                baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => Subgrids[c.TopLocation.GridIndex].Positioned);
                 if (baseConnection != null)
                 {
                     var topSubgrid = Subgrids[baseConnection.TopLocation.GridIndex];
@@ -670,12 +688,25 @@ namespace MultigridProjector.Logic
                         topSubgrid.GridBuilder.PositionAndOrientation.Value.ToMatrixD(out var baseMatrix);
                         var wm = topMatrix * MatrixD.Invert(baseMatrix) * topSubgrid.PreviewGrid.PositionComp.WorldMatrixRef;
                         subgrid.PreviewGrid.PositionComp.SetWorldMatrix(ref wm, skipTeleportCheck: true);
+                        subgrid.Positioned = true;
+                        gridsToPosition--;
                         continue;
                     }
                 }
 
-                // Reaching this point means that this subgrid is disconnected from the first subgrid, which should not happen 
+                // This subgrid cannot be positioned yet, let's try again in a later iteration
+                // PluginLog.Debug($"Subgrid #{subgrid.Index} could not be positioned at loop #{i}");
             }
+
+            if (gridsToPosition == 0)
+                return;
+
+            foreach (var subgrid in Subgrids.Where(s => !s.Positioned))
+                PluginLog.Error($"Subgrid #{subgrid.Index} could not be positioned!");
+
+            var yaml = GetYaml(false);
+            PluginLog.Error($"Projection with the above problem:\r\n{yaml}");
+            ((IMyProjector) Projector).Enabled = false;
         }
 
         private void ShouldUpdateProjection()
@@ -922,7 +953,8 @@ namespace MultigridProjector.Logic
 
             UpdateGridTransformations();
 
-            if (!_updateWork.IsComplete) return;
+            if (_updateWork == null || !_updateWork.IsComplete)
+                return;
 
             if (IsUpdateRequested)
                 ForceUpdateProjection();
