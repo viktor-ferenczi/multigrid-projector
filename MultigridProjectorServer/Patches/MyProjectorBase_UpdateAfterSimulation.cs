@@ -4,11 +4,11 @@ using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 using Torch.Managers.PatchManager;
-using VRage.Game.Entity.EntityComponents.Interfaces;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "UpdateAfterSimulation", null, "47184779")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_UpdateAfterSimulation

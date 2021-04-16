@@ -17,6 +17,7 @@ namespace MultigridProjectorServer
     {
         public static MultigridProjectorPlugin Instance { get; private set; }
         private TorchSessionManager _sessionManager;
+        private bool Initialized => _sessionManager != null;
 
         // Retrieved by MultigridProjectorTorchAgent via reflection
         // ReSharper disable once UnusedMember.Global
@@ -24,6 +25,8 @@ namespace MultigridProjectorServer
 
         // ReSharper disable once UnusedMember.Local
         // private readonly MultigridProjectorCommands _commands = new MultigridProjectorCommands();
+
+        private static Harmony Harmony => new Harmony("com.spaceengineers.multigridprojector");
 
         public override void Init(ITorchBase torch)
         {
@@ -33,8 +36,18 @@ namespace MultigridProjectorServer
             PluginLog.Logger = new PluginLogger(PluginLog.Prefix);
             PluginLog.Prefix = "";
 
-            EnsureOriginal.VerifyAll();
-            new Harmony("com.spaceengineers.multigridprojector").PatchAll();
+            try
+            {
+                EnsureOriginal.VerifyAll();
+                EnsureOriginalTorch.VerifyAll();
+            }
+            catch (NotSupportedException e)
+            {
+                PluginLog.Error("Found incompatible code changes in the game or plugin patch collisions. Please report the exception below on the SE Mods Discord (invite is on the Workshop page):");
+                throw;
+            }
+
+            Harmony.PatchAll();
 
             _sessionManager = torch.Managers.GetManager<TorchSessionManager>();
             _sessionManager.SessionStateChanged += SessionStateChanged;
@@ -61,9 +74,13 @@ namespace MultigridProjectorServer
 
         public override void Dispose()
         {
+            if (!Initialized)
+                return;
+
             PluginLog.Info("Unloading server plugin");
             
             _sessionManager.SessionStateChanged -= SessionStateChanged;
+            _sessionManager = null;
             
             PluginLog.Logger = null;
             Instance = null;

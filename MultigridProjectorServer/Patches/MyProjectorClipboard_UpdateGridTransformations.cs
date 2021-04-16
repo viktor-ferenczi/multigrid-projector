@@ -7,9 +7,10 @@ using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
 using Torch.Managers.PatchManager;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
+    [EnsureOriginalTorch(typeof(MyProjectorClipboard), "UpdateGridTransformations", null, "6a6d82b9")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorClipboard_UpdateGridTransformations

@@ -5,9 +5,10 @@ using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 using Torch.Managers.PatchManager;
 
-namespace MultigridProjectorServer
+namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "InitializeClipboard", null, "b7140f1d")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_InitializeClipboard

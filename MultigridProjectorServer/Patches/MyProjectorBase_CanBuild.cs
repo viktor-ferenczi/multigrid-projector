@@ -7,15 +7,17 @@ using Sandbox.Game.Entities.Cube;
 using Sandbox.ModAPI;
 using Torch.Managers.PatchManager;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "CanBuild", new []{typeof(MySlimBlock), typeof(bool)}, "a0424db9")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_CanBuild
     {
-        public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("CanBuild", BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public)).Prefixes.Add(typeof (MyProjectorBase_CanBuild).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
-        
+        public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof(MyProjectorBase).GetMethod("CanBuild", BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public)).Prefixes
+            .Add(typeof(MyProjectorBase_CanBuild).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
+
         [ServerOnly]
         // ReSharper disable once UnusedMember.Local
         private static bool Prefix(

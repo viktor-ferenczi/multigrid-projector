@@ -7,15 +7,16 @@ using Sandbox.Game.Entities.Blocks;
 using Torch.Managers.PatchManager;
 using VRage.Game;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "Init", null, "71397e45")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_Init
     {
-        public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("Init", BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public)).Suffixes.Add(typeof (MyProjectorBase_Init).GetMethod(nameof(Suffix), BindingFlags.Static | BindingFlags.NonPublic));
-        
+        public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof(MyProjectorBase).GetMethod("Init", BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.Public)).Suffixes.Add(typeof(MyProjectorBase_Init).GetMethod(nameof(Suffix), BindingFlags.Static | BindingFlags.NonPublic));
+
         [ServerOnly]
         // ReSharper disable once UnusedMember.Local
         private static void Suffix(
