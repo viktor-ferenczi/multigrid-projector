@@ -44,8 +44,8 @@ namespace MultigridProjector.Logic
         // Mechanical top blocks on this subgrid by cube position
         public readonly Dictionary<Vector3I, TopConnection> TopConnections = new Dictionary<Vector3I, TopConnection>();
 
-        // Requests rescanning the preview blocks, the initial true value starts the first scan
-        public bool IsUpdateRequested = true;
+        // Requests rescanning the preview blocks
+        public bool IsUpdateRequested;
 
         // Indicates whether the preview grid is supported for welding, e.g. connected to the first preview grid
         public bool Supported;
@@ -185,7 +185,7 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RequestUpdate()
         {
-            IsUpdateRequested = true;
+            IsUpdateRequested = Supported;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -566,7 +566,7 @@ namespace MultigridProjector.Logic
 
         public void UpdateBlockStatesBackgroundWork(MyProjectorBase projector)
         {
-            if (!IsUpdateRequested || !Supported)
+            if (!IsUpdateRequested)
                 return;
 
             IsUpdateRequested = false;

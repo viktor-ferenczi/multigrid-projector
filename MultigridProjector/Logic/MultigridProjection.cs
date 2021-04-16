@@ -48,6 +48,7 @@ namespace MultigridProjector.Logic
 
         // Subgrids of the projection, associated built grids as they appear, block status information, statistics
         public readonly List<Subgrid> Subgrids = new List<Subgrid>();
+        public IEnumerable<Subgrid> SupportedSubgrids => Subgrids.Where(s => s.Supported);
 
         // Bidirectional mapping of corresponding base and top blocks by their grid index and min cube positions
         public readonly Dictionary<BlockMinLocation, BlockMinLocation> BlueprintConnections = new Dictionary<BlockMinLocation, BlockMinLocation>();
@@ -328,6 +329,12 @@ namespace MultigridProjector.Logic
                 }
 
                 subgrid = projection.Subgrids[subgridIndex];
+                if (!subgrid.Supported)
+                {
+                    subgrid = null;
+                    return false;
+                }
+
                 return true;
             }
         }
@@ -379,7 +386,7 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool TryFindSubgridByBuiltGrid(MyCubeGrid grid, out Subgrid subgrid)
         {
-            subgrid = Subgrids.FirstOrDefault(s => s.BuiltGrid == grid);
+            subgrid = SupportedSubgrids.FirstOrDefault(s => s.BuiltGrid == grid);
             return subgrid != null;
         }
 
@@ -568,7 +575,7 @@ namespace MultigridProjector.Logic
         private void AggregateStatistics()
         {
             _stats.Clear();
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in SupportedSubgrids)
                 _stats.Add(subgrid.Stats);
         }
 
@@ -588,20 +595,20 @@ namespace MultigridProjector.Logic
             if (Sync.IsDedicated)
                 return;
 
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in SupportedSubgrids)
                 subgrid.UpdatePreviewBlockVisuals(Projector, _showOnlyBuildable);
         }
 
         // FIXME: Refactor, simplify
         private void UpdateGridTransformations()
         {
-            // Align the preview grids to match any grids has already been built
+            // Align the preview grids to match any grids have already been built, align the rest of grids relative to other preview grids
 
-            if (PreviewGrids == null || PreviewGrids.Count == 0 || Subgrids.Count != PreviewGrids.Count)
+            if (!Initialized || PreviewGrids == null || PreviewGrids.Count == 0 || Subgrids.Count != PreviewGrids.Count)
                 return;
 
             // Mark all subgrids as not positioned
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in SupportedSubgrids)
                 subgrid.Positioned = false;
 
             var projectorMatrix = Projector.WorldMatrix;
@@ -623,87 +630,90 @@ namespace MultigridProjector.Logic
             Subgrids[0].Positioned = true;
 
             // Further subgrids
-            var gridIndex = 0;
-            var gridsToPosition = Subgrids.Count - 1;
-            var maxSteps = gridsToPosition * gridsToPosition;
-            for (var i = 0; gridsToPosition > 0 && i < maxSteps; i++)
+            var gridsToPositionBefore = 0;
+            var gridsToPosition = SupportedSubgrids.Count(s => !s.Positioned);
+            for (var i = 1; i < Subgrids.Count; i++)
             {
-                if (++gridIndex >= Subgrids.Count)
-                    gridIndex = 1;
+                if (gridsToPosition == 0 || gridsToPosition == gridsToPositionBefore)
+                    break;
 
-                var subgrid = Subgrids[gridIndex];
-                if (subgrid.Positioned)
-                    continue;
+                gridsToPositionBefore = gridsToPosition;
 
-                var gridBuilder = subgrid.GridBuilder;
-                if (!gridBuilder.PositionAndOrientation.HasValue)
-                    continue;
-
-                var previewGrid = subgrid.PreviewGrid;
-                previewGrid.PositionComp.Scale = 1f;
-
-                // Align the preview to an already built top block
-                var topConnection = subgrid.TopConnections.Values.FirstOrDefault(IsConnected);
-                if (topConnection != null && !topConnection.Block.CubeGrid.Closed)
+                foreach (var subgrid in SupportedSubgrids)
                 {
-                    topConnection.Preview.AlignGrid(topConnection.Block);
-                    subgrid.Positioned = true;
-                    gridsToPosition--;
-                    continue;
-                }
+                    if(subgrid.Positioned)
+                        continue;
 
-                // Align the preview to an already built base block
-                var baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(IsConnected);
-                if (baseConnection != null && !baseConnection.Block.CubeGrid.Closed)
-                {
-                    baseConnection.Preview.AlignGrid(baseConnection.Block);
-                    subgrid.Positioned = true;
-                    gridsToPosition--;
-                    continue;
-                }
+                    var gridBuilder = subgrid.GridBuilder;
+                    if (!gridBuilder.PositionAndOrientation.HasValue)
+                        continue;
 
-                // Align the preview by top block connecting to an already positioned preview with a lower index
-                topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => Subgrids[c.BaseLocation.GridIndex].Positioned);
-                if (topConnection != null)
-                {
-                    var baseSubgrid = Subgrids[topConnection.BaseLocation.GridIndex];
-                    if (baseSubgrid.GridBuilder.PositionAndOrientation != null)
+                    var previewGrid = subgrid.PreviewGrid;
+                    previewGrid.PositionComp.Scale = 1f;
+
+                    // Align the preview to an already built top block
+                    var topConnection = subgrid.TopConnections.Values.FirstOrDefault(IsConnected);
+                    if (topConnection != null && !topConnection.Block.CubeGrid.Closed)
                     {
-                        gridBuilder.PositionAndOrientation.Value.ToMatrixD(out var topMatrix);
-                        baseSubgrid.GridBuilder.PositionAndOrientation.Value.ToMatrixD(out var baseMatrix);
-                        var wm = topMatrix * MatrixD.Invert(baseMatrix) * baseSubgrid.PreviewGrid.PositionComp.WorldMatrixRef;
-                        subgrid.PreviewGrid.PositionComp.SetWorldMatrix(ref wm, skipTeleportCheck: true);
+                        topConnection.Preview.AlignGrid(topConnection.Block);
                         subgrid.Positioned = true;
                         gridsToPosition--;
                         continue;
                     }
-                }
 
-                // Align the preview by base block connecting to an already positioned preview with a lower index
-                baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => Subgrids[c.TopLocation.GridIndex].Positioned);
-                if (baseConnection != null)
-                {
-                    var topSubgrid = Subgrids[baseConnection.TopLocation.GridIndex];
-                    if (topSubgrid.GridBuilder.PositionAndOrientation != null)
+                    // Align the preview to an already built base block
+                    var baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(IsConnected);
+                    if (baseConnection != null && !baseConnection.Block.CubeGrid.Closed)
                     {
-                        gridBuilder.PositionAndOrientation.Value.ToMatrixD(out var topMatrix);
-                        topSubgrid.GridBuilder.PositionAndOrientation.Value.ToMatrixD(out var baseMatrix);
-                        var wm = topMatrix * MatrixD.Invert(baseMatrix) * topSubgrid.PreviewGrid.PositionComp.WorldMatrixRef;
-                        subgrid.PreviewGrid.PositionComp.SetWorldMatrix(ref wm, skipTeleportCheck: true);
+                        baseConnection.Preview.AlignGrid(baseConnection.Block);
                         subgrid.Positioned = true;
                         gridsToPosition--;
                         continue;
                     }
-                }
 
-                // This subgrid cannot be positioned yet, let's try again in a later iteration
-                // PluginLog.Debug($"Subgrid #{subgrid.Index} could not be positioned at loop #{i}");
+                    // Align the preview by top block connecting to an already positioned preview with a lower index
+                    topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => Subgrids[c.BaseLocation.GridIndex].Positioned);
+                    if (topConnection != null)
+                    {
+                        var baseSubgrid = Subgrids[topConnection.BaseLocation.GridIndex];
+                        if (baseSubgrid.GridBuilder.PositionAndOrientation != null)
+                        {
+                            gridBuilder.PositionAndOrientation.Value.ToMatrixD(out var topMatrix);
+                            baseSubgrid.GridBuilder.PositionAndOrientation.Value.ToMatrixD(out var baseMatrix);
+                            var wm = topMatrix * MatrixD.Invert(baseMatrix) * baseSubgrid.PreviewGrid.PositionComp.WorldMatrixRef;
+                            subgrid.PreviewGrid.PositionComp.SetWorldMatrix(ref wm, skipTeleportCheck: true);
+                            subgrid.Positioned = true;
+                            gridsToPosition--;
+                            continue;
+                        }
+                    }
+
+                    // Align the preview by base block connecting to an already positioned preview with a lower index
+                    baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => Subgrids[c.TopLocation.GridIndex].Positioned);
+                    if (baseConnection != null)
+                    {
+                        var topSubgrid = Subgrids[baseConnection.TopLocation.GridIndex];
+                        if (topSubgrid.GridBuilder.PositionAndOrientation != null)
+                        {
+                            gridBuilder.PositionAndOrientation.Value.ToMatrixD(out var topMatrix);
+                            topSubgrid.GridBuilder.PositionAndOrientation.Value.ToMatrixD(out var baseMatrix);
+                            var wm = topMatrix * MatrixD.Invert(baseMatrix) * topSubgrid.PreviewGrid.PositionComp.WorldMatrixRef;
+                            subgrid.PreviewGrid.PositionComp.SetWorldMatrix(ref wm, skipTeleportCheck: true);
+                            subgrid.Positioned = true;
+                            gridsToPosition--;
+                            continue;
+                        }
+                    }
+
+                    // This subgrid cannot be positioned yet, let's try again in a later iteration
+                    // PluginLog.Debug($"Subgrid #{subgrid.Index} could not be positioned at loop #{i}");
+                }
             }
 
             if (gridsToPosition == 0)
                 return;
 
-            foreach (var subgrid in Subgrids.Where(s => !s.Positioned))
+            foreach (var subgrid in SupportedSubgrids.Where(s => !s.Positioned))
                 PluginLog.Error($"Subgrid #{subgrid.Index} could not be positioned!");
 
             var yaml = GetYaml(false);
@@ -730,7 +740,7 @@ namespace MultigridProjector.Logic
 
             _stats.Clear();
 
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in SupportedSubgrids)
             {
                 subgrid.UnregisterBuiltGrid();
             }
@@ -777,7 +787,7 @@ namespace MultigridProjector.Logic
 
         private void UnregisterDisconnectedSubgrids()
         {
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in SupportedSubgrids)
             {
                 if (subgrid.HasBuilt && !subgrid.IsConnectedToProjector)
                     subgrid.UnregisterBuiltGrid();
@@ -786,7 +796,7 @@ namespace MultigridProjector.Logic
 
         private void UpdateMechanicalConnections()
         {
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in SupportedSubgrids)
                 UpdateSubgridConnections(subgrid);
 
             UpdateSubgridConnectedness();
@@ -1067,7 +1077,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             var shouldUpdateProjection = Projector.GetShouldUpdateProjection() && MySandboxGame.TotalGamePlayTimeInMilliseconds - Projector.GetLastUpdate() >= 2000;
             if (shouldUpdateProjection)
             {
-                foreach (var subgrid in Subgrids)
+                foreach (var subgrid in SupportedSubgrids)
                     subgrid.RequestUpdate();
             }
 
@@ -1216,6 +1226,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             MyCubeGrid builtGrid;
             var subgrid = Subgrids[gridIndex];
+            if (!subgrid.Supported)
+                return BuildCheckResult.NotWeldable;
+
             using (subgrid.BuiltGridLock.Read())
             {
                 builtGrid = subgrid.BuiltGrid;
@@ -1491,16 +1504,17 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         private void UpdateSubgridConnectedness()
         {
             // Clear connectedness
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in SupportedSubgrids)
                 subgrid.IsConnectedToProjector = false;
 
             // Flood fill along the connected mechanical connections
             Subgrids[0].IsConnectedToProjector = true;
-            for (var connectedSubgrids = 1; connectedSubgrids < Subgrids.Count;)
+            var supportedSubgridCount = SupportedSubgrids.Count();
+            for (var connectedSubgrids = 1; connectedSubgrids < supportedSubgridCount;)
             {
                 var connectedBefore = connectedSubgrids;
 
-                foreach (var subgrid in Subgrids)
+                foreach (var subgrid in SupportedSubgrids)
                 {
                     if (!subgrid.IsConnectedToProjector || !subgrid.HasBuilt)
                         continue;

@@ -16,7 +16,7 @@ namespace MultigridProjector.Logic
         // Concurrency: The update work must write only into the dedicated members of subgrids
         private MultigridProjection _projection;
         private MyProjectorBase Projector => _projection.Projector;
-        private List<Subgrid> Subgrids => _projection.Subgrids;
+        private IEnumerable<Subgrid> SupportedSubgrids => _projection.SupportedSubgrids;
 
         // Task control
         private Task _task;
@@ -84,7 +84,7 @@ namespace MultigridProjector.Logic
 
         private void UpdateBlockStatesAndCollectStatistics(WorkData workData = null)
         {
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in SupportedSubgrids)
             {
                 if(ShouldStop) break;
                 subgrid.UpdateBlockStatesBackgroundWork(Projector);
@@ -93,7 +93,7 @@ namespace MultigridProjector.Logic
 
         private void FindBuiltMechanicalConnections()
         {
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in SupportedSubgrids)
             {
                 if(ShouldStop) break;
                 subgrid.FindBuiltBaseConnectionsBackgroundWork();
