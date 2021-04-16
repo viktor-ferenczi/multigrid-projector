@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
 using HarmonyLib;
@@ -29,6 +30,7 @@ using VRage.Game;
 using VRage.Game.ObjectBuilders.Definitions.SessionComponents;
 using VRage.ModAPI;
 using VRage.Network;
+using VRage.ObjectBuilders;
 using VRage.Utils;
 using VRageMath;
 
@@ -244,13 +246,13 @@ namespace MultigridProjector.Logic
 
                 foreach (var subgrid in Subgrids)
                 {
-                    if(!subgrid.Supported)
+                    if (!subgrid.Supported)
                         continue;
 
                     foreach (var baseConnection in subgrid.BaseConnections.Values)
                     {
                         var topSubgrid = Subgrids[baseConnection.TopLocation.GridIndex];
-                        if(topSubgrid.Supported)
+                        if (topSubgrid.Supported)
                             continue;
 
                         topSubgrid.Supported = true;
@@ -261,7 +263,7 @@ namespace MultigridProjector.Logic
                     foreach (var topConnection in subgrid.TopConnections.Values)
                     {
                         var baseSubgrid = Subgrids[topConnection.BaseLocation.GridIndex];
-                        if(baseSubgrid.Supported)
+                        if (baseSubgrid.Supported)
                             continue;
 
                         baseSubgrid.Supported = true;
@@ -270,7 +272,7 @@ namespace MultigridProjector.Logic
                     }
                 }
 
-                if(modified == 0)
+                if (modified == 0)
                     break;
             }
         }
@@ -289,7 +291,7 @@ namespace MultigridProjector.Logic
 
             ProjectorsWithBlueprintLoaded.Remove(Projector.EntityId);
 
-            if(Projector.AlignToRepairProjector(GridBuilders[0]))
+            if (Projector.AlignToRepairProjector(GridBuilders[0]))
                 PluginLog.Debug($"Aligned repair projection loaded into {Projector.GetDebugName()}");
         }
 
@@ -511,7 +513,7 @@ namespace MultigridProjector.Logic
                 Projector.RequestRemoveProjection();
         }
 
-        public string GetYaml(bool requireScan=true)
+        public string GetYaml(bool requireScan = true)
         {
             if (requireScan && !HasScanned)
                 return "";
@@ -528,7 +530,7 @@ namespace MultigridProjector.Logic
             sb.AppendLine($"Subgrids:");
             foreach (var subgrid in Subgrids)
             {
-                if(!subgrid.Supported)
+                if (!subgrid.Supported)
                     continue;
 
                 sb.AppendLine($"  Index: {subgrid.Index}");
@@ -815,7 +817,8 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void BuildMissingHead(BaseConnection baseConnection, Subgrid baseSubgrid)
         {
-            if (!baseConnection.HasBuilt || baseConnection.Block.TopBlock != null || !baseConnection.Block.IsFunctional) return;
+            if (!Sync.IsServer || !baseConnection.HasBuilt || baseConnection.Block.TopBlock != null || !baseConnection.Block.IsFunctional)
+                return;
 
             // Create head of right size
             GetCounterparty(baseConnection, out var topSubgrid);
@@ -838,7 +841,8 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void FindNewlyAddedHead(BaseConnection baseConnection, TopConnection topConnection)
         {
-            if (topConnection.HasBuilt || baseConnection.Block?.TopBlock == null) return;
+            if (topConnection.HasBuilt || baseConnection.Block?.TopBlock == null)
+                return;
 
             topConnection.Block = baseConnection.Block.TopBlock;
             topConnection.Found = topConnection.Block;
@@ -859,33 +863,115 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static void FindNewlyBuiltTop(TopConnection topConnection)
         {
-            if (topConnection.HasBuilt || topConnection.Found == null) return;
+            if (topConnection.HasBuilt || topConnection.Found == null)
+                return;
 
             topConnection.Block = topConnection.Found;
         }
 
         private void BuildMissingBase(TopConnection topConnection, Subgrid topSubgrid)
         {
-            if (!topConnection.HasBuilt || topConnection.Block.Stator != null) return;
+            if (!Sync.IsServer || !topConnection.HasBuilt || topConnection.Block.Stator != null)
+                return;
 
-            // Create head of right size
+            // Create base of right size
             var baseConnection = GetCounterparty(topConnection, out var baseSubgrid);
-            if (baseSubgrid.HasBuilt || !baseConnection.HasBuilt || !baseConnection.Block.IsFunctional) return;
-            var smallToLarge = baseSubgrid.GridSizeEnum != topSubgrid.GridSizeEnum;
-            // FIXME: Implement extension method RecreateBase
-            // topConnection.Block.RecreateBase(topConnection.Block.BuiltBy, smallToLarge);
+            if (baseSubgrid.HasBuilt)
+                return;
 
-            // Need to try again every 2 seconds, because building the base part may fail due to objects in the way 
-            // ShouldUpdateProjection();
+            // Create base grid builder
+            var baseGridBuilder = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_CubeGrid>();
+            baseGridBuilder.GridSizeEnum = baseConnection.Preview.CubeGrid.GridSizeEnum;
+            baseGridBuilder.IsStatic = baseConnection.Preview.CubeGrid.IsStatic;
+            baseGridBuilder.PositionAndOrientation = new MyPositionAndOrientation(baseConnection.Preview.CubeGrid.WorldMatrix);
+
+            // Optimization: Fast lookup of blueprint block builders at the expense of some additional memory consumption
+            if (!baseSubgrid.TryGetBlockBuilder(baseConnection.Preview.Position, out var baseBlockBuilder))
+                return;
+
+            // Sanity check: The preview block must match the blueprint block builder both by definition and orientation
+            if (!baseConnection.Preview.SlimBlock.IsMatchingBuilder(baseBlockBuilder))
+                return;
+
+            // Clone the block builder to prevent damaging the original blueprint
+            baseBlockBuilder = (MyObjectBuilder_CubeBlock) baseBlockBuilder.Clone();
+
+            // Make sure no EntityId collision will occur on re-welding a block on a previously disconnected (split)
+            // part of a built subgrid which has not been destroyed (or garbage collected) yet
+            if (baseBlockBuilder.EntityId != 0 && MyEntityIdentifier.ExistsById(baseBlockBuilder.EntityId))
+            {
+                baseBlockBuilder.EntityId = MyEntityIdentifier.AllocateId();
+            }
+
+            // Empty inventory, ammo (including already loaded ammo), also clears battery charge (which is wrong, see below)
+            baseBlockBuilder.SetupForProjector();
+            baseBlockBuilder.ConstructionInventory = null;
+
+            // Ownership is determined by the projector's grid, not by who is welding the block
+            baseBlockBuilder.BuiltBy = Projector.OwnerId;
+
+            // Add base block as the first block of the new grid
+            baseGridBuilder.CubeBlocks.Add(baseBlockBuilder);
+
+            // Create the actual base grid
+            var baseGrid = MyAPIGateway.Entities.CreateFromObjectBuilder(baseGridBuilder) as MyCubeGrid;
+            if (baseGrid == null)
+                return;
+            MyEntities.Add(baseGrid);
+
+            // Attach the existing top part to the newly created base
+            var baseBlock = baseGrid.CubeBlocks.First().FatBlock as MyMechanicalConnectionBlockBase;
+            try
+            {
+                baseBlock.Attach(topConnection.Block);
+            }
+            catch (TargetInvocationException e)
+            {
+                /* FIXME:
+
+Dirty hack to ignore the exception inside Attach.
+
+It happens only on welding a piston base under an existing piston top. Maybe this is the reason why there is no "Attach Head" on pistons?
+
+System.NullReferenceException: Object reference not set to an instance of an object.
+   at Sandbox.Game.Entities.Blocks.MyPistonBase.GetTopMatrixLocal()
+   at Sandbox.Game.Entities.Blocks.MyPistonBase.FillFixedData()
+   at Sandbox.Game.Entities.Blocks.MyPistonBase.CreateConstraint(MyAttachableTopBlockBase topBlock)
+   at Sandbox.Game.Entities.Blocks.MyPistonBase.Attach(MyAttachableTopBlockBase topBlock, Boolean updateGroup)
+   --- End of inner exception stack trace ---
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Object[] arguments, Signature sig, Boolean constructor)
+   at System.Reflection.RuntimeMethodInfo.UnsafeInvokeInternal(Object obj, Object[] parameters, Object[] arguments)
+   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at System.Reflection.MethodBase.Invoke(Object obj, Object[] parameters)
+   at MultigridProjector.Extensions.MyMechanicalConnectionBlockBaseExtensions.Attach(MyMechanicalConnectionBlockBase obj, MyAttachableTopBlockBase topBlock, Boolean updateGroup) in C:\Dev\multigrid-projector\MultigridProjector\Extensions\MyMechanicalConnectionBlockBaseExtensions.cs:line 19
+   at MultigridProjector.Logic.MultigridProjection.BuildMissingBase(TopConnection topConnection, Subgrid topSubgrid) in C:\Dev\multigrid-projector\MultigridProjector\Logic\MultigridProjection.cs:line 925
+                */
+                if (!e.ToString().Contains("NullReferenceException"))
+                    throw;
+            }
+
+            // Sanity check
+            if (baseBlock?.TopBlock == null)
+            {
+                baseGrid.Close();
+                return;
+            }
+
+            // Register base subgrid
+            baseConnection.Found = baseBlock;
+            baseConnection.Block = baseBlock;
+            RegisterConnectedSubgrid(baseSubgrid, baseConnection, topConnection, topSubgrid);
+
+            // Need to try again every 2 seconds, because building the base part may fail due to objects in the way
+            ShouldUpdateProjection();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void RegisterConnectedSubgrid(Subgrid baseSubgrid, BaseConnection baseConnection, TopConnection topConnection, Subgrid topSubgrid)
         {
             var bothBaseAndTopAreBuilt = baseConnection.HasBuilt && topConnection.HasBuilt;
-            if (!bothBaseAndTopAreBuilt) return;
-
-            var loneTopPart = topConnection.Block.CubeGrid.CubeBlocks.Count == 1;
+            if (!bothBaseAndTopAreBuilt)
+                return;
 
             if (baseConnection.Block.TopBlock == null && topConnection.Block.Stator == null && baseConnection.RequestAttach)
             {
@@ -895,14 +981,27 @@ namespace MultigridProjector.Logic
                 return;
             }
 
-            if (!baseSubgrid.HasBuilt)
+            var loneBasePart = baseConnection.Block.CubeGrid.CubeBlocks.Count == 1;
+            if (loneBasePart && !baseSubgrid.HasBuilt)
+            {
+                ConfigureBaseToMatchTop(baseConnection);
                 baseSubgrid.RegisterBuiltGrid(baseConnection.Block.CubeGrid);
+                return;
+            }
 
-            if (topSubgrid.HasBuilt) return;
+            if (topSubgrid.HasBuilt)
+                return;
 
+            var loneTopPart = topConnection.Block.CubeGrid.CubeBlocks.Count == 1;
             if (loneTopPart && (topConnection.Block.CubeGrid.GridSizeEnum != topSubgrid.GridSizeEnum || !baseConnection.Block.IsFunctional))
             {
-                // Remove head if the grid size is wrong or if the base is not functional yet.aw
+                if (!Sync.IsServer)
+                {
+                    ShouldUpdateProjection();
+                    return;
+                }
+
+                // Remove head if the grid size is wrong or if the base is not functional yet.
                 // This is an ugly workaround to remove the newly built head of wrong size,
                 // then building a new one of the proper size on the next simulation frame.
                 // It is required, because the patched MyMechanicalConnectionBlockBase.CreateTopPart
@@ -920,12 +1019,18 @@ namespace MultigridProjector.Logic
                 return;
 
             topConnection.Block.AlignGrid(topConnection.Preview);
+            ConfigureBaseToMatchTop(baseConnection);
+        }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void ConfigureBaseToMatchTop(BaseConnection baseConnection)
+        {
             switch (baseConnection.Block)
             {
                 case MyPistonBase pistonBase:
                     pistonBase.SetCurrentPosByTopGridMatrix();
                     break;
+
                 case MyMotorStator motorStator:
                     motorStator.SetAngleToPhysics();
                     motorStator.SetValueFloat("Displacement", ((MyMotorStator) baseConnection.Preview).DummyDisplacement);
@@ -1011,7 +1116,9 @@ namespace MultigridProjector.Logic
             if (previewBlock == null || !Projector.AllowWelding || !MySession.Static.GetComponent<MySessionComponentDLC>().HasDefinitionDLC(previewBlock.BlockDefinition, steamId))
             {
                 var myMultiplayerServerBase = MyMultiplayer.Static as MyMultiplayerServerBase;
-                myMultiplayerServerBase?.ValidationFailed(MyEventContext.Current.Sender.Value, false, stackTrace: false, additionalInfo: $"MultigridProjection.BuildInternal: previewCubeBlockPosition={previewCubeBlockPosition}; owner={owner}; builder={builder}; requestInstant={requestInstant}; builtBy={builtBy}; subgridIndex={subgridIndex}; previewBlock={previewBlock}; Projector.AllowWelding={Projector.AllowWelding}");
+                myMultiplayerServerBase?.ValidationFailed(MyEventContext.Current.Sender.Value, false, stackTrace: false,
+                    additionalInfo:
+                    $"MultigridProjection.BuildInternal: previewCubeBlockPosition={previewCubeBlockPosition}; owner={owner}; builder={builder}; requestInstant={requestInstant}; builtBy={builtBy}; subgridIndex={subgridIndex}; previewBlock={previewBlock}; Projector.AllowWelding={Projector.AllowWelding}");
                 return;
             }
 
@@ -1599,6 +1706,7 @@ namespace MultigridProjector.Logic
                     ((IMyProjector) projector).SetProjectedGrid(null);
                     return false;
                 }
+
                 if (projection == null)
                     return true;
             }
