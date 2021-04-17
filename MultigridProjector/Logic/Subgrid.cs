@@ -123,8 +123,15 @@ namespace MultigridProjector.Logic
         private void PrepareBase(MultigridProjection projection, MySlimBlock slimBlock, MyMechanicalConnectionBlockBase baseBlock)
         {
             var baseMinLocation = new BlockMinLocation(Index, baseBlock.Min);
-            if (!projection.BlueprintConnections.TryGetValue(baseMinLocation, out var topMinLocation)) return;
-            var topBlock = projection.PreviewTopBlocks[topMinLocation];
+            if (!projection.BlueprintConnections.TryGetValue(baseMinLocation, out var topMinLocation))
+                // It happens if the connection is detached
+                return;
+            if (!projection.PreviewTopBlocks.TryGetValue(topMinLocation, out var topBlock))
+                // It happens if the other part was removed due to removal of unknown modded blocks on blueprint load
+                return;
+            if (!projection.PreviewBaseBlocks.ContainsKey(baseMinLocation))
+                // Make sure the base part also presents in the preview
+                return;
             BaseConnections[slimBlock.Position] = new BaseConnection(baseBlock, new BlockLocation(topMinLocation.GridIndex, topBlock.Position));
         }
 
@@ -132,8 +139,15 @@ namespace MultigridProjector.Logic
         private void PrepareTop(MultigridProjection projection, MySlimBlock slimBlock, MyAttachableTopBlockBase topBlock)
         {
             var topMinLocation = new BlockMinLocation(Index, topBlock.Min);
-            if (!projection.BlueprintConnections.TryGetValue(topMinLocation, out var baseMinLocation)) return;
-            var baseBlock = projection.PreviewBaseBlocks[baseMinLocation];
+            if (!projection.BlueprintConnections.TryGetValue(topMinLocation, out var baseMinLocation))
+                // It happens if the connection is detached
+                return;
+            if (!projection.PreviewBaseBlocks.TryGetValue(baseMinLocation, out var baseBlock))
+                // It happens if the other part was removed due to removal of unknown modded blocks on blueprint load
+                return;
+            if (!projection.PreviewTopBlocks.ContainsKey(topMinLocation))
+                // Make sure the top part also presents in the preview
+                return;
             TopConnections[slimBlock.Position] = new TopConnection(topBlock, new BlockLocation(baseMinLocation.GridIndex, baseBlock.Position));
         }
 
@@ -598,7 +612,7 @@ namespace MultigridProjector.Logic
 
             foreach (var (position, baseConnection) in BaseConnections)
             {
-                if(!Blocks.TryGetValue(position, out var projectedBlock))
+                if (!Blocks.TryGetValue(position, out var projectedBlock))
                     continue;
 
                 switch (projectedBlock.State)
@@ -623,7 +637,7 @@ namespace MultigridProjector.Logic
 
             foreach (var (position, topConnection) in TopConnections)
             {
-                if(!Blocks.TryGetValue(position, out var projectedBlock))
+                if (!Blocks.TryGetValue(position, out var projectedBlock))
                     continue;
 
                 switch (projectedBlock.State)
