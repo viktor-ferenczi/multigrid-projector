@@ -869,8 +869,21 @@ namespace MultigridProjector.Logic
             var baseConnection = GetCounterparty(topConnection, out var baseSubgrid);
 
             FindNewlyBuiltTop(topConnection);
+            FindNewlyAddedBase(topConnection, baseConnection);
             BuildMissingBase(topConnection, topSubgrid);
             RegisterConnectedSubgrid(baseSubgrid, baseConnection, topConnection, topSubgrid);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void FindNewlyAddedBase(TopConnection topConnection, BaseConnection baseConnection)
+        {
+            if (baseConnection.HasBuilt || topConnection.Block?.Stator == null)
+                return;
+
+            baseConnection.Block = topConnection.Block.Stator;
+            baseConnection.Found = baseConnection.Block;
+
+            ForceUpdateProjection();
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -994,14 +1007,17 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return;
             }
 
-            var loneBasePart = baseConnection.Block.CubeGrid.CubeBlocks.Count == 1;
-            if (loneBasePart && !baseSubgrid.HasBuilt)
+            if (!baseSubgrid.HasBuilt)
             {
-                ConfigureBaseToMatchTop(baseConnection);
+                var loneBasePart = baseConnection.Block.CubeGrid.CubeBlocks.Count == 1;
+                if (loneBasePart)
+                    ConfigureBaseToMatchTop(baseConnection);
+
                 baseSubgrid.RegisterBuiltGrid(baseConnection.Block.CubeGrid);
                 return;
             }
 
+            // topSubgrid.HasBuilt must be true here
             if (topSubgrid.HasBuilt)
                 return;
 
@@ -1028,11 +1044,11 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             topSubgrid.RegisterBuiltGrid(topConnection.Block.CubeGrid);
 
-            if (!loneTopPart)
-                return;
-
-            topConnection.Block.AlignGrid(topConnection.Preview);
-            ConfigureBaseToMatchTop(baseConnection);
+            if (loneTopPart)
+            {
+                topConnection.Block.AlignGrid(topConnection.Preview);
+                ConfigureBaseToMatchTop(baseConnection);
+            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
