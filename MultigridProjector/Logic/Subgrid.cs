@@ -71,7 +71,7 @@ namespace MultigridProjector.Logic
             DisableFunctionalBlocks();
             CreateBlockModels();
 
-            CreateMechanicalConnections(projection);
+            FindMechanicalConnections(projection);
         }
 
         private void DisableFunctionalBlocks()
@@ -105,7 +105,7 @@ namespace MultigridProjector.Logic
             Blocks.Clear();
         }
 
-        private void CreateMechanicalConnections(MultigridProjection projection)
+        private void FindMechanicalConnections(MultigridProjection projection)
         {
             foreach (var slimBlock in PreviewGrid.CubeBlocks)
                 switch (slimBlock.FatBlock)
