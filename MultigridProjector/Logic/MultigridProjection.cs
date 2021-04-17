@@ -147,6 +147,9 @@ namespace MultigridProjector.Logic
 
             Initialized = true;
 
+            foreach (var subgrid in SupportedSubgrids)
+                subgrid.RequestUpdate();
+
             ForceUpdateProjection();
         }
 
