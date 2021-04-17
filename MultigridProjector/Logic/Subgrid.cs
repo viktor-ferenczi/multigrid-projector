@@ -238,6 +238,9 @@ namespace MultigridProjector.Logic
             {
                 BuiltGrid = grid;
 
+                foreach (var fatBlock in BuiltGrid.GetFatBlocks<MyTerminalBlock>())
+                    fatBlock.CheckConnectionChanged += OnCheckConnectionChanged;
+
                 ConnectGridEvents();
                 RequestUpdate();
             }
@@ -251,6 +254,9 @@ namespace MultigridProjector.Logic
             using (BuiltGridLock.Write())
             {
                 DisconnectGridEvents();
+
+                foreach (var terminalBlock in BuiltGrid.GetFatBlocks<MyTerminalBlock>())
+                    terminalBlock.CheckConnectionChanged -= OnCheckConnectionChanged;
 
                 BuiltGrid = null;
 
@@ -386,10 +392,7 @@ namespace MultigridProjector.Logic
             if (slimBlock.FatBlock is MyTerminalBlock terminalBlock)
             {
                 AddBlockToGroups(terminalBlock);
-
-                // FIXME: Figure whether we need it!
-                // terminalBlock.CheckConnectionChanged += CheckConnectionChanged;
-                // CheckConnectionChanged just invoked ShouldUpdateProjection();
+                terminalBlock.CheckConnectionChanged += OnCheckConnectionChanged;
             }
 
             switch (slimBlock.FatBlock)
@@ -425,10 +428,7 @@ namespace MultigridProjector.Logic
             if (slimBlock.FatBlock is MyTerminalBlock terminalBlock)
             {
                 RemoveBlockFromGroups(terminalBlock);
-
-                // FIXME: Figure whether we need it!
-                // terminalBlock.CheckConnectionChanged -= CheckConnectionChanged;
-                // CheckConnectionChanged just invoked ShouldUpdateProjection();
+                terminalBlock.CheckConnectionChanged -= OnCheckConnectionChanged;
             }
 
             switch (slimBlock.FatBlock)
@@ -448,15 +448,21 @@ namespace MultigridProjector.Logic
         [Everywhere]
         private void OnGridSplit(MyCubeGrid grid1, MyCubeGrid grid2)
         {
-            bool gridKept;
+            MyCubeGrid builtGrid;
             using (BuiltGridLock.Read())
             {
-                gridKept = grid1 == BuiltGrid || grid2 == BuiltGrid;
-                RequestUpdate();
+                builtGrid = BuiltGrid;
             }
 
-            if (!gridKept)
-                UnregisterBuiltGrid();
+            if (builtGrid == null)
+                return;
+
+            UnregisterBuiltGrid();
+
+            if (builtGrid != grid1 && builtGrid != grid2)
+                return;
+
+            RegisterBuiltGrid(builtGrid);
         }
 
         [Everywhere]
@@ -466,6 +472,11 @@ namespace MultigridProjector.Logic
                 return;
 
             UnregisterBuiltGrid();
+        }
+
+        private void OnCheckConnectionChanged(MyCubeBlock obj)
+        {
+            RequestUpdate();
         }
 
         #endregion
