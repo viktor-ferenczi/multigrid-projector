@@ -1009,7 +1009,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             if (!baseSubgrid.HasBuilt)
             {
-                var loneBasePart = baseConnection.Block.CubeGrid.CubeBlocks.Count == 1;
+                var loneBasePart = !baseConnection.IsWheel && baseConnection.Block.CubeGrid.CubeBlocks.Count == 1;
                 if (loneBasePart)
                     ConfigureBaseToMatchTop(baseConnection);
 
@@ -1021,7 +1021,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             if (topSubgrid.HasBuilt)
                 return;
 
-            var loneTopPart = topConnection.Block.CubeGrid.CubeBlocks.Count == 1;
+            var loneTopPart = !topConnection.IsWheel && topConnection.Block.CubeGrid.CubeBlocks.Count == 1;
             if (loneTopPart && (topConnection.Block.CubeGrid.GridSizeEnum != topSubgrid.GridSizeEnum || !baseConnection.Block.IsFunctional))
             {
                 if (!Sync.IsServer)
