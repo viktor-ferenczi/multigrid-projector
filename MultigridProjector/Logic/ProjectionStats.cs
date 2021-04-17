@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -37,23 +38,30 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RegisterBlock(MySlimBlock slimBlock, BlockState blockState)
         {
-            if (blockState == BlockState.FullyBuilt)
+            var armor = slimBlock.FatBlock == null;
+
+            switch (blockState)
             {
-                if (slimBlock.FatBlock == null)
-                    BuiltArmorBlocks++;
-                return;
+                case BlockState.Buildable:
+                case BlockState.BeingBuilt:
+                    BuildableBlocks++;
+                    break;
+
+                case BlockState.FullyBuilt:
+                    if (armor)
+                        BuiltArmorBlocks++;
+                    return;
             }
 
             RemainingBlocks++;
 
-            var fatBlock = slimBlock.FatBlock;
-            if (fatBlock == null)
+            if (armor)
             {
                 RemainingArmorBlocks++;
                 return;
             }
 
-            var blockDefinition = fatBlock.BlockDefinition;
+            var blockDefinition = slimBlock.FatBlock.BlockDefinition;
             RemainingBlocksPerType[blockDefinition] = RemainingBlocksPerType.GetValueOrDefault(blockDefinition) + 1;
         }
 
