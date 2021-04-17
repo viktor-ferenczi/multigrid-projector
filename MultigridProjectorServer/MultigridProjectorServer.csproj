@@ -94,6 +94,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="Api\MultigridProjectorTorchAgent.cs" />
+        <Compile Include="EnsureOriginalTorch.cs" />
         <Compile Include="MultigridProjectorCommands.cs" />
         <Compile Include="MultigridProjectorConfig.cs" />
         <Compile Include="MultigridProjectorPlugin.cs" />

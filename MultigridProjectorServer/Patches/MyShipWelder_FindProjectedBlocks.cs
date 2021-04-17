@@ -10,9 +10,10 @@ using SpaceEngineers.Game.Entities.Blocks;
 using Torch.Managers.PatchManager;
 using VRageMath;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
+    [EnsureOriginalTorch(typeof(MyShipWelder), "FindProjectedBlocks", null, "30c15aa0")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyShipWelder_FindProjectedBlocks

@@ -44,8 +44,8 @@ namespace MultigridProjector.Logic
         // Mechanical top blocks on this subgrid by cube position
         public readonly Dictionary<Vector3I, TopConnection> TopConnections = new Dictionary<Vector3I, TopConnection>();
 
-        // Requests rescanning the preview blocks, the initial true value starts the first scan
-        public bool IsUpdateRequested = true;
+        // Requests rescanning the preview blocks
+        public bool IsUpdateRequested;
 
         // Indicates whether the preview grid is supported for welding, e.g. connected to the first preview grid
         public bool Supported;
@@ -71,7 +71,7 @@ namespace MultigridProjector.Logic
             DisableFunctionalBlocks();
             CreateBlockModels();
 
-            CreateMechanicalConnections(projection);
+            FindMechanicalConnections(projection);
         }
 
         private void DisableFunctionalBlocks()
@@ -105,7 +105,7 @@ namespace MultigridProjector.Logic
             Blocks.Clear();
         }
 
-        private void CreateMechanicalConnections(MultigridProjection projection)
+        private void FindMechanicalConnections(MultigridProjection projection)
         {
             foreach (var slimBlock in PreviewGrid.CubeBlocks)
                 switch (slimBlock.FatBlock)
@@ -123,8 +123,15 @@ namespace MultigridProjector.Logic
         private void PrepareBase(MultigridProjection projection, MySlimBlock slimBlock, MyMechanicalConnectionBlockBase baseBlock)
         {
             var baseMinLocation = new BlockMinLocation(Index, baseBlock.Min);
-            if (!projection.BlueprintConnections.TryGetValue(baseMinLocation, out var topMinLocation)) return;
-            var topBlock = projection.PreviewTopBlocks[topMinLocation];
+            if (!projection.BlueprintConnections.TryGetValue(baseMinLocation, out var topMinLocation))
+                // It happens if the connection is detached
+                return;
+            if (!projection.PreviewTopBlocks.TryGetValue(topMinLocation, out var topBlock))
+                // It happens if the other part was removed due to removal of unknown modded blocks on blueprint load
+                return;
+            if (!projection.PreviewBaseBlocks.ContainsKey(baseMinLocation))
+                // Make sure the base part also presents in the preview
+                return;
             BaseConnections[slimBlock.Position] = new BaseConnection(baseBlock, new BlockLocation(topMinLocation.GridIndex, topBlock.Position));
         }
 
@@ -132,8 +139,15 @@ namespace MultigridProjector.Logic
         private void PrepareTop(MultigridProjection projection, MySlimBlock slimBlock, MyAttachableTopBlockBase topBlock)
         {
             var topMinLocation = new BlockMinLocation(Index, topBlock.Min);
-            if (!projection.BlueprintConnections.TryGetValue(topMinLocation, out var baseMinLocation)) return;
-            var baseBlock = projection.PreviewBaseBlocks[baseMinLocation];
+            if (!projection.BlueprintConnections.TryGetValue(topMinLocation, out var baseMinLocation))
+                // It happens if the connection is detached
+                return;
+            if (!projection.PreviewBaseBlocks.TryGetValue(baseMinLocation, out var baseBlock))
+                // It happens if the other part was removed due to removal of unknown modded blocks on blueprint load
+                return;
+            if (!projection.PreviewTopBlocks.ContainsKey(topMinLocation))
+                // Make sure the top part also presents in the preview
+                return;
             TopConnections[slimBlock.Position] = new TopConnection(topBlock, new BlockLocation(baseMinLocation.GridIndex, baseBlock.Position));
         }
 
@@ -185,7 +199,7 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RequestUpdate()
         {
-            IsUpdateRequested = true;
+            IsUpdateRequested = Supported;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -238,6 +252,9 @@ namespace MultigridProjector.Logic
             {
                 BuiltGrid = grid;
 
+                foreach (var fatBlock in BuiltGrid.GetFatBlocks<MyTerminalBlock>())
+                    fatBlock.CheckConnectionChanged += OnCheckConnectionChanged;
+
                 ConnectGridEvents();
                 RequestUpdate();
             }
@@ -251,6 +268,9 @@ namespace MultigridProjector.Logic
             using (BuiltGridLock.Write())
             {
                 DisconnectGridEvents();
+
+                foreach (var terminalBlock in BuiltGrid.GetFatBlocks<MyTerminalBlock>())
+                    terminalBlock.CheckConnectionChanged -= OnCheckConnectionChanged;
 
                 BuiltGrid = null;
 
@@ -386,10 +406,7 @@ namespace MultigridProjector.Logic
             if (slimBlock.FatBlock is MyTerminalBlock terminalBlock)
             {
                 AddBlockToGroups(terminalBlock);
-
-                // FIXME: Figure whether we need it!
-                // terminalBlock.CheckConnectionChanged += CheckConnectionChanged;
-                // CheckConnectionChanged just invoked ShouldUpdateProjection();
+                terminalBlock.CheckConnectionChanged += OnCheckConnectionChanged;
             }
 
             switch (slimBlock.FatBlock)
@@ -425,10 +442,7 @@ namespace MultigridProjector.Logic
             if (slimBlock.FatBlock is MyTerminalBlock terminalBlock)
             {
                 RemoveBlockFromGroups(terminalBlock);
-
-                // FIXME: Figure whether we need it!
-                // terminalBlock.CheckConnectionChanged -= CheckConnectionChanged;
-                // CheckConnectionChanged just invoked ShouldUpdateProjection();
+                terminalBlock.CheckConnectionChanged -= OnCheckConnectionChanged;
             }
 
             switch (slimBlock.FatBlock)
@@ -448,15 +462,21 @@ namespace MultigridProjector.Logic
         [Everywhere]
         private void OnGridSplit(MyCubeGrid grid1, MyCubeGrid grid2)
         {
-            bool gridKept;
+            MyCubeGrid builtGrid;
             using (BuiltGridLock.Read())
             {
-                gridKept = grid1 == BuiltGrid || grid2 == BuiltGrid;
-                RequestUpdate();
+                builtGrid = BuiltGrid;
             }
 
-            if (!gridKept)
-                UnregisterBuiltGrid();
+            if (builtGrid == null)
+                return;
+
+            UnregisterBuiltGrid();
+
+            if (builtGrid != grid1 && builtGrid != grid2)
+                return;
+
+            RegisterBuiltGrid(builtGrid);
         }
 
         [Everywhere]
@@ -466,6 +486,11 @@ namespace MultigridProjector.Logic
                 return;
 
             UnregisterBuiltGrid();
+        }
+
+        private void OnCheckConnectionChanged(MyCubeBlock obj)
+        {
+            RequestUpdate();
         }
 
         #endregion
@@ -566,7 +591,7 @@ namespace MultigridProjector.Logic
 
         public void UpdateBlockStatesBackgroundWork(MyProjectorBase projector)
         {
-            if (!IsUpdateRequested || !Supported)
+            if (!IsUpdateRequested)
                 return;
 
             IsUpdateRequested = false;
@@ -587,7 +612,7 @@ namespace MultigridProjector.Logic
 
             foreach (var (position, baseConnection) in BaseConnections)
             {
-                if(!Blocks.TryGetValue(position, out var projectedBlock))
+                if (!Blocks.TryGetValue(position, out var projectedBlock))
                     continue;
 
                 switch (projectedBlock.State)
@@ -612,7 +637,7 @@ namespace MultigridProjector.Logic
 
             foreach (var (position, topConnection) in TopConnections)
             {
-                if(!Blocks.TryGetValue(position, out var projectedBlock))
+                if (!Blocks.TryGetValue(position, out var projectedBlock))
                     continue;
 
                 switch (projectedBlock.State)

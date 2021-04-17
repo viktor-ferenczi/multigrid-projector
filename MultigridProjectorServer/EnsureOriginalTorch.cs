@@ -7,17 +7,24 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using HarmonyLib;
 
-namespace MultigridProjector.Utilities
+
+namespace MultigridProjectorServer
 {
     [AttributeUsage(AttributeTargets.Class)]
-    public class EnsureOriginal : Attribute
+    public class EnsureOriginalTorch : Attribute
     {
-        public readonly string[] AllowedHexDigests;
-        public string AllowedHexDigestsAsText => string.Join(", ", AllowedHexDigests);
+        private readonly string[] _allowedHexDigests;
+        private readonly Type _declaringType;
+        private readonly string _methodName;
+        private readonly Type[] _methodArgs;
+        private string AllowedHexDigestsAsText => string.Join(", ", _allowedHexDigests);
 
-        public EnsureOriginal(params string[] allowedHexDigests)
+        public EnsureOriginalTorch(Type declaringType, string methodName, Type[] methodArgs, params string[] allowedHexDigests)
         {
-            AllowedHexDigests = allowedHexDigests;
+            _allowedHexDigests = allowedHexDigests;
+            _declaringType = declaringType;
+            _methodName = methodName;
+            _methodArgs = methodArgs;
         }
 
         public static void VerifyAll()
@@ -47,26 +54,19 @@ namespace MultigridProjector.Utilities
 
         private static string VerifyType(Type patchType)
         {
-            var declaringType = patchType.GetCustomAttributes<HarmonyPatch>().FirstOrDefault(a => a.info.declaringType != null)?.info.declaringType;
-            if (declaringType == null)
-                return "";
-
-            var harmonyAttribute = patchType.GetCustomAttributes<HarmonyPatch>().FirstOrDefault(a => !string.IsNullOrEmpty(a.info.methodName));
-            if (harmonyAttribute == null)
-                return "";
-
-            var ensureOriginal = patchType.GetCustomAttributes<EnsureOriginal>().FirstOrDefault();
+            var ensureOriginal = patchType.GetCustomAttributes<EnsureOriginalTorch>().FirstOrDefault();
             if (ensureOriginal == null)
                 return "";
 
-            var methodName = harmonyAttribute.info.methodName;
-            var methodArgs = harmonyAttribute.info.argumentTypes;
+            var declaringType = ensureOriginal._declaringType;
+            var methodName = ensureOriginal._methodName;
+            var methodArgs = ensureOriginal._methodArgs;
             var methodInfo = AccessTools.DeclaredMethod(declaringType, methodName, methodArgs);
             if (methodInfo == null)
                 return $"Could not get method information for the {declaringType.Name}.{methodName} method patched in class {patchType.Name}";
 
             var actualDigest = HashMethodBody(methodInfo).ToString("x8");
-            if (!ensureOriginal.AllowedHexDigests.Contains(actualDigest))
+            if (!ensureOriginal._allowedHexDigests.Contains(actualDigest))
                 return $"Body of patched method {declaringType.Name}.{methodName} has changed: actual {actualDigest}, expected one of {ensureOriginal.AllowedHexDigestsAsText}\"";
 
             return "";

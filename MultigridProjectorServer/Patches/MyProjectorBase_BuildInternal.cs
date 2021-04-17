@@ -6,9 +6,10 @@ using Sandbox.Game.Entities.Blocks;
 using Torch.Managers.PatchManager;
 using VRageMath;
 
-namespace MultigridProjectorServer
+namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "BuildInternal", null,"b5ce7ac2")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_BuildInternal

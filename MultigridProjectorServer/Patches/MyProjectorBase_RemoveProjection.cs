@@ -5,9 +5,10 @@ using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 using Torch.Managers.PatchManager;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "RemoveProjection", null, "f6fc8084")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_RemoveProjection

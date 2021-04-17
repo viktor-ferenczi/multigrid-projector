@@ -17,7 +17,16 @@ namespace MultigridProjectorDedicated
             PluginLog.Info("Loading");
             try
             {
-                EnsureOriginal.VerifyAll();
+                try
+                {
+                    EnsureOriginal.VerifyAll();
+                }
+                catch (NotSupportedException e)
+                {
+                    PluginLog.Error(e, "Disabled the plugin due to potentially incompatible code changes in the game or plugin patch collisions. Please report the exception below on the SE Mods Discord (invite is on the Workshop page):");
+                    return;
+                }
+
                 Harmony.PatchAll();
             }
             catch (Exception e)

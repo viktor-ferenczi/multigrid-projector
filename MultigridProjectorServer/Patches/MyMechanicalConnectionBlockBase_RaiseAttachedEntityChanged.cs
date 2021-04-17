@@ -5,9 +5,10 @@ using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 using Torch.Managers.PatchManager;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
+    [EnsureOriginalTorch(typeof(MyMechanicalConnectionBlockBase), "RaiseAttachedEntityChanged", null,"f0a1b3d3")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyMechanicalConnectionBlockBase_RaiseAttachedEntityChanged
