@@ -1,6 +1,7 @@
 using MultigridProjector.Api;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
+using Sandbox.Game.Entities.Cube;
 
 namespace MultigridProjector.Logic
 {
@@ -18,7 +19,7 @@ namespace MultigridProjector.Logic
 
         // Requests attaching the counterparty block if exists and at the right position
         public bool RequestAttach;
-        
+
         protected Connection(T preview)
         {
             Preview = preview;
@@ -40,6 +41,8 @@ namespace MultigridProjector.Logic
         {
             TopLocation = topLocation;
         }
+
+        public bool IsWheel => Preview is MyMotorSuspension;
     }
 
     public class TopConnection: Connection<MyAttachableTopBlockBase>
@@ -50,5 +53,7 @@ namespace MultigridProjector.Logic
         {
             BaseLocation = baseLocation;
         }
+
+        public bool IsWheel => Preview is MyWheel;
     }
 }
