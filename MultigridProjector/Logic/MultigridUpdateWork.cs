@@ -26,6 +26,10 @@ namespace MultigridProjector.Logic
 
         public bool IsComplete => _task.IsComplete;
 
+        // Subgrid scan statistics for performance logging only (no functionality affected)
+        public int SubgridsScanned;
+        public int BlocksScanned;
+
         // ReSharper disable once PossiblyImpureMethodCallOnReadonlyVariable
         public WorkOptions Options => Parallel.DefaultOptions.WithDebugInfo(MyProfiler.TaskType.Block, "MultigridUpdateWork");
 
@@ -48,7 +52,7 @@ namespace MultigridProjector.Logic
 
         public void Start()
         {
-            if (!IsComplete) 
+            if (!IsComplete)
                 return;
 
             _stop = false;
@@ -60,7 +64,7 @@ namespace MultigridProjector.Logic
         {
             if (IsComplete)
                 return;
-            
+
             _stop = true;
         }
 
@@ -84,10 +88,18 @@ namespace MultigridProjector.Logic
 
         private void UpdateBlockStatesAndCollectStatistics(WorkData workData = null)
         {
+            SubgridsScanned = 0;
+            BlocksScanned = 0;
+
             foreach (var subgrid in SupportedSubgrids)
             {
-                if(ShouldStop) break;
-                subgrid.UpdateBlockStatesBackgroundWork(Projector);
+                if (ShouldStop) break;
+
+                var blockCount = subgrid.UpdateBlockStatesBackgroundWork(Projector);
+
+                BlocksScanned += blockCount;
+                if(blockCount > 0)
+                    SubgridsScanned++;
             }
         }
 
@@ -95,10 +107,10 @@ namespace MultigridProjector.Logic
         {
             foreach (var subgrid in SupportedSubgrids)
             {
-                if(ShouldStop) break;
+                if (ShouldStop) break;
                 subgrid.FindBuiltBaseConnectionsBackgroundWork();
-                
-                if(ShouldStop) break;
+
+                if (ShouldStop) break;
                 subgrid.FindBuiltTopConnectionsBackgroundWork();
             }
         }

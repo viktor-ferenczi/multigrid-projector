@@ -487,7 +487,7 @@ namespace MultigridProjector.Logic
             ScanNumber++;
             _yaml = null;
 
-            PluginLog.Debug($"{Projector.GetDebugName()} scan #{ScanNumber}");
+            PluginLog.Debug($"Scan #{ScanNumber} of {Projector.GetDebugName()}: {_updateWork.SubgridsScanned} subgrids, {_updateWork.BlocksScanned} blocks");
 
             Projector.SetLastUpdate(MySandboxGame.TotalGamePlayTimeInMilliseconds);
 

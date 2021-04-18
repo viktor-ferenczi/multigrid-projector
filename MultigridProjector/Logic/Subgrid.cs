@@ -589,10 +589,10 @@ namespace MultigridProjector.Logic
 
         #region Update Work
 
-        public void UpdateBlockStatesBackgroundWork(MyProjectorBase projector)
+        public int UpdateBlockStatesBackgroundWork(MyProjectorBase projector)
         {
             if (!IsUpdateRequested)
-                return;
+                return 0;
 
             IsUpdateRequested = false;
 
@@ -603,6 +603,8 @@ namespace MultigridProjector.Logic
                 projectedBlock.DetectBlock(projector, BuiltGrid);
                 Stats.RegisterBlock(projectedBlock.Preview, projectedBlock.State);
             }
+
+            return Blocks.Count;
         }
 
         public void FindBuiltBaseConnectionsBackgroundWork()
