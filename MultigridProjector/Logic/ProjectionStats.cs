@@ -11,8 +11,8 @@ namespace MultigridProjector.Logic
     public class ProjectionStats
     {
         public int TotalBlocks;
+        public int TotalArmorBlocks;
         public int RemainingBlocks;
-        public int BuiltArmorBlocks;
         public int RemainingArmorBlocks;
         public int BuildableBlocks;
 
@@ -21,16 +21,19 @@ namespace MultigridProjector.Logic
         public bool Valid => TotalBlocks > 0;
         public bool IsBuildCompleted => Valid && RemainingBlocks == 0;
         public int BuiltBlocks => TotalBlocks - RemainingBlocks;
+        public int BuiltArmorBlocks => TotalArmorBlocks - RemainingArmorBlocks;
         public bool BuiltOnlyArmorBlocks => Valid && BuiltBlocks == BuiltArmorBlocks;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Clear(int totalBlocks=0)
+        public void Clear()
         {
-            TotalBlocks = totalBlocks;
-            RemainingBlocks = 0;
-            BuiltArmorBlocks = 0;
-            RemainingArmorBlocks = 0;
+            TotalBlocks = 0;
+            TotalArmorBlocks = 0;
+
             BuildableBlocks = 0;
+
+            RemainingBlocks = 0;
+            RemainingArmorBlocks = 0;
 
             RemainingBlocksPerType.Clear();
         }
@@ -38,7 +41,11 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void RegisterBlock(MySlimBlock slimBlock, BlockState blockState)
         {
+            TotalBlocks++;
+
             var armor = slimBlock.FatBlock == null;
+            if (armor)
+                TotalArmorBlocks++;
 
             switch (blockState)
             {
@@ -48,8 +55,6 @@ namespace MultigridProjector.Logic
                     break;
 
                 case BlockState.FullyBuilt:
-                    if (armor)
-                        BuiltArmorBlocks++;
                     return;
             }
 
@@ -69,15 +74,15 @@ namespace MultigridProjector.Logic
         public void Add(ProjectionStats other)
         {
             TotalBlocks += other.TotalBlocks;
-            RemainingBlocks += other.RemainingBlocks;
-            BuiltArmorBlocks += other.BuiltArmorBlocks;
-            RemainingArmorBlocks += other.RemainingArmorBlocks;
+            TotalArmorBlocks += other.TotalArmorBlocks;
+
             BuildableBlocks += other.BuildableBlocks;
 
+            RemainingBlocks += other.RemainingBlocks;
+            RemainingArmorBlocks += other.RemainingArmorBlocks;
+
             foreach (var (blockDefinition, count) in other.RemainingBlocksPerType)
-            {
                 RemainingBlocksPerType[blockDefinition] = RemainingBlocksPerType.GetValueOrDefault(blockDefinition) + count;
-            }
         }
     }
 }

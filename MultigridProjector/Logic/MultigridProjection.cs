@@ -741,8 +741,6 @@ namespace MultigridProjector.Logic
             if (!Initialized || Projector.Closed || Subgrids.Count < 1)
                 return;
 
-            _stats.Clear();
-
             foreach (var subgrid in SupportedSubgrids)
             {
                 subgrid.UnregisterBuiltGrid();
