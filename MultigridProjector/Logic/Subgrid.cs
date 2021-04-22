@@ -477,21 +477,7 @@ namespace MultigridProjector.Logic
         [Everywhere]
         private void OnGridSplit(MyCubeGrid grid1, MyCubeGrid grid2)
         {
-            MyCubeGrid builtGrid;
-            using (BuiltGridLock.Read())
-            {
-                builtGrid = BuiltGrid;
-            }
-
-            if (builtGrid == null)
-                return;
-
             UnregisterBuiltGrid();
-
-            if (builtGrid != grid1 && builtGrid != grid2)
-                return;
-
-            RegisterBuiltGrid(builtGrid);
         }
 
         [Everywhere]
