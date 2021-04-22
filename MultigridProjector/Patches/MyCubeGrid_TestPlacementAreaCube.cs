@@ -23,7 +23,9 @@ namespace MultigridProjector.Patches
             typeof(MyCubeGrid),
             typeof(ulong),
             typeof(MyEntity),
-            typeof(bool)},
+            typeof(bool),
+            typeof(bool),
+        },
         new []
         {
             ArgumentType.Normal,
@@ -36,8 +38,9 @@ namespace MultigridProjector.Patches
             ArgumentType.Normal,
             ArgumentType.Normal,
             ArgumentType.Normal,
+            ArgumentType.Normal,
         })]
-    [EnsureOriginal("2b2afd1b")]
+    [EnsureOriginal("e8b488ba")]
     // ReSharper disable once InconsistentNaming
     public class MyCubeGrid_TestPlacementAreaCube
     {
@@ -46,10 +49,14 @@ namespace MultigridProjector.Patches
         private static void Postfix(
             MyCubeGrid targetGrid,
             Vector3I min,
+            bool isProjected,
             // ReSharper disable once InconsistentNaming
             ref bool __result)
         {
             if (__result)
+                return;
+
+            if (!isProjected)
                 return;
 
             try

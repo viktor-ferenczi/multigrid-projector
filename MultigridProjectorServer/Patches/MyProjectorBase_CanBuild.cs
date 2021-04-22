@@ -10,7 +10,7 @@ using Torch.Managers.PatchManager;
 namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
-    [EnsureOriginalTorch(typeof(MyProjectorBase), "CanBuild", new []{typeof(MySlimBlock), typeof(bool)}, "a0424db9")]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "CanBuild", new []{typeof(MySlimBlock), typeof(bool)}, "9e4488d4")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_CanBuild
