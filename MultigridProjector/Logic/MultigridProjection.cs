@@ -741,8 +741,6 @@ namespace MultigridProjector.Logic
             if (!Initialized || Projector.Closed || Subgrids.Count < 1)
                 return;
 
-            _stats.Clear();
-
             foreach (var subgrid in SupportedSubgrids)
             {
                 subgrid.UnregisterBuiltGrid();
@@ -1200,7 +1198,6 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             }
 
             // Empty inventory, ammo (including already loaded ammo), also clears battery charge (which is wrong, see below)
-            blockBuilder.SetupForProjector();
             blockBuilder.ConstructionInventory = null;
 
             // Reset batteries to default charge
@@ -1221,7 +1218,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             var visuals = new MyCubeGrid.MyBlockVisuals(previewBlock.ColorMaskHSV.PackHSVToUint(), skinId);
 
             // Actually build the block on both the server and all clients
-            builtGrid.BuildBlockRequestInternal(visuals, location, blockBuilder, builder, instantBuild, owner, MyEventContext.Current.IsLocallyInvoked ? steamId : MyEventContext.Current.Sender.Value);
+            builtGrid.BuildBlockRequestInternal(visuals, location, blockBuilder, builder, instantBuild, owner, MyEventContext.Current.IsLocallyInvoked ? steamId : MyEventContext.Current.Sender.Value, isProjection: true);
         }
 
         [Everywhere]
@@ -1284,7 +1281,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return BuildCheckResult.OK;
 
             var gridPlacementSettings = new MyGridPlacementSettings {SnapMode = SnapMode.OneFreeAxis};
-            if (MyCubeGrid.TestPlacementAreaCube(builtGrid, ref gridPlacementSettings, min, max, previewBlock.Orientation, previewBlock.BlockDefinition, ignoredEntity: builtGrid))
+            if (MyCubeGrid.TestPlacementAreaCube(builtGrid, ref gridPlacementSettings, min, max, previewBlock.Orientation, previewBlock.BlockDefinition, ignoredEntity: builtGrid, isProjected: true))
                 return BuildCheckResult.OK;
 
             return BuildCheckResult.IntersectedWithSomethingElse;

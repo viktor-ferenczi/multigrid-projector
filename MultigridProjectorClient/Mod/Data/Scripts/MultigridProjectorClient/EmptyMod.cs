@@ -6,6 +6,7 @@ using VRage.Utils;
 // ReSharper disable once CheckNamespace
 namespace MultigridProjectorClient
 {
+#if STABLE
     [MySessionComponentDescriptor(MyUpdateOrder.NoUpdate)]
     // ReSharper disable once UnusedType.Global
     public class EmptyMod : MySessionComponentBase
@@ -19,4 +20,5 @@ namespace MultigridProjectorClient
             MyLog.Default.WriteLineAndConsole($"Multigrid Projector: {message}");
         }
     }
+#endif
 }

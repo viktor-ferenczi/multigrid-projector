@@ -32,6 +32,9 @@ namespace MultigridProjector.Logic
         public bool HasBuilt => BuiltGrid != null;
         public MyCubeSize GridSizeEnum => PreviewGrid.GridSizeEnum;
 
+        // Initial statistics of the subgrid with none of the blocks welded
+        public readonly ProjectionStats InitialStats = new ProjectionStats();
+
         // Welding state statistics collected by the background worker
         public readonly ProjectionStats Stats = new ProjectionStats();
 
@@ -70,10 +73,11 @@ namespace MultigridProjector.Logic
 
             DisableFunctionalBlocks();
             CreateBlockModels();
-
+            CollectInitialStats();
             FindMechanicalConnections(projection);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void DisableFunctionalBlocks()
         {
             // Disable all functional blocks in the preview to avoid side effects, prevents ghost subgrids from projectors
@@ -81,6 +85,7 @@ namespace MultigridProjector.Logic
                 functionalBlock.Enabled = false;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CreateBlockModels()
         {
             var blockBuilders = GridBuilder
@@ -93,6 +98,15 @@ namespace MultigridProjector.Logic
                 .ToDictionary(
                     previewBlock => previewBlock.Position,
                     previewBlock => new ProjectedBlock(previewBlock, blockBuilders[previewBlock.Min]));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void CollectInitialStats()
+        {
+            foreach (var slimBlock in PreviewGrid.CubeBlocks)
+                InitialStats.RegisterBlock(slimBlock, BlockState.NotBuildable);
+
+            Stats.Add(InitialStats);
         }
 
         public void Dispose()
@@ -274,7 +288,8 @@ namespace MultigridProjector.Logic
 
                 BuiltGrid = null;
 
-                Stats.Clear(PreviewGrid.CubeBlocks.Count);
+                Stats.Clear();
+                Stats.Add(InitialStats);
 
                 foreach (var projectedBlock in Blocks.Values)
                     projectedBlock.Clear();
@@ -462,21 +477,7 @@ namespace MultigridProjector.Logic
         [Everywhere]
         private void OnGridSplit(MyCubeGrid grid1, MyCubeGrid grid2)
         {
-            MyCubeGrid builtGrid;
-            using (BuiltGridLock.Read())
-            {
-                builtGrid = BuiltGrid;
-            }
-
-            if (builtGrid == null)
-                return;
-
             UnregisterBuiltGrid();
-
-            if (builtGrid != grid1 && builtGrid != grid2)
-                return;
-
-            RegisterBuiltGrid(builtGrid);
         }
 
         [Everywhere]
@@ -596,7 +597,7 @@ namespace MultigridProjector.Logic
 
             IsUpdateRequested = false;
 
-            Stats.Clear(PreviewGrid.CubeBlocks.Count);
+            Stats.Clear();
 
             foreach (var projectedBlock in Blocks.Values)
             {
