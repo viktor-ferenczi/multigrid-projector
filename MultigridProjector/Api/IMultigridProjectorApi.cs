@@ -43,5 +43,10 @@ namespace MultigridProjector.Api
         // The format may change in incompatible ways only on major version increases.
         // New fields may be introduced without notice with any MGP release as the API changes.
         string GetYaml(long projectorId);
+
+        // Returns the hash of all block states of a subgrid, updated when the scan number increases.
+        // Changes only if there is any block state change. Can be used to monitor for state changes efficiently.
+        // Reset to zero on loading a blueprint or clearing (or turning OFF) the projector.
+        ulong GetStateHash(long projectorId, int subgridIndex);
     }
 }

@@ -75,7 +75,7 @@ namespace MultigridProjector.Utilities
         private static int HashMethodBody(MethodInfo methodInfo)
         {
             var code = PatchProcessor.GetCurrentInstructions(methodInfo);
-            return CombineHashCodes(HashInstructions(code));
+            return Arithmetic.CombineHashCodes(HashInstructions(code));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -94,28 +94,6 @@ namespace MultigridProjector.Utilities
                 foreach (var label in instruction.labels)
                     yield return label.GetHashCode();
             }
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int CombineHashCodes(IEnumerable<int> hashCodes)
-        {
-            // https://stackoverflow.com/questions/1646807/quick-and-simple-hash-code-combinations
-
-            var hash1 = (5381 << 16) + 5381;
-            var hash2 = hash1;
-
-            var i = 0;
-            foreach (var hashCode in hashCodes)
-            {
-                if (i % 2 == 0)
-                    hash1 = ((hash1 << 5) + hash1 + (hash1 >> 27)) ^ hashCode;
-                else
-                    hash2 = ((hash2 << 5) + hash2 + (hash2 >> 27)) ^ hashCode;
-
-                ++i;
-            }
-
-            return hash1 + hash2 * 1566083941;
         }
     }
 }

@@ -59,8 +59,11 @@ namespace MultigridProjector.Logic
         // Indicates that the preview grid has been positioned correctly during an update
         public bool Positioned;
 
+        // Block state hash
+        public ulong StateHash { get; private set; }
+
         // Indicates whether an unsupported preview grid has already been hidden
-        private bool _hidden;
+        private bool hidden;
 
         #region Initialization and disposal
 
@@ -252,7 +255,7 @@ namespace MultigridProjector.Logic
             previewBlock.Orientation.GetQuaternion(out var previewBlockOrientation);
             orientationQuaternion *= previewBlockOrientation;
         }
-
+        
         #endregion
 
         #region Built Grid Registration
@@ -265,6 +268,7 @@ namespace MultigridProjector.Logic
             using (BuiltGridLock.Write())
             {
                 BuiltGrid = grid;
+                StateHash = 0;
 
                 foreach (var fatBlock in BuiltGrid.GetFatBlocks<MyTerminalBlock>())
                     fatBlock.CheckConnectionChanged += OnCheckConnectionChanged;
@@ -287,6 +291,7 @@ namespace MultigridProjector.Logic
                     terminalBlock.CheckConnectionChanged -= OnCheckConnectionChanged;
 
                 BuiltGrid = null;
+                StateHash = 0;
 
                 Stats.Clear();
                 Stats.Add(InitialStats);
@@ -519,11 +524,11 @@ namespace MultigridProjector.Logic
 
         private void HideUnsupportedPreviewGrid(MyProjectorBase projector)
         {
-            if (_hidden)
+            if (hidden)
                 return;
 
             HidePreviewGrid(projector);
-            _hidden = true;
+            hidden = true;
         }
 
         public void HidePreviewGrid(MyProjectorBase projector)
@@ -599,11 +604,15 @@ namespace MultigridProjector.Logic
 
             Stats.Clear();
 
+            ulong stateHash = unchecked (0xdeadbeafdeadbeaful * (ulong) (1 + Index));
             foreach (var projectedBlock in Blocks.Values)
             {
                 projectedBlock.DetectBlock(projector, BuiltGrid);
                 Stats.RegisterBlock(projectedBlock.Preview, projectedBlock.State);
+                stateHash = unchecked ((stateHash << 11) - stateHash) ^ (ulong)projectedBlock.State;
             }
+
+            StateHash = stateHash;
 
             return Blocks.Count;
         }

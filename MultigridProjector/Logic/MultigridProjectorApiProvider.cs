@@ -106,6 +106,14 @@ namespace MultigridProjector.Logic
             return projection.GetYaml();
         }
 
+        public ulong GetStateHash(long projectorId, int subgridIndex)
+        {
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
+                return 0;
+
+            return subgrid.StateHash;
+        }
+
         #endregion
 
         #region ModApi
@@ -129,6 +137,7 @@ namespace MultigridProjector.Logic
             (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) ModApiGetTopConnections,
             (Func<long, long>) Api.GetScanNumber,
             (Func<long, string>) Api.GetYaml,
+            (Func<long, int, ulong>) Api.GetStateHash,
         });
 
         private static int ModApiGetBlockState(long projectorId, int subgridIndex, Vector3I position) => (int) Api.GetBlockState(projectorId, subgridIndex, position);
