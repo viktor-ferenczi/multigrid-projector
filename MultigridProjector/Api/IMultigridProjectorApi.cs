@@ -25,7 +25,7 @@ namespace MultigridProjector.Api
         // Returns the build state of a single projected block
         BlockState GetBlockState(long projectorId, int subgridIndex, Vector3I position);
 
-        // Writes built state of the preview blocks into blockStates in a given subgrid and volume of cubes with the given state mask
+        // Writes the build state of the preview blocks into blockStates in a given subgrid and volume of cubes with the given state mask
         bool GetBlockStates(Dictionary<Vector3I, BlockState> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask);
 
         // Returns the base connections of the blueprint: base position => top subgrid and top part position (only those connected in the blueprint)

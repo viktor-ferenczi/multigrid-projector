@@ -22,6 +22,13 @@ namespace MultigridProjector.Api
 
         #region Example script to access MGP from a programmable block. Copy this region as a template!
 
+        /* Multigrid Projector API Example
+
+        Requires the Multigrid Projector plugin:
+        https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416
+
+        */
+
         private MultigridProjectorProgrammableBlockAgent mgp;
         private IMyProjector projector;
 
@@ -98,6 +105,7 @@ namespace MultigridProjector.Api
             public bool Available { get; }
             public string Version { get; }
 
+            // Returns the number of subgrids in the active projection, returns zero if there is no projection
             public int GetSubgridCount(long projectorId)
             {
                 if (!Available)
@@ -107,6 +115,7 @@ namespace MultigridProjector.Api
                 return fn(projectorId);
             }
 
+            // Returns the preview grid (aka hologram) for the given subgrid, it always exists if the projection is active, even if fully built
             public IMyCubeGrid GetPreviewGrid(long projectorId, int subgridIndex)
             {
                 if (!Available)
@@ -116,6 +125,7 @@ namespace MultigridProjector.Api
                 return fn(projectorId, subgridIndex);
             }
 
+            // Returns the already built grid for the given subgrid if there is any, null if not built yet (the first subgrid is always built)
             public IMyCubeGrid GetBuiltGrid(long projectorId, int subgridIndex)
             {
                 if (!Available)
@@ -125,6 +135,7 @@ namespace MultigridProjector.Api
                 return fn(projectorId, subgridIndex);
             }
 
+            // Returns the build state of a single projected block
             public BlockState GetBlockState(long projectorId, int subgridIndex, Vector3I position)
             {
                 if (!Available)
@@ -134,6 +145,7 @@ namespace MultigridProjector.Api
                 return (BlockState) fn(projectorId, subgridIndex, position);
             }
 
+            // Writes the build state of the preview blocks into blockStates in a given subgrid and volume of cubes with the given state mask
             public bool GetBlockStates(Dictionary<Vector3I, BlockState> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask)
             {
                 if (!Available)
@@ -150,6 +162,7 @@ namespace MultigridProjector.Api
                 return true;
             }
 
+            // Returns the base connections of the blueprint: base position => top subgrid and top part position (only those connected in the blueprint)
             public Dictionary<Vector3I, BlockLocation> GetBaseConnections(long projectorId, int subgridIndex)
             {
                 if (!Available)
@@ -169,6 +182,7 @@ namespace MultigridProjector.Api
                 return baseConnections;
             }
 
+            // Returns the top connections of the blueprint: top position => base subgrid and base part position (only those connected in the blueprint)
             public Dictionary<Vector3I, BlockLocation> GetTopConnections(long projectorId, int subgridIndex)
             {
                 if (!Available)
@@ -188,6 +202,8 @@ namespace MultigridProjector.Api
                 return topConnections;
             }
 
+            // Returns the grid scan sequence number, incremented each time the preview grids/blocks change in any way in any of the subgrids.
+            // Reset to zero on loading a blueprint or clearing (or turning OFF) the projector.
             public long GetScanNumber(long projectorId)
             {
                 if (!Available)
@@ -197,6 +213,10 @@ namespace MultigridProjector.Api
                 return fn(projectorId);
             }
 
+            // Returns YAML representation of all information available via API functions.
+            // Returns an empty string if the grid scan sequence number is zero (see above).
+            // The format may change in incompatible ways only on major version increases.
+            // New fields may be introduced without notice with any MGP release as the API changes.
             public string GetYaml(long projectorId)
             {
                 if (!Available)
@@ -206,6 +226,9 @@ namespace MultigridProjector.Api
                 return fn(projectorId);
             }
 
+            // Returns the hash of all block states of a subgrid, updated when the scan number increases.
+            // Changes only if there is any block state change. Can be used to monitor for state changes efficiently.
+            // Reset to zero on loading a blueprint or clearing (or turning OFF) the projector.
             public ulong GetStateHash(long projectorId, int subgridIndex)
             {
                 if (!Available)

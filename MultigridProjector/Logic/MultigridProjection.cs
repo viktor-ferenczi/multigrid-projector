@@ -676,7 +676,7 @@ namespace MultigridProjector.Logic
                         continue;
                     }
 
-                    // Align the preview by top block connecting to an already positioned preview with a lower index
+                    // Align the preview by top block connecting to an already positioned base block preview
                     topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => Subgrids[c.BaseLocation.GridIndex].Positioned);
                     if (topConnection != null)
                     {
@@ -693,7 +693,7 @@ namespace MultigridProjector.Logic
                         }
                     }
 
-                    // Align the preview by base block connecting to an already positioned preview with a lower index
+                    // Align the preview by base block connecting to an already positioned top block preview
                     baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => Subgrids[c.TopLocation.GridIndex].Positioned);
                     if (baseConnection != null)
                     {
