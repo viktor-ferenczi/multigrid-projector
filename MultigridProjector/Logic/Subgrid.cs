@@ -406,7 +406,20 @@ namespace MultigridProjector.Logic
             if (previewSlimBlock == null)
                 return;
 
-            RequestUpdate();
+            if (!Blocks.TryGetValue(previewSlimBlock.Position, out var projectedBlock))
+                return;
+
+            switch (projectedBlock.State)
+            {
+                case BlockState.BeingBuilt:
+                    if (slimBlock.Integrity >= previewSlimBlock.Integrity)
+                        RequestUpdate();
+                    break;
+                case BlockState.FullyBuilt:
+                    if (slimBlock.Integrity < previewSlimBlock.Integrity)
+                        RequestUpdate();
+                    break;
+            }
         }
 
         [Everywhere]
