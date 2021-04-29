@@ -116,6 +116,8 @@ namespace MultigridProjector.Logic
                     return existingProjection;
                 }
 
+                MultigridProjectorApiProvider.RegisterProgrammableBlockApi();
+
                 Projections[projector.EntityId] = projection;
                 return projection;
             }

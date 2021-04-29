@@ -85,7 +85,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="MultigridProjectorPlugin.cs" />
-        <Compile Include="MultigridProjectorSession.cs" />
+        <Compile Include="PluginSession.cs" />
         <Compile Include="Patches\MyMechanicalConnectionBlockBase_CreateTopPartAndAttach.cs" />
         <Compile Include="Patches\MyMechanicalConnectionBlockBase_RaiseAttachedEntityChanged.cs" />
         <Compile Include="Patches\MyProjectorBase_Build.cs" />

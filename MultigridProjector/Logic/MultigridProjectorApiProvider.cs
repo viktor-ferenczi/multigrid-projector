@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using MultigridProjector.Api;
 using MultigridProjector.Extensions;
+using Sandbox.Game.Multiplayer;
+using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Game.ModAPI;
 using VRageMath;
@@ -13,8 +15,8 @@ namespace MultigridProjector.Logic
     {
         #region PluginApi
 
-        private static MultigridProjectorApiProvider _api;
-        public static IMultigridProjectorApi Api => _api ?? (_api = new MultigridProjectorApiProvider());
+        private static MultigridProjectorApiProvider api;
+        public static IMultigridProjectorApi Api => api ?? (api = new MultigridProjectorApiProvider());
 
         public string Version => "0.4.0";
 
@@ -122,9 +124,8 @@ namespace MultigridProjector.Logic
         public const long ModApiRequestId = WorkshopId * 1000 + 0;
         public const long ModApiResponseId = WorkshopId * 1000 + 1;
 
-        private static object _modApi;
-
-        public static object ModApi => _modApi ?? (_modApi = new object[]
+        private static object modApi;
+        public static object ModApi => modApi ?? (modApi = new object[]
         {
             Api.Version,
             (Func<long, int>) Api.GetSubgridCount,
@@ -175,6 +176,41 @@ namespace MultigridProjector.Logic
             gridIndices.AddRange(topConnections.Values.Select(blockLocation => blockLocation.GridIndex));
             basePositions.AddRange(topConnections.Values.Select(blockLocation => blockLocation.Position));
             return true;
+        }
+
+        #endregion
+
+        #region ProgrammableBlock API
+
+        private static Delegate[] pbApi;
+        private static Delegate[] PbApi => pbApi ?? (pbApi = new Delegate[]
+        {
+            new Func<string>(() => Api.Version),
+            new Func<long, int>(Api.GetSubgridCount),
+            new Func<long, int, IMyCubeGrid>(Api.GetPreviewGrid),
+            new Func<long, int, IMyCubeGrid>(Api.GetBuiltGrid),
+            new Func<long, int, Vector3I, int>(ModApiGetBlockState),
+            new Func<Dictionary<Vector3I, int>, long, int, BoundingBoxI, int, bool>(ModApiGetBlockStates),
+            new Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>(ModApiGetBaseConnections),
+            new Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>(ModApiGetTopConnections),
+            new Func<long, long>(Api.GetScanNumber),
+            new Func<long, string>(Api.GetYaml),
+            new Func<long, int, ulong>(Api.GetStateHash),
+        });
+
+        public static void RegisterProgrammableBlockApi()
+        {
+            if (!Sync.IsServer)
+                return;
+
+            MyAPIGateway.TerminalControls.GetControls<Sandbox.ModAPI.Ingame.IMyProgrammableBlock>(out var controls);
+            if (controls.Any(control => control.Id == "MgpApi"))
+                return;
+
+            var property = MyAPIGateway.TerminalControls.CreateProperty<Delegate[], IMyTerminalBlock>("MgpApi");
+            property.Visible = _ => false;
+            property.Getter = _ => PbApi;
+            MyAPIGateway.TerminalControls.AddControl<Sandbox.ModAPI.Ingame.IMyProgrammableBlock>(property);
         }
 
         #endregion
