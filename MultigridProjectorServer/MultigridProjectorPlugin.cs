@@ -26,6 +26,8 @@ namespace MultigridProjectorServer
         // ReSharper disable once UnusedMember.Local
         // private readonly MultigridProjectorCommands _commands = new MultigridProjectorCommands();
 
+        private MultigridProjectorSession mgpSession;
+
         private static Harmony Harmony => new Harmony("com.spaceengineers.multigridprojector");
 
         public override void Init(ITorchBase torch)
@@ -51,7 +53,7 @@ namespace MultigridProjectorServer
 
             _sessionManager = torch.Managers.GetManager<TorchSessionManager>();
             _sessionManager.SessionStateChanged += SessionStateChanged;
-            
+
             PluginLog.Info("Loaded server plugin");
         }
 
@@ -62,14 +64,23 @@ namespace MultigridProjectorServer
                 case TorchSessionState.Loading:
                     break;
                 case TorchSessionState.Loaded:
-                    MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
+                    mgpSession = new MultigridProjectorSession();
                     break;
                 case TorchSessionState.Unloading:
-                    MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
+                    if (mgpSession != null)
+                    {
+                        mgpSession.Dispose();
+                        mgpSession = null;
+                    }
                     break;
                 case TorchSessionState.Unloaded:
                     break;
             }
+        }
+
+        public override void Update()
+        {
+            mgpSession?.Update();
         }
 
         public override void Dispose()
@@ -78,26 +89,14 @@ namespace MultigridProjectorServer
                 return;
 
             PluginLog.Info("Unloading server plugin");
-            
+
             _sessionManager.SessionStateChanged -= SessionStateChanged;
             _sessionManager = null;
-            
+
             PluginLog.Logger = null;
             Instance = null;
 
             base.Dispose();
-        }
-        
-        private void HandleModApiRequest(object obj)
-        {
-            try
-            {
-                MyAPIGateway.Utilities.SendModMessage(MultigridProjectorApiProvider.ModApiResponseId, MultigridProjectorApiProvider.ModApi);
-            }
-            catch (Exception e)
-            {
-                PluginLog.Error(e, "Failed to respond to Mod API request");
-            }
         }
     }
 }

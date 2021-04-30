@@ -31,9 +31,6 @@ namespace MultigridProjectorClient
                 }
 
                 Harmony.PatchAll();
-
-                MySession.OnLoading += OnLoadSession;
-                // MySession.OnUnloading += OnUnloading;
             }
             catch (Exception e)
             {
@@ -45,36 +42,11 @@ namespace MultigridProjectorClient
 
         public void Dispose()
         {
-            MySession.OnLoading -= OnLoadSession;
-            // MySession.OnUnloading -= OnUnloading;
-
             // NOTE: Unpatching caused problems for other plugins, so just keeping the plugin installed all the time, which is common practice with Plugin Loader
             // PluginLog.Info("Unloading the Multigrid Projector Client Plugin");
             // _harmony.UnpatchAll();
 
             PluginLog.Info("Unloaded client plugin");
-        }
-
-        private void OnLoadSession()
-        {
-            MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
-        }
-
-        // private void OnUnloading()
-        // {
-        //     MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
-        // }
-
-        private void HandleModApiRequest(object obj)
-        {
-            try
-            {
-                MyAPIGateway.Utilities.SendModMessage(MultigridProjectorApiProvider.ModApiResponseId, MultigridProjectorApiProvider.ModApi);
-            }
-            catch (Exception e)
-            {
-                PluginLog.Error(e, "Failed to respond to Mod API request");
-            }
         }
 
         public void Update()

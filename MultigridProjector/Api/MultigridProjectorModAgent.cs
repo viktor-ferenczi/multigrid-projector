@@ -5,20 +5,18 @@ using VRage.Game.ModAPI;
 using Sandbox.ModAPI;
 using VRageMath;
 
-// ReSharper disable InlineOutVariableDeclaration
-// ReSharper disable once CheckNamespace
 namespace MultigridProjector.Api
 {
     // ReSharper disable once UnusedType.Global
     public class MultigridProjectorModAgent : IMultigridProjectorApi
     {
-        private static readonly string CompatibleMajorVersion = "0.";
+        private const string CompatibleMajorVersion = "0.";
 
         private const long WorkshopId = 2415983416;
         private const long ModApiRequestId = WorkshopId * 1000 + 0;
         private const long ModApiResponseId = WorkshopId * 1000 + 1;
 
-        private object[] _api;
+        private object[] api;
 
         // ReSharper disable once MemberCanBePrivate.Global
         public bool Available { get; private set; }
@@ -26,56 +24,56 @@ namespace MultigridProjector.Api
 
         public int GetSubgridCount(long projectorId)
         {
-            if (!Available || _api.Length < 2)
+            if (!Available)
                 return 0;
 
-            var fn = (Func<long, int>) _api[1];
+            var fn = (Func<long, int>) api[1];
             return fn(projectorId);
         }
 
         public List<MyObjectBuilder_CubeGrid> GetOriginalGridBuilders(long projectorId)
         {
-            if (!Available || _api.Length < 3)
+            if (!Available)
                 return null;
 
-            var fn = (Func<long, List<MyObjectBuilder_CubeGrid>>) _api[2];
+            var fn = (Func<long, List<MyObjectBuilder_CubeGrid>>) api[2];
             return fn(projectorId);
         }
 
         public IMyCubeGrid GetPreviewGrid(long projectorId, int subgridIndex)
         {
-            if (!Available || _api.Length < 4)
+            if (!Available)
                 return null;
 
-            var fn = (Func<long, int, IMyCubeGrid>) _api[3];
+            var fn = (Func<long, int, IMyCubeGrid>) api[3];
             return fn(projectorId, subgridIndex);
         }
 
         public IMyCubeGrid GetBuiltGrid(long projectorId, int subgridIndex)
         {
-            if (!Available || _api.Length < 5)
+            if (!Available)
                 return null;
 
-            var fn = (Func<long, int, IMyCubeGrid>) _api[4];
+            var fn = (Func<long, int, IMyCubeGrid>) api[4];
             return fn(projectorId, subgridIndex);
         }
 
         public BlockState GetBlockState(long projectorId, int subgridIndex, Vector3I position)
         {
-            if (!Available || _api.Length < 6)
+            if (!Available)
                 return BlockState.Unknown;
 
-            var fn = (Func<long, int, Vector3I, int>) _api[5];
+            var fn = (Func<long, int, Vector3I, int>) api[5];
             return (BlockState) fn(projectorId, subgridIndex, position);
         }
 
         public bool GetBlockStates(Dictionary<Vector3I, BlockState> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask)
         {
-            if (!Available || _api.Length < 7)
+            if (!Available)
                 return false;
 
             var blockIntStates = new Dictionary<Vector3I, int>();
-            var fn = (Func<Dictionary<Vector3I, int>, long, int, BoundingBoxI, int, bool>) _api[6];
+            var fn = (Func<Dictionary<Vector3I, int>, long, int, BoundingBoxI, int, bool>) api[6];
             if (!fn(blockIntStates, projectorId, subgridIndex, box, mask))
                 return false;
 
@@ -87,13 +85,13 @@ namespace MultigridProjector.Api
 
         public Dictionary<Vector3I, BlockLocation> GetBaseConnections(long projectorId, int subgridIndex)
         {
-            if (!Available || _api.Length < 8)
+            if (!Available)
                 return null;
 
             var basePositions = new List<Vector3I>();
             var gridIndices = new List<int>();
             var topPositions = new List<Vector3I>();
-            var fn = (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) _api[7];
+            var fn = (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) api[7];
             if (!fn(projectorId, subgridIndex, basePositions, gridIndices, topPositions))
                 return null;
 
@@ -106,13 +104,13 @@ namespace MultigridProjector.Api
 
         public Dictionary<Vector3I, BlockLocation> GetTopConnections(long projectorId, int subgridIndex)
         {
-            if (!Available || _api.Length < 9)
+            if (!Available)
                 return null;
             
             var topPositions = new List<Vector3I>();
             var gridIndices = new List<int>();
             var basePositions = new List<Vector3I>();
-            var fn = (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) _api[8];
+            var fn = (Func<long, int, List<Vector3I>, List<int>, List<Vector3I>, bool>) api[8];
             if (!fn(projectorId, subgridIndex, topPositions, gridIndices, basePositions))
                 return null;
 
@@ -125,20 +123,38 @@ namespace MultigridProjector.Api
 
         public long GetScanNumber(long projectorId)
         {
-            if (!Available || _api.Length < 10)
+            if (!Available)
                 return 0;
 
-            var fn = (Func<long, long>) _api[9];
+            var fn = (Func<long, long>) api[9];
             return fn(projectorId);
         }
 
         public string GetYaml(long projectorId)
         {
-            if (!Available || _api.Length < 11)
+            if (!Available)
                 return "";
 
-            var fn = (Func<long, string>) _api[10];
+            var fn = (Func<long, string>) api[10];
             return fn(projectorId);
+        }
+
+        public ulong GetStateHash(long projectorId, int subgridIndex)
+        {
+            if (!Available)
+                return 0;
+
+            var fn = (Func<long, int, ulong>) api[11];
+            return fn(projectorId, subgridIndex);
+        }
+
+        public bool IsSubgridComplete(long projectorId, int subgridIndex)
+        {
+            if (!Available)
+                return false;
+
+            var fn = (Func<long, int, bool>) api[12];
+            return fn(projectorId, subgridIndex);
         }
 
         public MultigridProjectorModAgent()
@@ -149,11 +165,11 @@ namespace MultigridProjector.Api
 
         private void HandleModMessage(object obj)
         {
-            _api = obj as object[];
-            if (_api == null || _api.Length < 9)
+            api = obj as object[];
+            if (api == null || api.Length < 12)
                 return;
 
-            Version = _api[0] as string;
+            Version = api[0] as string;
             if (Version == null || !Version.StartsWith(CompatibleMajorVersion))
                 return;
 

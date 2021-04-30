@@ -116,6 +116,8 @@ namespace MultigridProjector.Logic
                     return existingProjection;
                 }
 
+                MultigridProjectorApiProvider.RegisterProgrammableBlockApi();
+
                 Projections[projector.EntityId] = projection;
                 return projection;
             }
@@ -674,7 +676,7 @@ namespace MultigridProjector.Logic
                         continue;
                     }
 
-                    // Align the preview by top block connecting to an already positioned preview with a lower index
+                    // Align the preview by top block connecting to an already positioned base block preview
                     topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => Subgrids[c.BaseLocation.GridIndex].Positioned);
                     if (topConnection != null)
                     {
@@ -691,7 +693,7 @@ namespace MultigridProjector.Logic
                         }
                     }
 
-                    // Align the preview by base block connecting to an already positioned preview with a lower index
+                    // Align the preview by base block connecting to an already positioned top block preview
                     baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => Subgrids[c.TopLocation.GridIndex].Positioned);
                     if (baseConnection != null)
                     {
@@ -1543,6 +1545,18 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
                         if (!IsConnected(baseConnection, topConnection))
                             continue;
+
+                        // Extra validation needed on client side after grid splits
+                        if (baseConnection.Block.CubeGrid.EntityId != subgrid.BuiltGrid.EntityId)
+                        {
+                            baseConnection.ClearBuiltBlock();
+                            continue;
+                        }
+                        if (topConnection.Block.CubeGrid.EntityId != topSubgrid.BuiltGrid.EntityId)
+                        {
+                            topConnection.ClearBuiltBlock();
+                            continue;
+                        }
 
                         topSubgrid.IsConnectedToProjector = true;
                         connectedSubgrids += 1;

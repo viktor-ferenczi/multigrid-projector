@@ -7,7 +7,7 @@ namespace MultigridProjector.Api
 {
     public interface IMultigridProjectorApi
     {
-        // Multigrid Projector version: 0.3.4
+        // Multigrid Projector version: 0.4.0
         string Version { get; }
 
         // Returns the number of subgrids in the active projection, returns zero if there is no projection
@@ -25,7 +25,7 @@ namespace MultigridProjector.Api
         // Returns the build state of a single projected block
         BlockState GetBlockState(long projectorId, int subgridIndex, Vector3I position);
 
-        // Writes built state of the preview blocks into blockStates in a given subgrid and volume of cubes with the given state mask
+        // Writes the build state of the preview blocks into blockStates in a given subgrid and volume of cubes with the given state mask
         bool GetBlockStates(Dictionary<Vector3I, BlockState> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask);
 
         // Returns the base connections of the blueprint: base position => top subgrid and top part position (only those connected in the blueprint)
@@ -43,5 +43,13 @@ namespace MultigridProjector.Api
         // The format may change in incompatible ways only on major version increases.
         // New fields may be introduced without notice with any MGP release as the API changes.
         string GetYaml(long projectorId);
+
+        // Returns the hash of all block states of a subgrid, updated when the scan number increases.
+        // Changes only if there is any block state change. Can be used to monitor for state changes efficiently.
+        // Reset to zero on loading a blueprint or clearing (or turning OFF) the projector.
+        ulong GetStateHash(long projectorId, int subgridIndex);
+
+        // Returns true if the subgrid is fully built (completed)
+        bool IsSubgridComplete(long projectorId, int subgridIndex);
     }
 }
