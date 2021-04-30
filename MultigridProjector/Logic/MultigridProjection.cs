@@ -1546,6 +1546,18 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                         if (!IsConnected(baseConnection, topConnection))
                             continue;
 
+                        // Extra validation needed on client side after grid splits
+                        if (baseConnection.Block.CubeGrid.EntityId != subgrid.BuiltGrid.EntityId)
+                        {
+                            baseConnection.ClearBuiltBlock();
+                            continue;
+                        }
+                        if (topConnection.Block.CubeGrid.EntityId != topSubgrid.BuiltGrid.EntityId)
+                        {
+                            topConnection.ClearBuiltBlock();
+                            continue;
+                        }
+
                         topSubgrid.IsConnectedToProjector = true;
                         connectedSubgrids += 1;
                         break;
