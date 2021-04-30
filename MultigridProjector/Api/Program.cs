@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using VRage.Game.ModAPI;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces;
@@ -9,7 +11,7 @@ namespace MultigridProjector.Api
 {
     public class Program
     {
-        #region These are normally provided by the game. Do NOT copy them!
+        #region These are normally provided by the game. Do NOT copy these!
 
         public IMyProgrammableBlock Me;
         public IMyGridTerminalSystem GridTerminalSystem;
@@ -20,7 +22,7 @@ namespace MultigridProjector.Api
 
         #endregion
 
-        #region Example script to access MGP from a programmable block. Copy this region as a template!
+        #region Example script to access MGP from a programmable block
 
         /* Multigrid Projector API Example
 
@@ -55,13 +57,100 @@ namespace MultigridProjector.Api
                 if (projector == null)
                     return;
 
-                Echo(mgp.GetYaml(projector.EntityId));
+                EchoBlueprintDetails();
             }
             catch (Exception e)
             {
                 Echo(e.ToString());
             }
         }
+
+        private void EchoBlueprintDetails()
+        {
+            var sb = new StringBuilder();
+            
+            var projectorEntityId = projector.EntityId;
+            var projectorName = $"{projector.BlockDefinition.SubtypeName} {projector.CustomName ?? projector.DisplayNameText ?? projector.DisplayName} [{projectorEntityId}]";
+            var projectingGridName = $"{projector.CubeGrid.CustomName ?? projector.CubeGrid.DisplayName} [{projector.CubeGrid.EntityId}]";
+
+            sb.AppendLine($"Multigrid Projector PB API Test");
+            sb.AppendLine(projectorName);
+            sb.AppendLine($"Projecting grid: {projectingGridName}");
+
+            var scanNumber = mgp.GetScanNumber(projectorEntityId);
+            sb.AppendLine($"Scan number: {scanNumber}");
+
+            var subgridCount = mgp.GetSubgridCount(projectorEntityId);
+            if (subgridCount == 0 || scanNumber == 0)
+            {
+                sb.AppendLine($"{projectorName}: no blueprint loaded or disabled");
+                return;
+            }
+
+            sb.AppendLine($"Subgrid count: {subgridCount}");
+
+            for (var subgridIndex = 0; subgridIndex < subgridCount; subgridIndex++)
+            {
+                sb.AppendLine("-------------------");
+                sb.AppendLine($"Subgrid #{subgridIndex}");
+                sb.AppendLine("-------------------");
+
+                var previewGrid = mgp.GetPreviewGrid(projectorEntityId, subgridIndex);
+                sb.AppendLine($"Preview grid: {previewGrid.CustomName ?? previewGrid.DisplayName} [{previewGrid.EntityId}]");
+
+                var builtGrid = mgp.GetBuiltGrid(projectorEntityId, subgridIndex);
+                sb.AppendLine(builtGrid == null ? "No built grid for this subgrid" : $"Built grid: {builtGrid.CustomName ?? builtGrid.DisplayName} [{builtGrid.EntityId}]");
+
+                sb.AppendLine("");
+
+                sb.AppendLine($"Base connections:");
+                foreach (var pair in mgp.GetBaseConnections(projectorEntityId, subgridIndex))
+                {
+                    sb.AppendLine($"  {pair.Key} => #{pair.Value.GridIndex} @ {pair.Value.Position}");
+                }
+
+                sb.AppendLine("");
+
+                sb.AppendLine($"Top connections:");
+                foreach (var pair in mgp.GetTopConnections(projectorEntityId, subgridIndex))
+                {
+                    sb.AppendLine($"  {pair.Key} => #{pair.Value.GridIndex} @ {pair.Value.Position}");
+                }
+
+                sb.AppendLine("");
+
+                var stateHash = mgp.GetStateHash(projectorEntityId, subgridIndex);
+                sb.AppendLine($"State hash: 0x{stateHash:x16}ul");
+
+                var isComplete = mgp.IsSubgridComplete(projectorEntityId, subgridIndex);
+                sb.AppendLine($"Complete: {isComplete}");
+
+                var blockStates = new Dictionary<Vector3I, BlockState>();
+                mgp.GetBlockStates(blockStates, projectorEntityId, subgridIndex, new BoundingBoxI(Vector3I.MinValue, Vector3I.MaxValue), ~0);
+
+                if (blockStates.Count > 0)
+                    sb.AppendLine($"First block state: {mgp.GetBlockState(projectorEntityId, subgridIndex, blockStates.Keys.First())}");
+
+                sb.AppendLine($"Block states:");
+                foreach (var pair in blockStates)
+                {
+                    sb.AppendLine($"  {pair.Key} => {pair.Value}");
+                }
+            }
+
+            sb.AppendLine("-------------------");
+            sb.AppendLine($"YAML representation");
+            sb.AppendLine("-------------------");
+
+            var yaml = mgp.GetYaml(projectorEntityId);
+            sb.AppendLine(yaml);
+
+            Echo(sb.ToString());
+        }
+
+        #endregion
+
+        #region MGP API Agent
 
         public struct BlockLocation
         {
@@ -239,7 +328,7 @@ namespace MultigridProjector.Api
             }
 
             // Returns true if the subgrid is fully built (completed)
-            bool IsSubgridComplete(long projectorId, int subgridIndex)
+            public bool IsSubgridComplete(long projectorId, int subgridIndex)
             {
                 if (!Available)
                     return false;
