@@ -35,6 +35,7 @@ namespace MultigridProjector.Api
         private readonly MethodInfo _miGetScanNumber;
         private readonly MethodInfo _miGetYaml;
         private readonly MethodInfo _miGetStateHash;
+        private readonly MethodInfo _miIsSubgridComplete;
 
         public MultigridProjectorTorchAgent(ITorchSession torchSession)
         {
@@ -62,6 +63,7 @@ namespace MultigridProjector.Api
             _miGetScanNumber = apiType.GetMethod("GetScanNumber", BindingFlags.Instance | BindingFlags.Public);
             _miGetYaml = apiType.GetMethod("GetYaml", BindingFlags.Instance | BindingFlags.Public);
             _miGetStateHash = apiType.GetMethod("GetStateHash", BindingFlags.Instance | BindingFlags.Public);
+            _miIsSubgridComplete = apiType.GetMethod("IsSubgridComplete", BindingFlags.Instance | BindingFlags.Public);
 
             Plugin = plugin;
         }
@@ -119,6 +121,11 @@ namespace MultigridProjector.Api
         public ulong GetStateHash(long projectorId, int subgridIndex)
         {
             return (ulong) (_miGetStateHash?.Invoke(Api, new object[] {projectorId, subgridIndex}) ?? 0);
+        }
+
+        public bool IsSubgridComplete(long projectorId, int subgridIndex)
+        {
+            return (bool) (_miIsSubgridComplete?.Invoke(Api, new object[] {projectorId, subgridIndex}) ?? false);
         }
     }
 }

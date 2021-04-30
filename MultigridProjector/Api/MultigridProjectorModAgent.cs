@@ -148,6 +148,15 @@ namespace MultigridProjector.Api
             return fn(projectorId, subgridIndex);
         }
 
+        public bool IsSubgridComplete(long projectorId, int subgridIndex)
+        {
+            if (!Available)
+                return false;
+
+            var fn = (Func<long, int, bool>) api[12];
+            return fn(projectorId, subgridIndex);
+        }
+
         public MultigridProjectorModAgent()
         {
             MyAPIGateway.Utilities.RegisterMessageHandler(ModApiResponseId, HandleModMessage);

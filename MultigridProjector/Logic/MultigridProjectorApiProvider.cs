@@ -116,6 +116,14 @@ namespace MultigridProjector.Logic
             return subgrid.StateHash;
         }
 
+        public bool IsSubgridComplete(long projectorId, int subgridIndex)
+        {
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
+                return false;
+
+            return subgrid.Stats.IsBuildCompleted;
+        }
+
         #endregion
 
         #region ModApi
@@ -139,6 +147,7 @@ namespace MultigridProjector.Logic
             (Func<long, long>) Api.GetScanNumber,
             (Func<long, string>) Api.GetYaml,
             (Func<long, int, ulong>) Api.GetStateHash,
+            (Func<long, int, bool>) Api.IsSubgridComplete,
         });
 
         private static int ModApiGetBlockState(long projectorId, int subgridIndex, Vector3I position) => (int) Api.GetBlockState(projectorId, subgridIndex, position);
@@ -196,6 +205,7 @@ namespace MultigridProjector.Logic
             new Func<long, long>(Api.GetScanNumber),
             new Func<long, string>(Api.GetYaml),
             new Func<long, int, ulong>(Api.GetStateHash),
+            new Func<long, int, bool>(Api.IsSubgridComplete),
         });
 
         public static void RegisterProgrammableBlockApi()

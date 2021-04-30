@@ -48,5 +48,8 @@ namespace MultigridProjector.Api
         // Changes only if there is any block state change. Can be used to monitor for state changes efficiently.
         // Reset to zero on loading a blueprint or clearing (or turning OFF) the projector.
         ulong GetStateHash(long projectorId, int subgridIndex);
+
+        // Returns true if the subgrid is fully built (completed)
+        bool IsSubgridComplete(long projectorId, int subgridIndex);
     }
 }

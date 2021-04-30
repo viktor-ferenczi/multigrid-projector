@@ -238,10 +238,20 @@ namespace MultigridProjector.Api
                 return fn(projectorId, subgridIndex);
             }
 
+            // Returns true if the subgrid is fully built (completed)
+            bool IsSubgridComplete(long projectorId, int subgridIndex)
+            {
+                if (!Available)
+                    return false;
+
+                var fn = (Func<long, int, bool>) api[11];
+                return fn(projectorId, subgridIndex);
+            }
+
             public MultigridProjectorProgrammableBlockAgent(IMyProgrammableBlock programmableBlock)
             {
                 api = programmableBlock.GetProperty("MgpApi")?.As<Delegate[]>().GetValue(programmableBlock);
-                if (api == null || api.Length < 11)
+                if (api == null || api.Length < 12)
                     return;
 
                 var getVersion = api[0] as Func<string>;

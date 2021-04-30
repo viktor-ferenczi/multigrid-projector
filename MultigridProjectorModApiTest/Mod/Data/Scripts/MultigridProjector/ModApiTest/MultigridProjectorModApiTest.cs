@@ -151,6 +151,9 @@ namespace MultigridProjector.ModApiTest
                 var stateHash = Mgp.GetStateHash(projectorEntityId, subgridIndex);
                 MyLog.Default.WriteLineAndConsole($"State hash: 0x{stateHash:x16}ul");
 
+                var isComplete = Mgp.IsSubgridComplete(projectorEntityId, subgridIndex);
+                MyLog.Default.WriteLineAndConsole($"Complete: {isComplete}");
+
                 // Force printing the initial hash once (if not zero)
                 subgridStateHashes.Add(0);
 
