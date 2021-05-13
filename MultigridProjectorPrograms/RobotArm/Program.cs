@@ -7,6 +7,7 @@ using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.ModAPI;
 using VRage.Game.GUI.TextPanel;
+using VRage.Game.ModAPI;
 using IMyCubeGrid = VRage.Game.ModAPI.Ingame.IMyCubeGrid;
 
 namespace MultigridProjectorPrograms.RobotArm
@@ -14,8 +15,6 @@ namespace MultigridProjectorPrograms.RobotArm
     class Program : MyGridProgram
     {
         #region Arm logic
-
-        private static readonly Dictionary<long, HashSet<IMyTerminalBlock>> TerminalBlocks = new Dictionary<long, HashSet<IMyTerminalBlock>>();
 
         public interface ISegment<out T> where T : IMyTerminalBlock
         {
@@ -81,9 +80,9 @@ namespace MultigridProjectorPrograms.RobotArm
 
         public abstract class Segment<T> : ISegment<T> where T : IMyMechanicalConnectionBlock
         {
-            protected readonly ISegment<IMyTerminalBlock> Next;
-            protected readonly MatrixD TopToNext;
-            protected double Pose;
+            public readonly ISegment<IMyTerminalBlock> Next;
+            public readonly MatrixD TopToNext;
+            public double Pose { get; private set; }
 
             protected Segment(T baseBlock, ISegment<IMyTerminalBlock> next)
             {
@@ -249,35 +248,41 @@ namespace MultigridProjectorPrograms.RobotArm
 
         public class RobotArm
         {
-            public readonly ISegment<IMyTerminalBlock> Segment;
+            public readonly ISegment<IMyTerminalBlock> FirstSegment;
+            public readonly List<IMyMechanicalConnectionBlock> BaseBlocks = new List<IMyMechanicalConnectionBlock>();
+            public IMyTerminalBlock EffectorBlock;
 
-            public RobotArm(IMyTerminalBlock @base)
+            public RobotArm(IMyTerminalBlock @base, Dictionary<long, HashSet<IMyTerminalBlock>> terminalBlocks)
             {
-                Segment = Discover(@base);
-                Segment.Init();
+                FirstSegment = Discover(@base, terminalBlocks);
+                FirstSegment.Init();
             }
 
-            public MatrixD EffectorPose => Segment.Transform * Segment.Block.WorldMatrix;
+            public MatrixD EffectorPose => FirstSegment.Transform * FirstSegment.Block.WorldMatrix;
 
-            private ISegment<IMyTerminalBlock> Discover(IMyTerminalBlock block)
+            private ISegment<IMyTerminalBlock> Discover(IMyTerminalBlock block, Dictionary<long, HashSet<IMyTerminalBlock>> terminalBlocks)
             {
                 var pistonBase = block as IMyPistonBase;
                 if (pistonBase != null)
                 {
-                    var tip = FindTip(pistonBase.Top);
-                    var next = Discover(tip);
+                    BaseBlocks.Add(pistonBase);
+                    var tip = FindTip(pistonBase.Top, terminalBlocks);
+                    var next = Discover(tip, terminalBlocks);
                     return new PistonSegment(pistonBase, next);
                 }
 
                 var rotorBase = block as IMyMotorStator;
                 if (rotorBase != null)
                 {
-                    var tip = FindTip(rotorBase.Top);
-                    var next = Discover(tip);
+                    BaseBlocks.Add(rotorBase);
+                    var tip = FindTip(rotorBase.Top, terminalBlocks);
+                    var next = Discover(tip, terminalBlocks);
                     if (rotorBase.BlockDefinition.SubtypeName.EndsWith("Hinge"))
                         return new HingeSegment(rotorBase, next);
                     return new RotorSegment(rotorBase, next);
                 }
+
+                EffectorBlock = block;
 
                 var welder = block as IMyShipWelder;
                 if (welder != null)
@@ -293,15 +298,15 @@ namespace MultigridProjectorPrograms.RobotArm
                     return new Effector<IMyShipGrinder>(grinder, tip);
                 }
 
-                // TODO: Implement all relevant tip types
+                // TODO: Implement all relevant tip types, like landing gear
 
                 return new Effector<IMyTerminalBlock>(block, MatrixD.Identity);
             }
 
-            private static IMyTerminalBlock FindTip(IMyAttachableTopBlock topBlock)
+            private IMyTerminalBlock FindTip(IMyAttachableTopBlock topBlock, Dictionary<long, HashSet<IMyTerminalBlock>> terminalBlocks)
             {
                 HashSet<IMyTerminalBlock> blocks;
-                if (!TerminalBlocks.TryGetValue(topBlock.CubeGrid.EntityId, out blocks))
+                if (!terminalBlocks.TryGetValue(topBlock.CubeGrid.EntityId, out blocks))
                     return null;
 
                 foreach (var block in blocks)
@@ -322,55 +327,169 @@ namespace MultigridProjectorPrograms.RobotArm
                 return null;
             }
 
-            public double Target(Vector3D target)
+            public virtual double Target(Vector3D target)
             {
-                return Segment.Optimize(Segment.Block.WorldMatrix, target);
+                return FirstSegment.Optimize(FirstSegment.Block.WorldMatrix, target);
             }
 
-            public void Update()
+            public virtual void Update()
             {
-                Segment.Update();
+                FirstSegment.Update();
             }
 
-            public void Retract()
+            public virtual void Retract()
             {
-                Segment.Retract();
+                FirstSegment.Retract();
             }
 
-            public void Stop()
+            public virtual void Stop()
             {
-                Segment.Stop();
+                FirstSegment.Stop();
+            }
+        }
+
+        public class CollisionSafeRobotArm : RobotArm
+        {
+            private readonly List<IMySensorBlock> sensors = new List<IMySensorBlock>();
+            private int retracting;
+
+            public CollisionSafeRobotArm(IMyTerminalBlock @base, Dictionary<long, HashSet<IMyTerminalBlock>> terminalBlocks) : base(@base, terminalBlocks)
+            {
+                foreach (var block in BaseBlocks)
+                    RegisterSensors(terminalBlocks, block);
+
+                RegisterSensors(terminalBlocks, EffectorBlock);
+            }
+
+            private void RegisterSensors(Dictionary<long, HashSet<IMyTerminalBlock>> terminalBlocks, IMyTerminalBlock block)
+            {
+                HashSet<IMyTerminalBlock> blocks;
+                if (!terminalBlocks.TryGetValue(block.CubeGrid.EntityId, out blocks))
+                    return;
+
+                sensors.AddRange(blocks.Where(b => b is IMySensorBlock).Cast<IMySensorBlock>());
+            }
+
+            public bool HasCollision => sensors.Any(sensor => sensor.Enabled && sensor.IsActive);
+            public bool IsRetracting => retracting > 0;
+
+            public override void Update()
+            {
+                if (HasCollision)
+                {
+                    retracting = 10;
+                    Retract();
+                }
+
+                if (IsRetracting)
+                    retracting--;
+
+                base.Update();
+            }
+
+            public override double Target(Vector3D target)
+            {
+                if (IsRetracting)
+                    return -1;
+
+                return base.Target(target);
+            }
+        }
+
+        public class WelderArm : CollisionSafeRobotArm
+        {
+            public WelderArm(IMyTerminalBlock @base, Dictionary<long, HashSet<IMyTerminalBlock>> terminalBlocks) : base(@base, terminalBlocks)
+            {
+            }
+
+            private static readonly BoundingBoxI MaxBox = new BoundingBoxI(Vector3I.MinValue, Vector3I.MaxValue);
+            private static readonly Dictionary<Vector3I, BlockState> BlockStates = new Dictionary<Vector3I, BlockState>();
+            public static IEnumerable<Vector3D> IterBuildableBlocks(MultigridProjectorProgrammableBlockAgent mgp, long projectorEntityId)
+            {
+                var subgridCount = mgp.GetSubgridCount(projectorEntityId);
+                for (var subgridIndex = 0; subgridIndex < subgridCount; subgridIndex++)
+                {
+                    BlockStates.Clear();
+                    if (!mgp.GetBlockStates(BlockStates, projectorEntityId, subgridIndex, MaxBox, (int) BlockState.Buildable))
+                        continue;
+
+                    if (BlockStates.Count == 0)
+                        continue;
+
+                    var previewGrid = mgp.GetPreviewGrid(projectorEntityId, subgridIndex);
+                    if (previewGrid == null)
+                        continue;
+
+                    foreach (var position in BlockStates.Keys)
+                        yield return previewGrid.GridIntegerToWorld(position);
+                }
+            }
+
+            public bool TargetNearest(IEnumerable<Vector3D> buildableBlockPositions)
+            {
+                var tipPosition = EffectorPose.Translation;
+                var nearestTarget = Vector3D.Zero;
+                var nearestSquareDistance = double.PositiveInfinity;
+                var foundTarget = false;
+
+                foreach (var blockPosition in buildableBlockPositions)
+                {
+                    var squareDistance = Vector3D.DistanceSquared(blockPosition, tipPosition);
+                    if (squareDistance >= nearestSquareDistance)
+                        continue;
+
+                    nearestSquareDistance = squareDistance;
+                    nearestTarget = blockPosition;
+                    foundTarget = true;
+                }
+
+                if (foundTarget)
+                {
+                    var error = Target(nearestTarget);
+                    Log($"Target: {Format(nearestTarget)}");
+                    Log($"Squared error: {error:0.000000}");
+
+                    if (error > 100)
+                    {
+                        Log("Out of reach");
+                        Retract();
+                    }
+                }
+                else
+                {
+                    Log("No target");
+                    Retract();
+                }
+
+                return foundTarget;
             }
         }
 
         #endregion
 
-        #region Programmable block interface
+        #region Program
 
-        private IMyTextSurface pbSurface;
         private readonly IMyTextPanel lcd;
         private readonly IMyProjector projector;
-        private MultigridProjectorProgrammableBlockAgent mgp;
-        private IMyCubeGrid previewGrid;
-        private Dictionary<Vector3I, BlockState> blockStates = new Dictionary<Vector3I, BlockState>();
-        private BoundingBoxI maxBox = new BoundingBoxI(Vector3I.MinValue, Vector3I.MaxValue);
-        private List<IMySensorBlock> sensors = new List<IMySensorBlock>();
-        private RobotArm arm;
+        private readonly List<WelderArm> arms = new List<WelderArm>();
+        private readonly MultigridProjectorProgrammableBlockAgent mgp;
 
         public Program()
         {
             Runtime.UpdateFrequency = UpdateFrequency.Update10;
 
-            pbSurface = Me.GetSurface(0);
+            var pbSurface = Me.GetSurface(0);
             pbSurface.ContentType = ContentType.TEXT_AND_IMAGE;
+            pbSurface.Alignment = TextAlignment.CENTER;
             pbSurface.FontColor = Color.DarkGreen;
-            pbSurface.FontSize = 4f;
-            pbSurface.WriteText("Robot Arm\r\nController");
+            pbSurface.FontSize = 3.2f;
+            pbSurface.WriteText("Robotic Arm\r\nController");
 
             lcd = GridTerminalSystem.GetBlockWithName("LCD") as IMyTextPanel;
             if (lcd != null)
             {
                 lcd.ContentType = ContentType.TEXT_AND_IMAGE;
+                lcd.Alignment = TextAlignment.LEFT;
                 lcd.FontColor = Color.DarkGreen;
                 lcd.FontSize = 1f;
                 lcd.WriteText("");
@@ -379,30 +498,31 @@ namespace MultigridProjectorPrograms.RobotArm
             projector = GridTerminalSystem.GetBlockWithName("Projector") as IMyProjector;
             mgp = new MultigridProjectorProgrammableBlockAgent(Me);
 
-            GridTerminalSystem.GetBlocksOfType(sensors);
+            var terminalBlocks = FindAllTerminalBlocks();
 
-            FindAllTerminalBlocks();
-            arm = new RobotArm(GridTerminalSystem.GetBlockWithName("Arm Rotor") as IMyMotorStator);
-            // arm = new RobotArm(GridTerminalSystem.GetBlockWithName("Arm 2 Hinge") as IMyMotorStator);
-            TerminalBlocks.Clear();
+            arms.Add(new WelderArm(GridTerminalSystem.GetBlockWithName("Arm 1 Rotor") as IMyMotorStator, terminalBlocks));
+            arms.Add(new WelderArm(GridTerminalSystem.GetBlockWithName("Arm 2 Rotor") as IMyMotorStator, terminalBlocks));
         }
 
-        private void FindAllTerminalBlocks()
+        private Dictionary<long, HashSet<IMyTerminalBlock>> FindAllTerminalBlocks()
         {
+            var terminalBlocks = new Dictionary<long, HashSet<IMyTerminalBlock>>();
             List<IMyTerminalBlock> blocks = new List<IMyTerminalBlock>();
             GridTerminalSystem.GetBlocksOfType<IMyFunctionalBlock>(blocks);
             foreach (var block in blocks)
             {
                 var gridId = block.CubeGrid.EntityId;
                 HashSet<IMyTerminalBlock> gridBlocks;
-                if (!TerminalBlocks.TryGetValue(gridId, out gridBlocks))
+                if (!terminalBlocks.TryGetValue(gridId, out gridBlocks))
                 {
                     gridBlocks = new HashSet<IMyTerminalBlock>();
-                    TerminalBlocks[gridId] = gridBlocks;
+                    terminalBlocks[gridId] = gridBlocks;
                 }
 
                 gridBlocks.Add(block);
             }
+
+            return terminalBlocks;
         }
 
         public void Main(string argument, UpdateType updateSource)
@@ -421,79 +541,23 @@ namespace MultigridProjectorPrograms.RobotArm
 
         public void Save()
         {
-            arm.Stop();
+            foreach(var arm in arms)
+                arm.Stop();
+        }
+
+        private void Update10()
+        {
+            var buildableBlockPositions = WelderArm.IterBuildableBlocks(mgp, projector.EntityId).ToList();
+            foreach (var arm in arms)
+            {
+                arm.TargetNearest(buildableBlockPositions);
+                arm.Update();
+            }
         }
 
         #endregion
 
-        #region Logic
-
-        private void Update10()
-        {
-            // MechanicalConnectorTests();
-            // return;
-
-            if (sensors.Any(sensor => sensor.Enabled && sensor.IsActive))
-            {
-                Log("Retracting");
-                arm.Retract();
-                arm.Update();
-                return;
-            }
-
-            var tipPosition = arm.EffectorPose.Translation;
-            var nearestTarget = Vector3D.Zero;
-            var nearestSquareDistance = double.PositiveInfinity;
-            var foundTarget = false;
-
-            var projectorEntityId = projector.EntityId;
-            var subgridCount = mgp.GetSubgridCount(projectorEntityId);
-            for (var subgridIndex = 0; subgridIndex < subgridCount; subgridIndex++)
-            {
-                blockStates.Clear();
-                if (!mgp.GetBlockStates(blockStates, projectorEntityId, subgridIndex, maxBox, (int) BlockState.Buildable))
-                    continue;
-
-                if (blockStates.Count == 0)
-                    continue;
-
-                previewGrid = mgp.GetPreviewGrid(projectorEntityId, subgridIndex);
-                if (previewGrid == null)
-                    continue;
-
-                foreach (var position in blockStates.Keys)
-                {
-                    var blockPosition = previewGrid.GridIntegerToWorld(position);
-                    var squareDistance = Vector3D.DistanceSquared(blockPosition, tipPosition);
-                    if (squareDistance >= nearestSquareDistance)
-                        continue;
-
-                    nearestSquareDistance = squareDistance;
-                    nearestTarget = blockPosition;
-                    foundTarget = true;
-                }
-            }
-
-            if (!foundTarget)
-            {
-                arm.Retract();
-                arm.Update();
-                return;
-            }
-
-            var error = arm.Target(nearestTarget);
-            Log($"Error: {error:0.000000}");
-
-            if (error > 100)
-            {
-                Log("Out of reach");
-                arm.Retract();
-                arm.Update();
-                return;
-            }
-
-            arm.Update();
-        }
+        #region Tests
 
         private void MechanicalConnectorTests()
         {
@@ -517,9 +581,9 @@ namespace MultigridProjectorPrograms.RobotArm
             Log($"  dUp {Format(deltaUp)}");
         }
 
-        private static MatrixD GetPistonTransform(double pose)
+        private static MatrixD GetRotorTransform(double pose, double displacement)
         {
-            return MatrixD.CreateTranslation(Vector3D.Up * (1.4 + pose));
+            return MatrixD.CreateTranslation(Vector3D.Up * (0.2 + displacement)) * MatrixD.CreateFromAxisAngle(Vector3D.Down, pose);
         }
 
         private static MatrixD GetHingeTransform(double pose)
@@ -527,9 +591,9 @@ namespace MultigridProjectorPrograms.RobotArm
             return MatrixD.CreateFromAxisAngle(Vector3D.Down, pose);
         }
 
-        private static MatrixD GetRotorTransform(double pose, double displacement)
+        private static MatrixD GetPistonTransform(double pose)
         {
-            return MatrixD.CreateTranslation(Vector3D.Up * (0.2 + displacement)) * MatrixD.CreateFromAxisAngle(Vector3D.Down, pose);
+            return MatrixD.CreateTranslation(Vector3D.Up * (1.4 + pose));
         }
 
         #endregion
@@ -538,21 +602,21 @@ namespace MultigridProjectorPrograms.RobotArm
 
         // FIXME: Make logging non-static at the end
 
-        private static StringBuilder log = new StringBuilder();
+        private static readonly StringBuilder LogBuilder = new StringBuilder();
 
         private static void ClearLog()
         {
-            log.Clear();
+            LogBuilder.Clear();
         }
 
         private static void Log(string message)
         {
-            log.Append($"{message}\r\n");
+            LogBuilder.Append($"{message}\r\n");
         }
 
         private void ShowLog()
         {
-            lcd?.WriteText(log.ToString());
+            lcd?.WriteText(LogBuilder.ToString());
         }
 
         private static string Format(Vector3D v)
