@@ -30,14 +30,14 @@ namespace MultigridProjectorPrograms.RobotArm
         // Names should contains: Timer, Details, Status, Log
         private const string TextPanelsGroupName = "Shipyard Text Panels";
 
-        // L2 regularization of the direction component of the optimized effector pose, higher value prefers more precise direction
-        private const double DirectionRegularization = 1.0; // Turn the welder arm towards the preview grid's center
+        // Weight of the direction component of the optimized effector pose in the cost, higher value prefers more precise effector direction
+        private const double DirectionCostWeight = 1.0; // Turn the welder arm towards the preview grid's center
 
-        // L2 regularization of the roll component of the optimized effector pose, higher value prefers more precise match of roll
-        private const double RollRegularization = 0.0; // Welders don't care about roll, therefore no need to optimize for that
+        // Weight of the roll component of the optimized effector pose, higher value prefers more precise roll control
+        private const double RollCostWeight = 0.0; // Welders don't care about roll, therefore no need to optimize for that
 
-        // L2 regularization of the optimized pose and mechanical base activations, higher value prefers simpler arm poses
-        private const double ActivationRegularization = 0.5; // [1]
+        // L2 regularization of mechanical base activations, higher value prefers simpler arm poses closer to the initial activations
+        private const double ActivationRegularization = 0.5;
 
         // Maximum distance from the effector's tip to weld blocks, determined by the welder,
         // outside this distance the welder is turned off to prevent building blocks out-of-order
@@ -154,7 +154,7 @@ namespace MultigridProjectorPrograms.RobotArm
         private const double MaxWeldingDistanceSquared = MaxWeldingDistance * MaxWeldingDistance; // [m*m]
 
         // Maximum acceptable optimized cost for the arm to start targeting a block
-        private static readonly double MaxAcceptableCost = MaxWeldingDistanceSquared + 2 * (DirectionRegularization + RollRegularization) + ActivationRegularization;
+        private static readonly double MaxAcceptableCost = MaxWeldingDistanceSquared + 2 * (DirectionCostWeight + RollCostWeight) + ActivationRegularization;
 
         // Stops optimizing the pose before the loop count limit if this cost level is reached
         private static readonly double GoodEnoughCost = Math.Pow(0.033 * MaxWeldingDistance, 2);
@@ -1324,8 +1324,8 @@ namespace MultigridProjectorPrograms.RobotArm
         private static double CalculatePoseCost(ref MatrixD target, ref MatrixD pose)
         {
             return Vector3D.DistanceSquared(pose.Translation, target.Translation) +
-                   Vector3D.DistanceSquared(pose.Forward, target.Forward) * DirectionRegularization +
-                   Vector3D.DistanceSquared(pose.Up, target.Up) * RollRegularization;
+                   Vector3D.DistanceSquared(pose.Forward, target.Forward) * DirectionCostWeight +
+                   Vector3D.DistanceSquared(pose.Up, target.Up) * RollCostWeight;
         }
 
         #endregion
