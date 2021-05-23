@@ -35,6 +35,7 @@ After enabling the plugin it will be active for all single player worlds you loa
 [*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2420963329]Test world[/url]
 [*] [url=https://github.com/viktor-ferenczi/multigrid-projector]Source code[/url]
 [*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2433810091]Mod API Test[/url]
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2471605159]Programmable block API[/url]
 [*] [url=https://discord.gg/x3Z8Ug5YkQ]Bug reports[/url]
 [/list]
 Please vote on the bug ticket to get multigrid welding into the vanilla game, eventually:

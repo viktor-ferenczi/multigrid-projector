@@ -12,5 +12,10 @@ namespace MultigridProjector.Logic
             GridIndex = gridIndex;
             MinPosition = minPosition;
         }
+
+        public override int GetHashCode()
+        {
+            return (((((GridIndex * 397) ^ MinPosition.X) * 397) ^ MinPosition.Y) * 397) ^ MinPosition.Z;
+        }
     }
 }

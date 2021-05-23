@@ -162,6 +162,11 @@ namespace MultigridProjector.Api
                 GridIndex = gridIndex;
                 Position = position;
             }
+
+            public override int GetHashCode()
+            {
+                return (((((GridIndex * 397) ^ Position.X) * 397) ^ Position.Y) * 397) ^ Position.Z;
+            }
         }
 
         public enum BlockState

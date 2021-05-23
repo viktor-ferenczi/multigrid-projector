@@ -495,7 +495,12 @@ namespace MultigridProjector.Logic
         [Everywhere]
         private void OnGridSplit(MyCubeGrid grid1, MyCubeGrid grid2)
         {
+            var builtGrid = BuiltGrid;
+
             UnregisterBuiltGrid();
+
+            if (IsConnectedToProjector)
+                RegisterBuiltGrid(builtGrid);
         }
 
         [Everywhere]
