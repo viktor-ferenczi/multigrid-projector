@@ -48,7 +48,13 @@ namespace MultigridProjectorPrograms.RobotArm
         private const int OptimizationPasses = 1;
 
         // Maximum time to retract the arm after a collision
-        private const int MaxRetractionTimeAfterCollision = 6;  // [Ticks] (1/6 seconds, due to Update10)
+        private const int MaxRetractionTimeAfterCollision = 3;  // [Ticks] (1/6 seconds, due to Update10)
+
+        // Timeout moving the arm near the target block, counted until welding range
+        private const int MovingTimeout = 18; // [Ticks] (1/6 seconds, due to Update10)
+
+        // Timeout for welding a block
+        private const int WeldingTimeout = 6; // [Ticks] (1/6 seconds, due to Update10)
 
         // Minimum meaningful activation steps during optimization
         private const double MinActivationStepPiston = 0.001; // [m]
@@ -585,14 +591,12 @@ namespace MultigridProjectorPrograms.RobotArm
             // incremented on moving the arm until welding starts,
             // finishes moving on reaching MovingTimeout
             private int MovingTimer;
-            private const int MovingTimeout = 6 * 5; // 5 seconds, since Update10 is used
 
             // Timer to detect non-progressing welding,
             // reset to zero each time the welding progresses,
             // incremented during the welding process,
             // finishes welding on reaching WeldingTimeout
             private int WeldingTimer;
-            private const int WeldingTimeout = 6; // 1 second, since Update10 is used
 
             public WelderArm(IMyProjector projector,
                 MultigridProjectorProgrammableBlockAgent mgp,
