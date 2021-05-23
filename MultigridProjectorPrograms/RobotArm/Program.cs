@@ -31,13 +31,13 @@ namespace MultigridProjectorPrograms.RobotArm
         private const string TextPanelsGroupName = "Shipyard Text Panels";
 
         // Weight of the direction component of the optimized effector pose in the cost, higher value prefers more precise effector direction
-        private const double DirectionCostWeight = 1.0; // Turn the welder arm towards the preview grid's center
+        private const double DirectionCostWeight = 0.25; // Turn the welder arm towards the preview grid's center
 
         // Weight of the roll component of the optimized effector pose, higher value prefers more precise roll control
         private const double RollCostWeight = 0.0; // Welders don't care about roll, therefore no need to optimize for that
 
         // L2 regularization of mechanical base activations, higher value prefers simpler arm poses closer to the initial activations
-        private const double ActivationRegularization = 0.5;
+        private const double ActivationRegularization = 2.0;
 
         // Maximum distance from the effector's tip to weld blocks, determined by the welder,
         // outside this distance the welder is turned off to prevent building blocks out-of-order
@@ -178,12 +178,16 @@ namespace MultigridProjectorPrograms.RobotArm
                 Block = block;
                 Next = next;
 
-                TopToNext = next.Block.WorldMatrix * MatrixD.Invert(Block.Top.WorldMatrix);
+                TopToNext = next.Block.WorldMatrix * MatrixD.Invert(block.Top.WorldMatrix);
                 previousActivation = GetPhysicalActivation();
 
                 var nextSegment = Next as Segment<IMyMechanicalConnectionBlock>;
                 SegmentCount = 1 + (nextSegment?.SegmentCount ?? 0);
                 activationWeight = ActivationRegularization / SegmentCount;
+
+                double v;
+                if (double.TryParse((block.CustomData ?? "").Trim(), out v))
+                    initialActivation = ClampPosition(v);
             }
 
             public T Block { get; }
@@ -312,27 +316,7 @@ namespace MultigridProjectorPrograms.RobotArm
             protected abstract MatrixD GetBaseToTopTransform(double activation);
         }
 
-        public abstract class RotorOrHingeSegment : Segment<IMyMotorStator>
-        {
-            protected RotorOrHingeSegment(IMyMotorStator block, ISegment<IMyTerminalBlock> next) : base(block, next)
-            {
-                if (block.LowerLimitRad > 0)
-                    initialActivation = block.LowerLimitRad;
-
-                if (block.UpperLimitRad < 0)
-                    initialActivation = block.UpperLimitRad;
-
-                if (block.LowerLimitRad <= 0 && block.UpperLimitRad >= 0)
-                    activationRange = Math.Max(-block.LowerLimitRad, block.UpperLimitRad);
-                else
-                    activationRange = Block.UpperLimitRad - Block.LowerLimitRad;
-
-                if (activationRange < minActivationStep)
-                    activationRange = minActivationStep;
-            }
-        }
-
-        public class RotorSegment : RotorOrHingeSegment
+        public class RotorSegment : Segment<IMyMotorStator>
         {
             private const double MinVelocity = Math.PI / 1440;
 
@@ -341,6 +325,7 @@ namespace MultigridProjectorPrograms.RobotArm
             public RotorSegment(IMyMotorStator block, ISegment<IMyTerminalBlock> next) : base(block, next)
             {
                 minActivationStep = MinActivationStepRotor;
+                activationRange = Math.Max(minActivationStep, Math.Max(Block.UpperLimitRad - initialActivation, initialActivation - Block.LowerLimitRad));
             }
 
             protected override double GetPhysicalActivation() => Block.Angle;
@@ -356,7 +341,7 @@ namespace MultigridProjectorPrograms.RobotArm
             protected override MatrixD GetBaseToTopTransform(double activation) => MatrixD.CreateTranslation(Vector3D.Up * (0.2 + Block.Displacement)) * MatrixD.CreateFromAxisAngle(Vector3D.Down, activation);
         }
 
-        public class HingeSegment : RotorOrHingeSegment
+        public class HingeSegment : Segment<IMyMotorStator>
         {
             private const double MinVelocity = Math.PI / 1440;
             private const double MaxVelocity = Math.PI / 8;
@@ -364,6 +349,7 @@ namespace MultigridProjectorPrograms.RobotArm
             public HingeSegment(IMyMotorStator block, ISegment<IMyTerminalBlock> next) : base(block, next)
             {
                 minActivationStep = MinActivationStepHinge;
+                activationRange = Math.Max(minActivationStep, Math.Max(Block.UpperLimitRad - initialActivation, initialActivation - Block.LowerLimitRad));
             }
 
             protected override double GetPhysicalActivation() => Block.Angle;
@@ -386,13 +372,8 @@ namespace MultigridProjectorPrograms.RobotArm
 
             public PistonSegment(IMyPistonBase block, ISegment<IMyTerminalBlock> next) : base(block, next)
             {
-                initialActivation = block.LowestPosition;
-                activationRange = block.HighestPosition - block.LowestPosition;
-
                 minActivationStep = MinActivationStepPiston;
-
-                if (activationRange < minActivationStep)
-                    activationRange = minActivationStep;
+                activationRange = Math.Max(minActivationStep, Math.Max(Block.HighestPosition - initialActivation, initialActivation - Block.LowestPosition));
             }
 
             protected override double GetPhysicalActivation() => Block.CurrentPosition;
