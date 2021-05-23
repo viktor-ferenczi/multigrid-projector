@@ -31,13 +31,13 @@ namespace MultigridProjectorPrograms.RobotArm
         private const string TextPanelsGroupName = "Shipyard Text Panels";
 
         // Weight of the direction component of the optimized effector pose in the cost, higher value prefers more precise effector direction
-        private const double DirectionCostWeight = 0.25; // Turn the welder arm towards the preview grid's center
+        private const double DirectionCostWeight = 0.2; // Turn the welder arm towards the preview grid's center
 
         // Weight of the roll component of the optimized effector pose, higher value prefers more precise roll control
         private const double RollCostWeight = 0.0; // Welders don't care about roll, therefore no need to optimize for that
 
         // L2 regularization of mechanical base activations, higher value prefers simpler arm poses closer to the initial activations
-        private const double ActivationRegularization = 2.0;
+        private const double ActivationRegularization = 1.0;
 
         // Maximum distance from the effector's tip to weld blocks, determined by the welder,
         // outside this distance the welder is turned off to prevent building blocks out-of-order
@@ -218,7 +218,7 @@ namespace MultigridProjectorPrograms.RobotArm
 
             public double SumActivationCosts => ActivationCost(optimizedActivation) + next.SumActivationCosts;
 
-            public bool IsRetracted => Math.Abs(GetPhysicalActivation()) < 0.1 && Math.Abs(GetVelocity()) < 0.1 && next.IsRetracted;
+            public bool IsRetracted => Math.Abs(GetPhysicalActivation() - InitialActivation) < 0.1 && Math.Abs(GetVelocity()) < 0.1 && next.IsRetracted;
 
             public bool IsMoving => Math.Abs(activationVelocity) >= 0.1 || next.IsMoving;
 
@@ -302,7 +302,7 @@ namespace MultigridProjectorPrograms.RobotArm
 
             public void Retract()
             {
-                optimizedActivation = 0;
+                optimizedActivation = InitialActivation;
                 next.Retract();
             }
 
@@ -709,10 +709,10 @@ namespace MultigridProjectorPrograms.RobotArm
 
                 var previewGrid = mgp.GetPreviewGrid(projector.EntityId, TargetLocation.GridIndex);
                 var previewBlockCoordinates = previewGrid.GridIntegerToWorld(TargetLocation.Position);
-
-                var previewCenter = previewGrid.WorldAABB.Center;
-                var target = MatrixD.CreateLookAtInverse(previewBlockCoordinates, previewCenter, FirstSegment.Block.WorldMatrix.Up);
-                // var target = MatrixD.CreateWorld(previewBlockCoordinates, previewWm.Forward, previewWm.Up);
+                var armBaseWm = FirstSegment.Block.WorldMatrix;
+                var direction = Vector3D.Normalize(previewBlockCoordinates - armBaseWm.Translation);
+                var target = MatrixD.CreateFromDir(direction, armBaseWm.Up);
+                target.Translation += previewBlockCoordinates;
                 Cost = Target(target);
                 if (Cost >= MaxAcceptableCost)
                 {
@@ -865,7 +865,7 @@ namespace MultigridProjectorPrograms.RobotArm
             private readonly IMyMotorStator rotor;
             private float latestAngle;
             private int counter;
-            private const int Timeout = 6;
+            private const int Timeout = 18;
             public event Action OnReverse;
 
             public RotorReverser(IMyMotorStator rotor)
