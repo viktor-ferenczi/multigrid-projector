@@ -47,15 +47,16 @@ namespace MultigridProjectorPrograms.RobotArm
         // Maximum number of full forward-backward optimization passes along the arm segments each tick
         private const int OptimizationPasses = 1;
 
+        // Maximum time to retract the arm after a collision
+        private const int MaxRetractionTimeAfterCollision = 6;  // [Ticks] (1/6 seconds, due to Update10)
+
         // Minimum meaningful activation steps during optimization
         private const double MinActivationStepPiston = 0.001; // [m]
         private const double MinActivationStepRotor = 0.001; // [rad]
         private const double MinActivationStepHinge = 0.001; // [rad]
 
-        // Maximum number of neighboring layers to weld at the same time in the same subgrid,
-        // increasing this number improves welding speed, but also risks leaving holes behind
-        // due to the arms locking themselves away from inner blocks
-        private const int MaxLayersToWeld = 3;
+        // Maximum number of blocks to weld at the same time
+        private const int MaxBlocksToWeld = 8;
 
         #endregion
 
@@ -577,6 +578,7 @@ namespace MultigridProjectorPrograms.RobotArm
             public double Cost { get; private set; }
 
             private WelderArmState state;
+            private int countdownToStopRetracting;
             public int FailureCount;
 
             public WelderArmState State
@@ -623,13 +625,14 @@ namespace MultigridProjectorPrograms.RobotArm
                 welder.Enabled = false;
             }
 
-            public void Reset()
+            public void Reset(int countdown=0)
             {
                 State = WelderArmState.Retracting;
                 TargetLocation = new BlockLocation();
                 MovingTimer = 0;
                 WeldingTimer = 0;
                 FailureCount = 0;
+                countdownToStopRetracting = countdown;
             }
 
             public void Target(BlockLocation location)
@@ -664,7 +667,7 @@ namespace MultigridProjectorPrograms.RobotArm
                 switch (State)
                 {
                     case WelderArmState.Retracting:
-                        if (FirstSegment.IsRetracted)
+                        if (FirstSegment.IsRetracted || countdownToStopRetracting > 0 && --countdownToStopRetracting == 0)
                         {
                             State = WelderArmState.Stopped;
                             MovingTimer = 0;
@@ -779,13 +782,15 @@ namespace MultigridProjectorPrograms.RobotArm
             private readonly MultigridProjectorProgrammableBlockAgent mgp;
             private readonly Dictionary<Vector3I, BlockState> BlockStates = new Dictionary<Vector3I, BlockState>();
             private readonly Dictionary<Vector3I, int> LayeredBlockPositions = new Dictionary<Vector3I, int>();
+            private readonly List<int> LayerBlockCounts = new List<int>();
             private ulong latestStateHash;
             public bool HasBuilt { get; private set; }
             public bool HasFinished { get; private set; }
-            public int LayerNumber { get; private set; } = 1;
+            public int LayerIndex => LayerBlockCounts.Count;
             public int WeldedLayer { get; private set; }
-            public int WeldableBlockCount => LayeredBlockPositions.Count;
-            public int WeldedLayerBlockCount => LayeredBlockPositions.Values.Count(layer => layer == WeldedLayer);
+            public bool IsValidLayer => WeldedLayer < LayerBlockCounts.Count;
+            public int WeldedLayerBlockCount => LayerBlockCounts[WeldedLayer];
+            public int BuildableBlockCount => LayeredBlockPositions.Count;
 
             public Subgrid(long projectorEntityId, MultigridProjectorProgrammableBlockAgent mgp, int index)
             {
@@ -818,22 +823,26 @@ namespace MultigridProjectorPrograms.RobotArm
                 // Remove already built blocks (allocates memory, but it is hard to avoid here)
                 var blocksToRemove = LayeredBlockPositions.Keys.Where(position => !BlockStates.ContainsKey(position)).ToList();
                 foreach (var position in blocksToRemove)
+                {
+                    LayerBlockCounts[LayeredBlockPositions[position]]--;
                     LayeredBlockPositions.Remove(position);
+                }
 
+                // Store the new layer if any
                 if (BlockStates.Count > 0)
                 {
                     HasBuilt = true;
                     HasFinished = false;
 
-                    // Store new blocks in the new layer if any
-                    var countBefore = LayeredBlockPositions.Count;
+                    var blockCountBefore = LayeredBlockPositions.Count;
+
                     foreach (var position in BlockStates.Keys)
                         if (!LayeredBlockPositions.ContainsKey(position))
-                            LayeredBlockPositions[position] = LayerNumber;
+                            LayeredBlockPositions[position] = LayerIndex;
 
-                    // Count as a layer if any new block has been found
-                    if (LayeredBlockPositions.Count > countBefore)
-                        LayerNumber++;
+                    var layerBlockCount = LayeredBlockPositions.Count - blockCountBefore;
+                    if (layerBlockCount > 0)
+                        LayerBlockCounts.Add(layerBlockCount);
                 }
                 else if (!HasFinished && mgp.IsSubgridComplete(projectorEntityId, Index))
                 {
@@ -843,15 +852,26 @@ namespace MultigridProjectorPrograms.RobotArm
                 return true;
             }
 
+            public int CountWeldableBlocks(out int lastLayerToWeld)
+            {
+                // Skip fully welded layers
+                while (IsValidLayer && WeldedLayerBlockCount == 0)
+                    WeldedLayer++;
+
+                // Find weldable layers
+                lastLayerToWeld = WeldedLayer;
+                var blockCount = LayerBlockCounts[lastLayerToWeld];
+                if (lastLayerToWeld + 1 < LayerBlockCounts.Count && blockCount + LayerBlockCounts[lastLayerToWeld + 1] <= MaxBlocksToWeld)
+                    blockCount += LayerBlockCounts[lastLayerToWeld++];
+
+                return blockCount;
+            }
+
             public IEnumerable<Vector3I> IterWeldableBlockPositions()
             {
-                if (LayeredBlockPositions.Count == 0)
-                    yield break;
-
-                WeldedLayer = LayeredBlockPositions.Values.Min();
-
-                var layerLimit = WeldedLayer + MaxLayersToWeld;
-                foreach (var position in LayeredBlockPositions.Where(p => p.Value < layerLimit).Select(p => p.Key))
+                int lastLayerToWeld;
+                CountWeldableBlocks(out lastLayerToWeld);
+                foreach (var position in LayeredBlockPositions.Where(p => p.Value <= lastLayerToWeld).Select(p => p.Key))
                     yield return position;
             }
 
@@ -1038,7 +1058,7 @@ namespace MultigridProjectorPrograms.RobotArm
 
                     case WelderArmState.Collided:
                     case WelderArmState.Unreachable:
-                        arm.Reset();
+                        arm.Reset(MaxRetractionTimeAfterCollision);
                         break;
                 }
 
@@ -1088,13 +1108,13 @@ namespace MultigridProjectorPrograms.RobotArm
                     return;
 
                 var sb = new StringBuilder();
-                sb.Append("Sub Position           Cost State\r\n");
-                sb.Append("--- --------           ---- -----\r\n");
+                sb.Append("Sub Block position    Cost State\r\n");
+                sb.Append("--- --------------    ---- -----\r\n");
                 foreach (var arm in arms)
                 {
                     var active = arm.State == WelderArmState.Moving || arm.State == WelderArmState.Welding;
                     var subgridIndexText = (active ? arm.TargetLocation.GridIndex.ToString() : "-").PadLeft(3);
-                    var positionText = (active ? Format(arm.TargetLocation.Position) : "").PadRight(15);
+                    var positionText = (active ? Format(arm.TargetLocation.Position) : "").PadRight(14);
                     var costText = (active ? (arm.Cost < 1000 ? $"{arm.Cost:0.000}" : "-") : "").PadLeft(7);
                     sb.Append($"{subgridIndexText} {positionText} {costText} {arm.State}\r\n");
                 }
@@ -1107,11 +1127,12 @@ namespace MultigridProjectorPrograms.RobotArm
                     if (!subgrid.HasBuilt || subgrid.HasFinished)
                         continue;
 
+                    int lastLayerToWeld;
                     var subgridIndexText = subgrid.Index.ToString().PadLeft(3);
-                    var blockCountText = subgrid.WeldableBlockCount.ToString().PadLeft(6);
-                    var layerCountText = subgrid.LayerNumber.ToString().PadLeft(6);
-                    var weldedLayerText = subgrid.WeldedLayer.ToString().PadLeft(7);
-                    var layerBlockCountText = subgrid.WeldedLayerBlockCount.ToString().PadLeft(5);
+                    var blockCountText = subgrid.BuildableBlockCount.ToString().PadLeft(6);
+                    var layerCountText = subgrid.LayerIndex.ToString().PadLeft(6);
+                    var layerBlockCountText = subgrid.CountWeldableBlocks(out lastLayerToWeld).ToString().PadLeft(5);
+                    var weldedLayerText = $"{subgrid.WeldedLayer}-{lastLayerToWeld}".PadLeft(7);
                     sb.Append($"{subgridIndexText} {blockCountText} {layerCountText} {weldedLayerText} {layerBlockCountText}\r\n");
                 }
 
