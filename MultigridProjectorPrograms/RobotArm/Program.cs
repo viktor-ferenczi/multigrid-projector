@@ -726,17 +726,15 @@ namespace MultigridProjectorPrograms.RobotArm
                     return;
                 }
 
-                var colliding = HasCollision;
+                if (HasCollision)
+                {
+                    State = WelderArmState.Collided;
+                    return;
+                }
 
                 var welding = Vector3D.DistanceSquared(welder.WorldMatrix.Translation, previewBlockCoordinates) <= MaxWeldingDistanceSquared;
                 if (!welding)
                 {
-                    if (colliding)
-                    {
-                        State = WelderArmState.Collided;
-                        return;
-                    }
-
                     State = WelderArmState.Moving;
 
                     if (++MovingTimer >= MovingTimeout)
@@ -745,10 +743,7 @@ namespace MultigridProjectorPrograms.RobotArm
                     return;
                 }
 
-                if (colliding)
-                    Retract();
-
-                if (WeldingTimer++ >= WeldingTimeout)
+                if (++WeldingTimer >= WeldingTimeout)
                 {
                     State = WelderArmState.Failed;
                     return;
@@ -872,6 +867,7 @@ namespace MultigridProjectorPrograms.RobotArm
             private float latestAngle;
             private int counter;
             private const int Timeout = 6;
+            public event Action OnReverse;
 
             public RotorReverser(IMyMotorStator rotor)
             {
@@ -903,6 +899,7 @@ namespace MultigridProjectorPrograms.RobotArm
                     {
                         rotor.TargetVelocityRad = -velocity;
                         counter = 0;
+                        OnReverse?.Invoke();
                     }
                 }
 
@@ -978,9 +975,13 @@ namespace MultigridProjectorPrograms.RobotArm
             private void Reset()
             {
                 subgrids.Clear();
+                RetractAll();
+            }
 
+            public void RetractAll()
+            {
                 foreach (var arm in arms)
-                    arm.State = WelderArmState.Retracting;
+                    arm.Reset(15);
             }
 
             public void Update()
@@ -1154,6 +1155,7 @@ namespace MultigridProjectorPrograms.RobotArm
 
                     var projectorRotor = GridTerminalSystem.GetBlockWithName(ProjectorRotorName) as IMyMotorStator;
                     rotorReverser = new RotorReverser(projectorRotor);
+                    rotorReverser.OnReverse += shipyard.RetractAll;
                 }
                 catch (Exception e)
                 {
