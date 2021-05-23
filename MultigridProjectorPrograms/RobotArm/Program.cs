@@ -62,7 +62,8 @@ namespace MultigridProjectorPrograms.RobotArm
         private const double MinActivationStepHinge = 0.001; // [rad]
 
         // Maximum number of blocks to weld at the same time
-        private const int MaxBlocksToWeld = 8;
+        private const int MaxLargeBlocksToWeld = 7;
+        private const int MaxSmallBlocksToWeld = 70;
 
         #endregion
 
@@ -764,6 +765,7 @@ namespace MultigridProjectorPrograms.RobotArm
             private readonly Dictionary<Vector3I, int> LayeredBlockPositions = new Dictionary<Vector3I, int>();
             private readonly List<int> LayerBlockCounts = new List<int>();
             private ulong latestStateHash;
+            private MyCubeSize gridSize;
             public bool HasBuilt { get; private set; }
             public bool HasFinished { get; private set; }
             public int LayerIndex => LayerBlockCounts.Count;
@@ -777,6 +779,9 @@ namespace MultigridProjectorPrograms.RobotArm
                 Index = index;
                 this.projectorEntityId = projectorEntityId;
                 this.mgp = mgp;
+
+                var previewGrid = mgp.GetPreviewGrid(projectorEntityId, index);
+                gridSize = previewGrid.GridSizeEnum;
             }
 
             public bool Update()
@@ -841,7 +846,8 @@ namespace MultigridProjectorPrograms.RobotArm
                 // Find weldable layers
                 lastLayerToWeld = WeldedLayer;
                 var blockCount = LayerBlockCounts[lastLayerToWeld];
-                if (lastLayerToWeld + 1 < LayerBlockCounts.Count && blockCount + LayerBlockCounts[lastLayerToWeld + 1] <= MaxBlocksToWeld)
+                var maxBlocksToWeld = gridSize == MyCubeSize.Large ? MaxLargeBlocksToWeld : MaxSmallBlocksToWeld;
+                while (lastLayerToWeld + 1 < LayerBlockCounts.Count && blockCount + LayerBlockCounts[lastLayerToWeld + 1] <= maxBlocksToWeld)
                     blockCount += LayerBlockCounts[lastLayerToWeld++];
 
                 return blockCount;
