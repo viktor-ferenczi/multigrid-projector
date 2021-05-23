@@ -47,14 +47,20 @@ namespace MultigridProjectorPrograms.RobotArm
         // Maximum number of full forward-backward optimization passes along the arm segments each tick
         private const int OptimizationPasses = 1;
 
-        // Maximum time to retract the arm after a collision
+        // Maximum time to retract the arm after a collision on moving the arm to the target block or during welding
         private const int MaxRetractionTimeAfterCollision = 3;  // [Ticks] (1/6 seconds, due to Update10)
+
+        // Maximum time to retract the arm after a block proved to be unreachable after the arm tried to reach it
+        private const int MaxRetractionTimeAfterUnreachable = 18;  // [Ticks] (1/6 seconds, due to Update10)
 
         // Timeout moving the arm near the target block, counted until welding range
         private const int MovingTimeout = 18; // [Ticks] (1/6 seconds, due to Update10)
 
         // Timeout for welding a block
         private const int WeldingTimeout = 6; // [Ticks] (1/6 seconds, due to Update10)
+
+        // Resets the arm after this many subsequent failed welding attempts
+        private const int ResetArmAfterFailedWeldingAttempts = 5;
 
         // Minimum meaningful activation steps during optimization
         private const double MinActivationStepPiston = 0.001; // [m]
@@ -169,32 +175,32 @@ namespace MultigridProjectorPrograms.RobotArm
 
         public abstract class Segment<T> : ISegment<T> where T : IMyMechanicalConnectionBlock
         {
-            private readonly ISegment<IMyTerminalBlock> Next;
-            private readonly MatrixD TopToNext;
-            private readonly int SegmentCount;
+            private readonly ISegment<IMyTerminalBlock> next;
+            private readonly MatrixD topToNext;
+            private readonly int segmentCount;
             private readonly double activationWeight;
             private double optimizedActivation;
             private double previousActivation;
             private double activationVelocity;
-            protected double initialActivation;
-            protected double activationRange;
-            protected double minActivationStep;
+            protected readonly double InitialActivation;
+            protected double ActivationRange;
+            protected double MinActivationStep;
 
             protected Segment(T block, ISegment<IMyTerminalBlock> next)
             {
                 Block = block;
-                Next = next;
+                this.next = next;
 
-                TopToNext = next.Block.WorldMatrix * MatrixD.Invert(block.Top.WorldMatrix);
+                topToNext = next.Block.WorldMatrix * MatrixD.Invert(block.Top.WorldMatrix);
                 previousActivation = GetPhysicalActivation();
 
-                var nextSegment = Next as Segment<IMyMechanicalConnectionBlock>;
-                SegmentCount = 1 + (nextSegment?.SegmentCount ?? 0);
-                activationWeight = ActivationRegularization / SegmentCount;
+                var nextSegment = this.next as Segment<IMyMechanicalConnectionBlock>;
+                segmentCount = 1 + (nextSegment?.segmentCount ?? 0);
+                activationWeight = ActivationRegularization / segmentCount;
 
                 double v;
                 if (double.TryParse((block.CustomData ?? "").Trim(), out v))
-                    initialActivation = ClampPosition(v);
+                    InitialActivation = ClampPosition(v);
             }
 
             public T Block { get; }
@@ -203,39 +209,39 @@ namespace MultigridProjectorPrograms.RobotArm
             {
                 get
                 {
-                    var nextTransform = Next.Transform;
+                    var nextTransform = next.Transform;
                     return GetTipTransform(optimizedActivation, ref nextTransform);
                 }
             }
 
-            public MatrixD EffectorTipPose => Next.EffectorTipPose;
+            public MatrixD EffectorTipPose => next.EffectorTipPose;
 
-            public double SumActivationCosts => ActivationCost(optimizedActivation) + Next.SumActivationCosts;
+            public double SumActivationCosts => ActivationCost(optimizedActivation) + next.SumActivationCosts;
 
-            public bool IsRetracted => Math.Abs(GetPhysicalActivation()) < 0.1 && Math.Abs(GetVelocity()) < 0.1 && Next.IsRetracted;
+            public bool IsRetracted => Math.Abs(GetPhysicalActivation()) < 0.1 && Math.Abs(GetVelocity()) < 0.1 && next.IsRetracted;
 
-            public bool IsMoving => Math.Abs(activationVelocity) >= 0.1 || Next.IsMoving;
+            public bool IsMoving => Math.Abs(activationVelocity) >= 0.1 || next.IsMoving;
 
             public IEnumerable<IMyTerminalBlock> IterBlocks()
             {
                 yield return Block;
 
-                foreach (var block in Next.IterBlocks())
+                foreach (var block in next.IterBlocks())
                     yield return block;
             }
 
-            private double ActivationCost(double activation) => Math.Pow((activation - initialActivation) / activationRange, 2);
+            private double ActivationCost(double activation) => Math.Pow((activation - InitialActivation) / ActivationRange, 2);
 
             private MatrixD GetTipTransform(double activation, ref MatrixD nextTransform) => nextTransform * GetSegmentTransform(activation);
 
-            private MatrixD GetSegmentTransform(double activation) => TopToNext * GetBaseToTopTransform(activation);
+            private MatrixD GetSegmentTransform(double activation) => topToNext * GetBaseToTopTransform(activation);
 
             private MatrixD CalculatePose(ref MatrixD wm, double activation, ref MatrixD nextTransform) => GetTipTransform(activation, ref nextTransform) * wm;
 
             public void Init()
             {
                 optimizedActivation = GetPhysicalActivation();
-                Next.Init();
+                next.Init();
             }
 
             public double Optimize(ref MatrixD wm, ref MatrixD target)
@@ -243,20 +249,20 @@ namespace MultigridProjectorPrograms.RobotArm
                 // VerifyPose(Block.CustomName, Block.WorldMatrix, wm);
                 OptimizeActivation(ref wm, ref target);
                 var nextWm = GetSegmentTransform(optimizedActivation) * wm;
-                Next.Optimize(ref nextWm, ref target);
+                next.Optimize(ref nextWm, ref target);
                 return OptimizeActivation(ref wm, ref target);
             }
 
             private double OptimizeActivation(ref MatrixD wm, ref MatrixD target)
             {
-                var nextTransform = Next.Transform;
-                var nextSumActivationCosts = Next.SumActivationCosts;
+                var nextTransform = next.Transform;
+                var nextSumActivationCosts = next.SumActivationCosts;
 
                 var tipPose = CalculatePose(ref wm, optimizedActivation, ref nextTransform);
                 var cost = CalculatePoseCost(ref target, ref tipPose) + (ActivationCost(optimizedActivation) + nextSumActivationCosts) * activationWeight;
 
-                var step = activationRange * 0.5;
-                while (cost > GoodEnoughCost && Math.Abs(step) > minActivationStep)
+                var step = ActivationRange * 0.5;
+                while (cost > GoodEnoughCost && Math.Abs(step) > MinActivationStep)
                 {
                     var activation1 = ClampPosition(optimizedActivation - step);
                     var pose1 = CalculatePose(ref wm, activation1, ref nextTransform);
@@ -291,19 +297,19 @@ namespace MultigridProjectorPrograms.RobotArm
                 previousActivation = current;
                 var velocity = DetermineVelocity(current, this.optimizedActivation);
                 SetVelocity(velocity);
-                Next.Update();
+                next.Update();
             }
 
             public void Retract()
             {
                 optimizedActivation = 0;
-                Next.Retract();
+                next.Retract();
             }
 
             public void Stop()
             {
                 SetVelocity(0);
-                Next.Stop();
+                next.Stop();
             }
 
             protected double DetermineVelocity(double current, double target, double speed = 2.0)
@@ -331,8 +337,8 @@ namespace MultigridProjectorPrograms.RobotArm
 
             public RotorSegment(IMyMotorStator block, ISegment<IMyTerminalBlock> next) : base(block, next)
             {
-                minActivationStep = MinActivationStepRotor;
-                activationRange = Math.Max(minActivationStep, Math.Max(Block.UpperLimitRad - initialActivation, initialActivation - Block.LowerLimitRad));
+                MinActivationStep = MinActivationStepRotor;
+                ActivationRange = Math.Max(MinActivationStep, Math.Max(Block.UpperLimitRad - InitialActivation, InitialActivation - Block.LowerLimitRad));
             }
 
             protected override double GetPhysicalActivation() => Block.Angle;
@@ -355,8 +361,8 @@ namespace MultigridProjectorPrograms.RobotArm
 
             public HingeSegment(IMyMotorStator block, ISegment<IMyTerminalBlock> next) : base(block, next)
             {
-                minActivationStep = MinActivationStepHinge;
-                activationRange = Math.Max(minActivationStep, Math.Max(Block.UpperLimitRad - initialActivation, initialActivation - Block.LowerLimitRad));
+                MinActivationStep = MinActivationStepHinge;
+                ActivationRange = Math.Max(MinActivationStep, Math.Max(Block.UpperLimitRad - InitialActivation, InitialActivation - Block.LowerLimitRad));
             }
 
             protected override double GetPhysicalActivation() => Block.Angle;
@@ -379,8 +385,8 @@ namespace MultigridProjectorPrograms.RobotArm
 
             public PistonSegment(IMyPistonBase block, ISegment<IMyTerminalBlock> next) : base(block, next)
             {
-                minActivationStep = MinActivationStepPiston;
-                activationRange = Math.Max(minActivationStep, Math.Max(Block.HighestPosition - initialActivation, initialActivation - Block.LowestPosition));
+                MinActivationStep = MinActivationStepPiston;
+                ActivationRange = Math.Max(MinActivationStep, Math.Max(Block.HighestPosition - InitialActivation, InitialActivation - Block.LowestPosition));
             }
 
             protected override double GetPhysicalActivation() => Block.CurrentPosition;
@@ -702,22 +708,9 @@ namespace MultigridProjectorPrograms.RobotArm
                 }
 
                 var previewGrid = mgp.GetPreviewGrid(projector.EntityId, TargetLocation.GridIndex);
-                var previewWm = previewGrid.WorldMatrix;
-                var previewCenter = previewGrid.WorldAABB.Center;
-
                 var previewBlockCoordinates = previewGrid.GridIntegerToWorld(TargetLocation.Position);
 
-                // var centerDirection = previewCenter - previewBlockCoordinates;
-                // if (centerDirection.LengthSquared() < 1e-4)
-                //     centerDirection = previewWm.Forward;
-                // else
-                //     centerDirection.Normalize();
-                //
-                // var up = Vector3D.Cross(centerDirection, previewWm.Up);
-                // if (up.LengthSquared() < 1e-4)
-                //     up = Vector3D.Cross(centerDirection, previewWm.Right);
-                // up.Normalize();
-
+                var previewCenter = previewGrid.WorldAABB.Center;
                 var target = MatrixD.CreateLookAtInverse(previewBlockCoordinates, previewCenter, FirstSegment.Block.WorldMatrix.Up);
                 // var target = MatrixD.CreateWorld(previewBlockCoordinates, previewWm.Forward, previewWm.Up);
                 Cost = Target(target);
@@ -987,7 +980,7 @@ namespace MultigridProjectorPrograms.RobotArm
             public void RetractAll()
             {
                 foreach (var arm in arms)
-                    arm.Reset(15);
+                    arm.Reset();
             }
 
             public void Update()
@@ -1031,37 +1024,39 @@ namespace MultigridProjectorPrograms.RobotArm
                 lcdTimer?.WriteText($"{seconds / 3600:00}:{(seconds / 60) % 60:00}:{seconds % 60:00}");
             }
 
-            private bool Assign(WelderArm arm)
+            private void Assign(WelderArm arm)
             {
                 switch (arm.State)
                 {
                     case WelderArmState.Failed:
-                        if (++arm.FailureCount >= 3)
+                        if (++arm.FailureCount >= ResetArmAfterFailedWeldingAttempts)
                             arm.Reset();
                         else
-                            AssignNextBlock(arm);
-                        return true;
+                            AssignNextBlock(arm, arm.FirstSegment.EffectorTipPose.Translation);
+                        break;
 
                     case WelderArmState.Stopped:
+                        AssignNextBlock(arm, arm.FirstSegment.Block.WorldMatrix.Translation);
+                        break;
+
                     case WelderArmState.Finished:
                         arm.FailureCount = 0;
-                        AssignNextBlock(arm);
-                        return true;
+                        AssignNextBlock(arm, arm.FirstSegment.EffectorTipPose.Translation);
+                        break;
 
                     case WelderArmState.Collided:
-                    case WelderArmState.Unreachable:
                         arm.Reset(MaxRetractionTimeAfterCollision);
                         break;
-                }
 
-                return false;
+                    case WelderArmState.Unreachable:
+                        arm.Reset(MaxRetractionTimeAfterUnreachable);
+                        break;
+                }
             }
 
-            private void AssignNextBlock(WelderArm arm)
+            private void AssignNextBlock(WelderArm arm, Vector3D referencePosition)
             {
                 arm.Reset();
-
-                var referencePosition = arm.FirstSegment.Block.WorldMatrix.Translation;
 
                 Subgrid subgridToWeld = null;
                 var nearestDistanceSquared = double.PositiveInfinity;
