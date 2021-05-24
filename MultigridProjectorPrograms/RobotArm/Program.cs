@@ -31,7 +31,7 @@ namespace MultigridProjectorPrograms.RobotArm
         private const string TextPanelsGroupName = "Shipyard Text Panels";
 
         // Weight of the direction component of the optimized effector pose in the cost, higher value prefers more precise effector direction
-        private const double DirectionCostWeight = 0.5; // Turn the welder arm towards the preview grid's center
+        private const double DirectionCostWeight = 1.0; // Turn the welder arm towards the preview grid's center
 
         // Weight of the roll component of the optimized effector pose, higher value prefers more precise roll control
         private const double RollCostWeight = 0.0; // Welders don't care about roll, therefore no need to optimize for that
@@ -48,10 +48,10 @@ namespace MultigridProjectorPrograms.RobotArm
         private const int OptimizationPasses = 1;
 
         // Maximum time to retract the arm after a collision on moving the arm to the target block or during welding
-        private const int MaxRetractionTimeAfterCollision = 3;  // [Ticks] (1/6 seconds, due to Update10)
+        private const int MaxRetractionTimeAfterCollision = 3; // [Ticks] (1/6 seconds, due to Update10)
 
         // Maximum time to retract the arm after a block proved to be unreachable after the arm tried to reach it
-        private const int MaxRetractionTimeAfterUnreachable = 6;  // [Ticks] (1/6 seconds, due to Update10)
+        private const int MaxRetractionTimeAfterUnreachable = 6; // [Ticks] (1/6 seconds, due to Update10)
 
         // If the arm moves the wrong direction then consider the target as unreachable
         private const double MovingCostIncreaseLimit = 50.0;
@@ -587,6 +587,7 @@ namespace MultigridProjectorPrograms.RobotArm
             private int countdownToStopRetracting;
             private double bestCostForThisTarget;
             public int FailureCount;
+            public int SubgridIndex;
 
             public WelderArmState State
             {
@@ -633,7 +634,7 @@ namespace MultigridProjectorPrograms.RobotArm
                 welder.Enabled = false;
             }
 
-            public void Reset(int countdown=0)
+            public void Reset(int countdown = 0)
             {
                 State = WelderArmState.Retracting;
                 TargetLocation = new BlockLocation();
@@ -660,6 +661,7 @@ namespace MultigridProjectorPrograms.RobotArm
                 {
                     case WelderArmState.Stopped:
                         Stop();
+                        SubgridIndex = rng.Next();
                         break;
 
                     case WelderArmState.Moving:
@@ -668,9 +670,14 @@ namespace MultigridProjectorPrograms.RobotArm
 
                     case WelderArmState.Collided:
                     case WelderArmState.Retracting:
+                        Retract();
+                        Cost = 0;
+                        break;
+
                     case WelderArmState.Unreachable:
                         Retract();
                         Cost = 0;
+                        SubgridIndex = rng.Next();
                         break;
                 }
             }
@@ -755,8 +762,8 @@ namespace MultigridProjectorPrograms.RobotArm
                 var maxWeldingDistance = previewBlockHalfSize + (welder.CubeGrid.GridSizeEnum == MyCubeSize.Large ? MaxWeldingDistanceLargeWelder : MaxWeldingDistanceSmallWelder);
                 var maxWeldingDistanceSquared = maxWeldingDistance * maxWeldingDistance;
                 var welding = distanceSquared <= maxWeldingDistanceSquared;
-                Log($"dsq={distanceSquared:0.000}");
-                Log($"max={maxWeldingDistanceSquared:0.000}");
+                // Log($"dsq={distanceSquared:0.000}");
+                // Log($"max={maxWeldingDistanceSquared:0.000}");
                 if (!welding)
                 {
                     State = WelderArmState.Moving;
@@ -1100,8 +1107,14 @@ namespace MultigridProjectorPrograms.RobotArm
                 var nearestDistanceSquared = double.PositiveInfinity;
                 var positionToWeld = Vector3I.Zero;
 
-                foreach (var subgrid in subgrids)
+                var subgridIndex = arm.SubgridIndex % subgrids.Count;
+                for (var i = 0; i < subgrids.Count; i++)
                 {
+                    var subgrid = subgrids[subgridIndex];
+
+                    if (++subgridIndex >= subgrids.Count)
+                        subgridIndex = 0;
+
                     if (!subgrid.HasBuilt || subgrid.HasFinished)
                         continue;
 
@@ -1117,7 +1130,12 @@ namespace MultigridProjectorPrograms.RobotArm
                             positionToWeld = position;
                         }
                     }
+
+                    if (subgridToWeld != null)
+                        break;
                 }
+
+                arm.SubgridIndex = subgridToWeld.Index;
 
                 if (subgridToWeld == null)
                     return;
