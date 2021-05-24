@@ -1245,7 +1245,7 @@ namespace MultigridProjectorPrograms.RobotArm
             if (lcdTimer != null)
             {
                 lcdTimer.Font = "Monospace";
-                lcdTimer.FontSize = 2.8f;
+                lcdTimer.FontSize = 4f;
                 lcdTimer.Alignment = TextAlignment.CENTER;
                 lcdTimer.TextPadding = 10;
             }
