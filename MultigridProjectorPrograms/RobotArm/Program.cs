@@ -39,10 +39,10 @@ namespace MultigridProjectorPrograms.RobotArm
         // L2 regularization of mechanical base activations, higher value prefers simpler arm poses closer to the initial activations
         private const double ActivationRegularization = 2.0;
 
-        // Maximum distance from the effector's tip to weld blocks, determined by the welder,
-        // outside this distance the welder is turned off to prevent building blocks out-of-order
-        // which may block the arm out from regions not fully welded up yet (prevents most of the blind spots)
-        private const double MaxWeldingDistance = 3.5; // [m]
+        // Maximum distance from the effector's tip to weld blocks,
+        // it applies to block intersection, not to the distance of their center
+        private const double MaxWeldingDistanceLargeWelder = 2.26; // [m]
+        private const double MaxWeldingDistanceSmallWelder = 1.3; // [m]
 
         // Maximum number of full forward-backward optimization passes along the arm segments each tick
         private const int OptimizationPasses = 1;
@@ -51,13 +51,13 @@ namespace MultigridProjectorPrograms.RobotArm
         private const int MaxRetractionTimeAfterCollision = 3;  // [Ticks] (1/6 seconds, due to Update10)
 
         // Maximum time to retract the arm after a block proved to be unreachable after the arm tried to reach it
-        private const int MaxRetractionTimeAfterUnreachable = 9;  // [Ticks] (1/6 seconds, due to Update10)
+        private const int MaxRetractionTimeAfterUnreachable = 6;  // [Ticks] (1/6 seconds, due to Update10)
 
         // If the arm moves the wrong direction then consider the target as unreachable
-        private const double MovingCostIncreaseLimit = 10.0;
+        private const double MovingCostIncreaseLimit = 50.0;
 
         // Timeout moving the arm near the target block, counted until welding range
-        private const int MovingTimeout = 18; // [Ticks] (1/6 seconds, due to Update10)
+        private const int MovingTimeout = 20; // [Ticks] (1/6 seconds, due to Update10)
 
         // Timeout for welding a block
         private const int WeldingTimeout = 6; // [Ticks] (1/6 seconds, due to Update10)
@@ -71,12 +71,14 @@ namespace MultigridProjectorPrograms.RobotArm
         private const double MinActivationStepHinge = 0.001; // [rad]
 
         // Maximum number of blocks to weld at the same time
-        private const int MaxLargeBlocksToWeld = 7;
-        private const int MaxSmallBlocksToWeld = 70;
+        private const int MaxLargeBlocksToWeld = 1;
+        private const int MaxSmallBlocksToWeld = 125;
 
         #endregion
 
         #region Arm logic
+
+        private static Random rng = new Random();
 
         public interface ISegment<out T> where T : IMyTerminalBlock
         {
@@ -168,13 +170,11 @@ namespace MultigridProjectorPrograms.RobotArm
             }
         }
 
-        private const double MaxWeldingDistanceSquared = MaxWeldingDistance * MaxWeldingDistance; // [m*m]
-
         // Maximum acceptable optimized cost for the arm to start targeting a block
-        private static readonly double MaxAcceptableCost = MaxWeldingDistanceSquared + 2 * (DirectionCostWeight + RollCostWeight) + ActivationRegularization;
+        private static readonly double MaxAcceptableCost = MaxWeldingDistanceLargeWelder * MaxWeldingDistanceLargeWelder + 2 * (DirectionCostWeight + RollCostWeight) + ActivationRegularization;
 
         // Stops optimizing the pose before the loop count limit if this cost level is reached
-        private static readonly double GoodEnoughCost = Math.Pow(0.033 * MaxWeldingDistance, 2);
+        private static readonly double GoodEnoughCost = 0.04 * MaxWeldingDistanceSmallWelder * MaxWeldingDistanceSmallWelder;
 
         public abstract class Segment<T> : ISegment<T> where T : IMyMechanicalConnectionBlock
         {
@@ -204,6 +204,15 @@ namespace MultigridProjectorPrograms.RobotArm
                 double v;
                 if (double.TryParse((block.CustomData ?? "").Trim(), out v))
                     InitialActivation = ClampPosition(v);
+
+                foreach (var s in (block.CustomName ?? "").Split(' '))
+                {
+                    if (s.StartsWith("="))
+                    {
+                        if (double.TryParse(s.Substring(1), out v))
+                            InitialActivation = ClampPosition(v);
+                    }
+                }
             }
 
             public T Block { get; }
@@ -441,7 +450,7 @@ namespace MultigridProjectorPrograms.RobotArm
                 var welder = block as IMyShipWelder;
                 if (welder != null)
                 {
-                    var tipDistance = welder.CubeGrid.GridSizeEnum == MyCubeSize.Large ? 1.5 * 2.5 : 1.5 * 1.5;
+                    var tipDistance = 0.7 * (welder.CubeGrid.GridSizeEnum == MyCubeSize.Large ? 2.5 : 1.5);
                     var tip = MatrixD.CreateTranslation(tipDistance * Vector3D.Forward);
                     return new Effector<IMyShipWelder>(welder, tip);
                 }
@@ -449,7 +458,7 @@ namespace MultigridProjectorPrograms.RobotArm
                 var grinder = block as IMyShipGrinder;
                 if (grinder != null)
                 {
-                    var tipDistance = grinder.CubeGrid.GridSizeEnum == MyCubeSize.Large ? 1.5 * 2.5 : 1.5 * 1.5;
+                    var tipDistance = 0.7 * (grinder.CubeGrid.GridSizeEnum == MyCubeSize.Large ? 2.5 : 1.5);
                     var tip = MatrixD.CreateTranslation(tipDistance * Vector3D.Forward);
                     return new Effector<IMyShipGrinder>(grinder, tip);
                 }
@@ -597,6 +606,9 @@ namespace MultigridProjectorPrograms.RobotArm
             // Location (grid index and position) of the preview block to build and weld up
             public BlockLocation TargetLocation { get; private set; }
 
+            // Direction to approach the target from
+            public Base6Directions.Direction TargetApproach;
+
             // Timer to detect non-progressing move,
             // reset to zero each time the arm starts to move to a target block,
             // incremented on moving the arm until welding starts,
@@ -631,10 +643,11 @@ namespace MultigridProjectorPrograms.RobotArm
                 countdownToStopRetracting = countdown;
             }
 
-            public void Target(BlockLocation location)
+            public void Target(BlockLocation location, Base6Directions.Direction approach)
             {
                 State = WelderArmState.Moving;
                 TargetLocation = location;
+                TargetApproach = approach;
                 MovingTimer = 0;
                 WeldingTimer = 0;
             }
@@ -718,10 +731,11 @@ namespace MultigridProjectorPrograms.RobotArm
                 var previewGrid = mgp.GetPreviewGrid(projector.EntityId, TargetLocation.GridIndex);
                 var previewBlockCoordinates = previewGrid.GridIntegerToWorld(TargetLocation.Position);
                 var armBaseWm = FirstSegment.Block.WorldMatrix;
-                var gridCenter = previewGrid.WorldAABB.Center;
-                var direction = Vector3D.Normalize(gridCenter - previewBlockCoordinates);
+                var direction = previewGrid.WorldMatrix.GetDirectionVector(TargetApproach);
                 var target = MatrixD.CreateFromDir(direction, armBaseWm.Up);
-                target.Translation += previewBlockCoordinates;
+                var previewBlockHalfSize = 0.5 * (previewGrid.GridSizeEnum == MyCubeSize.Large ? 2.5 : 1.5);
+                var keepDistance = welder.WorldMatrix.Forward * 1.5 * previewBlockHalfSize;
+                target.Translation += previewBlockCoordinates - keepDistance;
                 Cost = Target(target);
                 if (Cost >= MaxAcceptableCost || Cost > bestCostForThisTarget + MovingCostIncreaseLimit)
                 {
@@ -737,7 +751,12 @@ namespace MultigridProjectorPrograms.RobotArm
                     return;
                 }
 
-                var welding = Vector3D.DistanceSquared(welder.WorldMatrix.Translation, previewBlockCoordinates) <= MaxWeldingDistanceSquared;
+                var distanceSquared = Vector3D.DistanceSquared(FirstSegment.EffectorTipPose.Translation, previewBlockCoordinates);
+                var maxWeldingDistance = previewBlockHalfSize + (welder.CubeGrid.GridSizeEnum == MyCubeSize.Large ? MaxWeldingDistanceLargeWelder : MaxWeldingDistanceSmallWelder);
+                var maxWeldingDistanceSquared = maxWeldingDistance * maxWeldingDistance;
+                var welding = distanceSquared <= maxWeldingDistanceSquared;
+                Log($"dsq={distanceSquared:0.000}");
+                Log($"max={maxWeldingDistanceSquared:0.000}");
                 if (!welding)
                 {
                     State = WelderArmState.Moving;
@@ -1104,7 +1123,8 @@ namespace MultigridProjectorPrograms.RobotArm
                     return;
 
                 var location = new BlockLocation(subgridToWeld.Index, positionToWeld);
-                arm.Target(location);
+                var approach = (Base6Directions.Direction) (rng.Next() % 6);
+                arm.Target(location, approach);
                 subgridToWeld.Remove(positionToWeld);
             }
 
@@ -1138,7 +1158,7 @@ namespace MultigridProjectorPrograms.RobotArm
                     var blockCountText = subgrid.BuildableBlockCount.ToString().PadLeft(6);
                     var layerCountText = subgrid.LayerIndex.ToString().PadLeft(6);
                     var layerBlockCountText = subgrid.CountWeldableBlocks(out lastLayerToWeld).ToString().PadLeft(5);
-                    var weldedLayerText = $"{subgrid.WeldedLayer}-{lastLayerToWeld}".PadLeft(7);
+                    var weldedLayerText = $"{1 + subgrid.WeldedLayer}-{1 + lastLayerToWeld}".PadLeft(7);
                     sb.Append($"{subgridIndexText} {blockCountText} {layerCountText} {weldedLayerText} {layerBlockCountText}\r\n");
                 }
 
