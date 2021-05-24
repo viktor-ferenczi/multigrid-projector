@@ -31,13 +31,13 @@ namespace MultigridProjectorPrograms.RobotArm
         private const string TextPanelsGroupName = "Shipyard Text Panels";
 
         // Weight of the direction component of the optimized effector pose in the cost, higher value prefers more precise effector direction
-        private const double DirectionCostWeight = 0.2; // Turn the welder arm towards the preview grid's center
+        private const double DirectionCostWeight = 0.5; // Turn the welder arm towards the preview grid's center
 
         // Weight of the roll component of the optimized effector pose, higher value prefers more precise roll control
         private const double RollCostWeight = 0.0; // Welders don't care about roll, therefore no need to optimize for that
 
         // L2 regularization of mechanical base activations, higher value prefers simpler arm poses closer to the initial activations
-        private const double ActivationRegularization = 1.0;
+        private const double ActivationRegularization = 2.0;
 
         // Maximum distance from the effector's tip to weld blocks, determined by the welder,
         // outside this distance the welder is turned off to prevent building blocks out-of-order
@@ -51,7 +51,10 @@ namespace MultigridProjectorPrograms.RobotArm
         private const int MaxRetractionTimeAfterCollision = 3;  // [Ticks] (1/6 seconds, due to Update10)
 
         // Maximum time to retract the arm after a block proved to be unreachable after the arm tried to reach it
-        private const int MaxRetractionTimeAfterUnreachable = 18;  // [Ticks] (1/6 seconds, due to Update10)
+        private const int MaxRetractionTimeAfterUnreachable = 9;  // [Ticks] (1/6 seconds, due to Update10)
+
+        // If the arm moves the wrong direction then consider the target as unreachable
+        private const double MovingCostIncreaseLimit = 10.0;
 
         // Timeout moving the arm near the target block, counted until welding range
         private const int MovingTimeout = 18; // [Ticks] (1/6 seconds, due to Update10)
@@ -573,6 +576,7 @@ namespace MultigridProjectorPrograms.RobotArm
 
             private WelderArmState state;
             private int countdownToStopRetracting;
+            private double bestCostForThisTarget;
             public int FailureCount;
 
             public WelderArmState State
@@ -645,6 +649,10 @@ namespace MultigridProjectorPrograms.RobotArm
                         Stop();
                         break;
 
+                    case WelderArmState.Moving:
+                        bestCostForThisTarget = double.PositiveInfinity;
+                        break;
+
                     case WelderArmState.Collided:
                     case WelderArmState.Retracting:
                     case WelderArmState.Unreachable:
@@ -710,15 +718,18 @@ namespace MultigridProjectorPrograms.RobotArm
                 var previewGrid = mgp.GetPreviewGrid(projector.EntityId, TargetLocation.GridIndex);
                 var previewBlockCoordinates = previewGrid.GridIntegerToWorld(TargetLocation.Position);
                 var armBaseWm = FirstSegment.Block.WorldMatrix;
-                var direction = Vector3D.Normalize(previewBlockCoordinates - armBaseWm.Translation);
+                var gridCenter = previewGrid.WorldAABB.Center;
+                var direction = Vector3D.Normalize(gridCenter - previewBlockCoordinates);
                 var target = MatrixD.CreateFromDir(direction, armBaseWm.Up);
                 target.Translation += previewBlockCoordinates;
                 Cost = Target(target);
-                if (Cost >= MaxAcceptableCost)
+                if (Cost >= MaxAcceptableCost || Cost > bestCostForThisTarget + MovingCostIncreaseLimit)
                 {
                     State = WelderArmState.Unreachable;
                     return;
                 }
+
+                bestCostForThisTarget = Math.Min(bestCostForThisTarget, Cost);
 
                 if (HasCollision)
                 {
@@ -988,9 +999,17 @@ namespace MultigridProjectorPrograms.RobotArm
                 var subgridCount = mgp.GetSubgridCount(projector.EntityId);
                 if (!projector.Enabled || !mgp.Available || subgridCount < 1)
                 {
+                    if (subgrids.Count == 0)
+                        return;
+
+                    lcdDetails?.WriteText("Completed");
+                    lcdStatus?.WriteText("");
+
                     Reset();
+
                     foreach (var arm in arms)
                         arm.Update();
+
                     return;
                 }
 
@@ -1021,7 +1040,7 @@ namespace MultigridProjectorPrograms.RobotArm
                 lcdDetails?.WriteText(index >= 0 ? info.Substring(index) : "");
 
                 var seconds = ++totalTicks / 6;
-                lcdTimer?.WriteText($"{seconds / 3600:00}:{(seconds / 60) % 60:00}:{seconds % 60:00}");
+                lcdTimer?.WriteText($"{seconds / 60:00}:{seconds % 60:00}");
             }
 
             private void Assign(WelderArm arm)
