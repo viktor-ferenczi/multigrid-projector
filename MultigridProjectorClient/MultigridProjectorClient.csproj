@@ -126,7 +126,6 @@
       <Content Include="Mod\thumb.jpg">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <Content Include="deploy_release_mod.bat" />
       <Content Include="README.md" />
     </ItemGroup>
     <ItemGroup>
