@@ -145,7 +145,7 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void ShowTransparent(MyProjectorBase projector)
         {
-            projector.SetTransparency(Preview, -0.5f);
+            projector.SetTransparency(Preview, 0.25f);
         }
     }
 }
