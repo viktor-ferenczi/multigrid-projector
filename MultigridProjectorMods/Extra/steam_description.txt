@@ -1,0 +1,22 @@
+[h1]Multigrid Projector Extra[/h1]
+
+Additional features building on the Multigrid Projector plugin.
+
+[b]It is a regular mod which needs to be added to the world[/b]. This is [b]not[/b] a plugin! This is [b]not[/b] a mod version of the Multigrid Projector.
+
+[h2]Features[/h2]
+[list]
+[*] Projector control panel button to load a self-repair projection for the projector's own mechanical group (ship)
+[/list]
+
+More features useful for projectors and console blocks are expected to be added in the future.
+
+[i]On loading the self-repair projection the projector's "Keep projection" checkbox is enabled.[/i]
+
+[i]The "Load Repair Projection" button is at the bottom and enabled only if no other blueprint is loaded into the projector.[/i]
+
+[h2]Multigrid Projector[/h2]
+
+[url=https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416]Multigrid Projector client plugin[/url]
+
+Please join the [url=https://discord.gg/PYPFPGf3Ca]SE Mods Discord[/url] for more information or hands-on help.

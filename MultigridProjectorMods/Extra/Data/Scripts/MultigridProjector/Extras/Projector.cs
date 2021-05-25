@@ -4,6 +4,7 @@ using System.Linq;
 using VRage.Game.Components;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.ModAPI;
+using Sandbox.ModAPI.Interfaces;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using VRage.Game;
 using VRage.Game.ModAPI;
@@ -12,16 +13,15 @@ using VRage.ObjectBuilders;
 using VRage.Utils;
 
 // ReSharper disable once CheckNamespace
-namespace MultigridProjector.Plus
+namespace MultigridProjector.Extra
 {
     // ReSharper disable once UnusedType.Global
-    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_Projector), true)]
+    [MyEntityComponentDescriptor(typeof(MyObjectBuilder_Projector), false)]
     public class ProjectorLogicComponent : MyGameLogicComponent
     {
-        private static bool initialized;
-        private static readonly List<IMyProjector> Projectors = new List<IMyProjector>();
-        private static readonly List<string> Blueprints = new List<string>();
+        private static volatile bool initialized;
 
+        private static bool IsWorkingButNotProjecting(IMyTerminalBlock block) => IsValid(block) && block.IsWorking && (block as IMyProjector)?.IsProjecting == false;
         private static bool IsWorking(IMyTerminalBlock block) => IsValid(block) && block.IsWorking;
         private static bool IsValid(IMyTerminalBlock block) => block.CubeGrid?.Physics != null;
 
@@ -36,14 +36,14 @@ namespace MultigridProjector.Plus
 
             CreateLoadRepairProjectionButton();
 
-            Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
+            // Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
         }
 
         private static void CreateLoadRepairProjectionButton()
         {
             var btnBuild = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlButton, IMyProjector>("LoadRepairProjection");
             btnBuild.Enabled = IsWorking;
-            btnBuild.Visible = IsValid;
+            btnBuild.Visible = IsWorkingButNotProjecting;
             btnBuild.SupportsMultipleBlocks = false;
             btnBuild.Title = MyStringId.GetOrCompute("Load Repair Projection");
             btnBuild.Action = LoadRepairProjection;
@@ -79,23 +79,14 @@ namespace MultigridProjector.Plus
 
             var definitions = new MyObjectBuilder_Definitions {ShipBlueprints = new[] {bp}};
 
-            var path = Path.Combine(MyAPIGateway.Utilities.GamePaths.UserDataPath, "Storage", MyAPIGateway.Utilities.GamePaths.ModScopeName, "RepairBlueprints", $"{projector.CubeGrid.EntityId}.sbc");
-            definitions.Save(path);
+            var filename = $"{projector.CubeGrid.EntityId}.sbc";
+            var absolutePath = Path.Combine(MyAPIGateway.Utilities.GamePaths.UserDataPath, "Storage", MyAPIGateway.Utilities.GamePaths.ModScopeName, filename);
+            definitions.Save(absolutePath);
 
-            Projectors.Add(projector);
-            Blueprints.Add(path);
-        }
+            projector.LoadBlueprint(absolutePath);
 
-        public override void UpdateAfterSimulation100()
-        {
-            if (Projectors.Count == 0)
-                return;
-
-            var projector = Projectors.Pop();
-            var path = Blueprints.Pop();
-
-            if (IsWorking(projector))
-                projector.LoadBlueprint(path);
+            MyAPIGateway.Utilities.DeleteFileInLocalStorage(filename, typeof(ProjectorLogicComponent));
+            MyAPIGateway.Utilities.DeleteFileInLocalStorage(filename + "B5", typeof(ProjectorLogicComponent));
         }
     }
 }
