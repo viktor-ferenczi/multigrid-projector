@@ -1,16 +1,17 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
     <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
     <PropertyGroup>
         <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
         <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-        <ProjectGuid>{C30BC529-29CC-42C2-9330-4880AC7C3CC5}</ProjectGuid>
+        <ProjectGuid>{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}</ProjectGuid>
         <OutputType>Library</OutputType>
         <AppDesignerFolder>Properties</AppDesignerFolder>
-        <RootNamespace>MultigridProjectorModApiTest</RootNamespace>
-        <AssemblyName>MultigridProjectorModApiTest</AssemblyName>
+        <RootNamespace>MultigridProjectorMods</RootNamespace>
+        <AssemblyName>MultigridProjectorMods</AssemblyName>
         <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
         <FileAlignment>512</FileAlignment>
+        <LangVersion>6</LangVersion>
     </PropertyGroup>
     <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
         <PlatformTarget>x64</PlatformTarget>
@@ -33,50 +34,49 @@
     </PropertyGroup>
     <ItemGroup>
         <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\GameBin64\Sandbox.Common.dll</HintPath>
+            <HintPath>..\GameBin64\Sandbox.Common.dll</HintPath>
+        </Reference>
+        <Reference Include="Sandbox.Game, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
+          <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
         </Reference>
         <Reference Include="SpaceEngineers.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\GameBin64\SpaceEngineers.Game.dll</HintPath>
+            <HintPath>..\GameBin64\SpaceEngineers.Game.dll</HintPath>
         </Reference>
         <Reference Include="SpaceEngineers.ObjectBuilders, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\GameBin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+            <HintPath>..\GameBin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
         </Reference>
         <Reference Include="System" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
         <Reference Include="System.Xml" />
         <Reference Include="VRage, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\GameBin64\VRage.dll</HintPath>
+            <HintPath>..\GameBin64\VRage.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\GameBin64\VRage.Game.dll</HintPath>
+            <HintPath>..\GameBin64\VRage.Game.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Library, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\GameBin64\VRage.Library.dll</HintPath>
+            <HintPath>..\GameBin64\VRage.Library.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Math, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\GameBin64\VRage.Math.dll</HintPath>
+            <HintPath>..\GameBin64\VRage.Math.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Mod\Data\Scripts\MultigridProjector\ModApiTest\MultigridProjectorModApiTest.cs" />
+        <Compile Include="MultigridProjectorPlus\Data\Scripts\MultigridProjector\Plus\PlusSession.cs" />
+        <Compile Include="MultigridProjectorPlus\Data\Scripts\MultigridProjector\Plus\Projector.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
     <ItemGroup>
-      <Content Include="deploy_mod_api_test.bat" />
-      <Content Include="Mod\metadata.mod">
+      <Content Include="deploy_mods.bat" />
+      <Content Include="MultigridProjectorPlus\metadata.mod">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <Content Include="Mod\thumb.jpg">
+      <Content Include="MultigridProjectorPlus\thumb.jpg">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
-      <Content Include="steam_description.txt" />
-    </ItemGroup>
-    <ItemGroup>
-      <PackageReference Include="Lib.Harmony" Version="2.0.4" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-    <Import Project="..\MultigridProjector\MultigridProjector.projitems" Label="Shared" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
     <Target Name="BeforeBuild">
