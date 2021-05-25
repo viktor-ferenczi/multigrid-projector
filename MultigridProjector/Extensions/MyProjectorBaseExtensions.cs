@@ -9,6 +9,7 @@ using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.ModAPI.Ingame;
+using Sandbox.ModAPI.Interfaces;
 using VRage.Game;
 using VRage.Sync;
 using VRageMath;
@@ -327,6 +328,7 @@ namespace MultigridProjector.Extensions
             projectionOffset = Vector3I.Clamp(projectionOffset, new Vector3I(-50), new Vector3I(50));
 
             var p = (IMyProjector) projector;
+            p.SetValueBool("KeepProjection", true);
             p.ProjectionOffset = projectionOffset;
             p.ProjectionRotation = projectionRotation;
             p.UpdateOffsetAndRotation();
