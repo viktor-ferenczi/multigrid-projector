@@ -588,6 +588,7 @@ namespace MultigridProjectorPrograms.RobotArm
             private double bestCostForThisTarget;
             public int FailureCount;
             public int SubgridIndex;
+            public readonly HashSet<int> SubgridsWorked = new HashSet<int>();
 
             public WelderArmState State
             {
@@ -661,14 +662,30 @@ namespace MultigridProjectorPrograms.RobotArm
                 {
                     case WelderArmState.Stopped:
                         Stop();
-                        SubgridIndex = rng.Next();
+                        SubgridsWorked.Remove(SubgridIndex);
+                        SubgridIndex = ChooseAnotherSubgrid();
                         break;
 
                     case WelderArmState.Moving:
                         bestCostForThisTarget = double.PositiveInfinity;
                         break;
 
+                    case WelderArmState.Welding:
+                    case WelderArmState.Finished:
+                        SubgridsWorked.Add(SubgridIndex);
+                        break;
+
+                    case WelderArmState.Failed:
+                        SubgridsWorked.Remove(SubgridIndex);
+                        SubgridIndex = ChooseAnotherSubgrid();
+                        break;
+
                     case WelderArmState.Collided:
+                        SubgridIndex = ChooseAnotherSubgrid();
+                        Retract();
+                        Cost = 0;
+                        break;
+
                     case WelderArmState.Retracting:
                         Retract();
                         Cost = 0;
@@ -677,9 +694,25 @@ namespace MultigridProjectorPrograms.RobotArm
                     case WelderArmState.Unreachable:
                         Retract();
                         Cost = 0;
-                        SubgridIndex = rng.Next();
+                        SubgridsWorked.Remove(SubgridIndex);
+                        SubgridIndex = ChooseAnotherSubgrid();
                         break;
                 }
+            }
+
+            private int ChooseAnotherSubgrid()
+            {
+                if (SubgridsWorked.Count == 0)
+                    return -1;
+
+                var index = rng.Next() % SubgridsWorked.Count;
+                foreach (var subgridIndex in SubgridsWorked)
+                {
+                    if (index-- == 0)
+                        return subgridIndex;
+                }
+
+                return -1;
             }
 
             public new void Update()
@@ -1108,6 +1141,11 @@ namespace MultigridProjectorPrograms.RobotArm
                 var positionToWeld = Vector3I.Zero;
 
                 var subgridIndex = arm.SubgridIndex % subgrids.Count;
+
+                var checkAllSubgrids = arm.SubgridIndex == -1;
+                if (checkAllSubgrids)
+                    subgridIndex = 0;
+
                 for (var i = 0; i < subgrids.Count; i++)
                 {
                     var subgrid = subgrids[subgridIndex];
@@ -1115,8 +1153,14 @@ namespace MultigridProjectorPrograms.RobotArm
                     if (++subgridIndex >= subgrids.Count)
                         subgridIndex = 0;
 
-                    if (!subgrid.HasBuilt || subgrid.HasFinished)
+                    if (!subgrid.HasBuilt)
                         continue;
+
+                    if (subgrid.HasFinished)
+                    {
+                        arm.SubgridsWorked.Remove(subgrid.Index);
+                        continue;
+                    }
 
                     foreach (var position in subgrid.IterWeldableBlockPositions())
                     {
@@ -1131,14 +1175,14 @@ namespace MultigridProjectorPrograms.RobotArm
                         }
                     }
 
-                    if (subgridToWeld != null)
+                    if (subgridToWeld != null && !checkAllSubgrids)
                         break;
                 }
 
-                arm.SubgridIndex = subgridToWeld.Index;
-
                 if (subgridToWeld == null)
                     return;
+
+                arm.SubgridIndex = subgridToWeld.Index;
 
                 var location = new BlockLocation(subgridToWeld.Index, positionToWeld);
                 var approach = (Base6Directions.Direction) (rng.Next() % 6);
