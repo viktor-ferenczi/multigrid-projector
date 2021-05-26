@@ -51,5 +51,34 @@ namespace MultigridProjector.Api
 
         // Returns true if the subgrid is fully built (completed)
         bool IsSubgridComplete(long projectorId, int subgridIndex);
+
+        // Fills in the statistics for the entire projection
+        void GetStats(long projectorId, ProjectionStats stats);
+
+        // Fills in the statistics for a single subgrid projection
+        void GetSubgridStats(long projectorId, int subgridIndex, ProjectionStats stats);
+
+        // Enables or disables showing preview of all blocks
+        void EnablePreview(long projectorId, bool enable);
+
+        // Enables or disables showing preview of all blocks on a specific subgrid
+        void EnableSubgridPreview(long projectorId, int subgridIndex, bool enable);
+
+        // Enables or disables showing preview of a specific block
+        void EnableBlockPreview(long projectorId, int subgridIndex, Vector3I position, bool enable);
+
+        // Returns whether showing preview is enabled for a specific block
+        bool IsPreviewEnabled(long projectorId, int subgridIndex, Vector3I position);
+        
+        void EnableWelding(long projectorId, bool enable);
+
+        // Enables or disables welding of all blocks on a specific subgrid
+        void EnableSubgridWelding(long projectorId, int subgridIndex, bool enable);
+
+        // Enables or disables welding of a specific block
+        void EnableBlockWelding(long projectorId, int subgridIndex, Vector3I position, bool enable);
+
+        // Returns whether welding is enabled for a specific block
+        bool IsWeldingEnabled(long projectorId, int subgridIndex, Vector3I position);
     }
 }

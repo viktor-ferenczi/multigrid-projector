@@ -1275,6 +1275,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             // Subgrid
             Subgrid subgrid;
+            ProjectedBlock blockInfo;
             using (subgridsLock.Read())
             {
                 if (gridIndex < 0 || gridIndex >= subgrids.Count)
@@ -1283,6 +1284,18 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 subgrid = subgrids[gridIndex];
                 if (!subgrid.Supported)
                     return BuildCheckResult.NotWeldable;
+
+                if (!subgrid.Blocks.TryGetValue(previewBlock.Position, out blockInfo))
+                {
+                    // Unknown projected block
+                    return BuildCheckResult.NotWeldable;
+                }
+            }
+
+            if (!blockInfo.WeldingEnabled)
+            {
+                // Welding of this block is disabled via the MGP API
+                return BuildCheckResult.NotWeldable;
             }
 
             // Must have a built grid

@@ -24,6 +24,16 @@ namespace MultigridProjector.Logic
         // Preview block on the projected grid
         public readonly MySlimBlock Preview;
 
+        // Enables showing the preview block
+        // Hiding blocks from the preview is useful to show only part of the blueprint,
+        // for example hiding all armor blocks. Hiding the preview block does not affect welding.
+        public bool PreviewEnabled = true;
+
+        // Enables building or welding the block (if already buildable)
+        // Disabling welding is useful to enforce an exact build order of blocks for ship welders.
+        // It is also useful to build only part of the blueprint selectively controlled via the API.
+        public bool WeldingEnabled = true;
+
         // Preview block visual state
         private VisualState latestVisual = VisualState.None;
 
@@ -120,7 +130,7 @@ namespace MultigridProjector.Logic
                     return showOnlyBuildable ? VisualState.Hidden : VisualState.Hologram;
 
                 case BlockState.Buildable:
-                    return VisualState.Transparent;
+                    return PreviewEnabled ? VisualState.Transparent : VisualState.Hidden;
 
                 case BlockState.BeingBuilt:
                 case BlockState.FullyBuilt:

@@ -36,6 +36,16 @@ namespace MultigridProjector.Api
         private readonly MethodInfo _miGetYaml;
         private readonly MethodInfo _miGetStateHash;
         private readonly MethodInfo _miIsSubgridComplete;
+        private readonly MethodInfo _miGetStats;
+        private readonly MethodInfo _miGetSubgridStats;
+        private readonly MethodInfo _miEnablePreview;
+        private readonly MethodInfo _miEnableSubgridPreview;
+        private readonly MethodInfo _miEnableBlockPreview;
+        private readonly MethodInfo _miIsPreviewEnabled;
+        private readonly MethodInfo _miEnableWelding;
+        private readonly MethodInfo _miEnableSubgridWelding;
+        private readonly MethodInfo _miEnableBlockWelding;
+        private readonly MethodInfo _miIsWeldingEnabled;
 
         public MultigridProjectorTorchAgent(ITorchSession torchSession)
         {
@@ -52,18 +62,28 @@ namespace MultigridProjector.Api
             if (Version == null || !Version.StartsWith(CompatibleMajorVersion))
                 return;
 
-            _miGetSubgridCount = apiType.GetMethod("GetSubgridCount", BindingFlags.Instance | BindingFlags.Public);
-            _miGetOriginalGridBuilders = apiType.GetMethod("GetOriginalGridBuilders", BindingFlags.Instance | BindingFlags.Public);
-            _miGetPreviewGrid = apiType.GetMethod("GetPreviewGrid", BindingFlags.Instance | BindingFlags.Public);
-            _miGetBuiltGrid = apiType.GetMethod("GetBuiltGrid", BindingFlags.Instance | BindingFlags.Public);
-            _miGetBlockState = apiType.GetMethod("GetBlockState", BindingFlags.Instance | BindingFlags.Public);
-            _miGetBlockStates = apiType.GetMethod("GetBlockStates", BindingFlags.Instance | BindingFlags.Public);
-            _miGetBaseConnections = apiType.GetMethod("GetBaseConnections", BindingFlags.Instance | BindingFlags.Public);
-            _miGetTopConnections = apiType.GetMethod("GetTopConnections", BindingFlags.Instance | BindingFlags.Public);
-            _miGetScanNumber = apiType.GetMethod("GetScanNumber", BindingFlags.Instance | BindingFlags.Public);
-            _miGetYaml = apiType.GetMethod("GetYaml", BindingFlags.Instance | BindingFlags.Public);
-            _miGetStateHash = apiType.GetMethod("GetStateHash", BindingFlags.Instance | BindingFlags.Public);
-            _miIsSubgridComplete = apiType.GetMethod("IsSubgridComplete", BindingFlags.Instance | BindingFlags.Public);
+            _miGetSubgridCount = apiType.GetMethod(nameof(GetSubgridCount), BindingFlags.Instance | BindingFlags.Public);
+            _miGetOriginalGridBuilders = apiType.GetMethod(nameof(GetOriginalGridBuilders), BindingFlags.Instance | BindingFlags.Public);
+            _miGetPreviewGrid = apiType.GetMethod(nameof(GetPreviewGrid), BindingFlags.Instance | BindingFlags.Public);
+            _miGetBuiltGrid = apiType.GetMethod(nameof(GetBuiltGrid), BindingFlags.Instance | BindingFlags.Public);
+            _miGetBlockState = apiType.GetMethod(nameof(GetBlockState), BindingFlags.Instance | BindingFlags.Public);
+            _miGetBlockStates = apiType.GetMethod(nameof(GetBlockStates), BindingFlags.Instance | BindingFlags.Public);
+            _miGetBaseConnections = apiType.GetMethod(nameof(GetBaseConnections), BindingFlags.Instance | BindingFlags.Public);
+            _miGetTopConnections = apiType.GetMethod(nameof(GetTopConnections), BindingFlags.Instance | BindingFlags.Public);
+            _miGetScanNumber = apiType.GetMethod(nameof(GetScanNumber), BindingFlags.Instance | BindingFlags.Public);
+            _miGetYaml = apiType.GetMethod(nameof(GetYaml), BindingFlags.Instance | BindingFlags.Public);
+            _miGetStateHash = apiType.GetMethod(nameof(GetStateHash), BindingFlags.Instance | BindingFlags.Public);
+            _miIsSubgridComplete = apiType.GetMethod(nameof(IsSubgridComplete), BindingFlags.Instance | BindingFlags.Public);
+            _miGetStats = apiType.GetMethod(nameof(GetStats), BindingFlags.Instance | BindingFlags.Public);
+            _miGetSubgridStats = apiType.GetMethod(nameof(GetSubgridStats), BindingFlags.Instance | BindingFlags.Public);
+            _miEnablePreview = apiType.GetMethod(nameof(EnablePreview), BindingFlags.Instance | BindingFlags.Public);
+            _miEnableSubgridPreview = apiType.GetMethod(nameof(EnableSubgridPreview), BindingFlags.Instance | BindingFlags.Public);
+            _miEnableBlockPreview = apiType.GetMethod(nameof(EnableBlockPreview), BindingFlags.Instance | BindingFlags.Public);
+            _miIsPreviewEnabled = apiType.GetMethod(nameof(IsPreviewEnabled), BindingFlags.Instance | BindingFlags.Public);
+            _miEnableWelding = apiType.GetMethod(nameof(EnableWelding), BindingFlags.Instance | BindingFlags.Public);
+            _miEnableSubgridWelding = apiType.GetMethod(nameof(EnableSubgridWelding), BindingFlags.Instance | BindingFlags.Public);
+            _miEnableBlockWelding = apiType.GetMethod(nameof(EnableBlockWelding), BindingFlags.Instance | BindingFlags.Public);
+            _miIsWeldingEnabled = apiType.GetMethod(nameof(IsWeldingEnabled), BindingFlags.Instance | BindingFlags.Public);
 
             Plugin = plugin;
         }
@@ -126,6 +146,56 @@ namespace MultigridProjector.Api
         public bool IsSubgridComplete(long projectorId, int subgridIndex)
         {
             return (bool) (_miIsSubgridComplete?.Invoke(Api, new object[] {projectorId, subgridIndex}) ?? false);
+        }
+
+        public void GetStats(long projectorId, ProjectionStats stats)
+        {
+            _miGetStats?.Invoke(Api, new object[] {projectorId, stats});
+        }
+
+        public void GetSubgridStats(long projectorId, int subgridIndex, ProjectionStats stats)
+        {
+            _miGetSubgridStats?.Invoke(Api, new object[] {projectorId, subgridIndex, stats});
+        }
+
+        public void EnablePreview(long projectorId, bool enable)
+        {
+            _miEnablePreview?.Invoke(Api, new object[] {projectorId, enable});
+        }
+
+        public void EnableSubgridPreview(long projectorId, int subgridIndex, bool enable)
+        {
+            _miEnableSubgridPreview?.Invoke(Api, new object[] {projectorId, subgridIndex, enable});
+        }
+
+        public void EnableBlockPreview(long projectorId, int subgridIndex, Vector3I position, bool enable)
+        {
+            _miEnableBlockPreview?.Invoke(Api, new object[] {projectorId, subgridIndex, position, enable});
+        }
+
+        public bool IsPreviewEnabled(long projectorId, int subgridIndex, Vector3I position)
+        {
+            return (bool) (_miIsPreviewEnabled?.Invoke(Api, new object[] {projectorId, subgridIndex, position}) ?? false);
+        }
+
+        public void EnableWelding(long projectorId, bool enable)
+        {
+            _miEnableWelding?.Invoke(Api, new object[] {projectorId, enable});
+        }
+
+        public void EnableSubgridWelding(long projectorId, int subgridIndex, bool enable)
+        {
+            _miEnableSubgridWelding?.Invoke(Api, new object[] {projectorId, subgridIndex, enable});
+        }
+
+        public void EnableBlockWelding(long projectorId, int subgridIndex, Vector3I position, bool enable)
+        {
+            _miEnableBlockWelding?.Invoke(Api, new object[] {projectorId, subgridIndex, position, enable});
+        }
+
+        public bool IsWeldingEnabled(long projectorId, int subgridIndex, Vector3I position)
+        {
+            return (bool) (_miIsWeldingEnabled?.Invoke(Api, new object[] {projectorId, subgridIndex, position}) ?? false);
         }
     }
 }

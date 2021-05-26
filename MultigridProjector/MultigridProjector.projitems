@@ -14,6 +14,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Api\IMultigridProjectorApi.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Api\MultigridProjectorModAgent.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Api\Program.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Api\ProjectionStats.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\Constants.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\MyMotorStatorExtensions.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\MultigridProjectorSession.cs" />

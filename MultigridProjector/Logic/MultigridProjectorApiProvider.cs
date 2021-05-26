@@ -38,7 +38,7 @@ namespace MultigridProjector.Logic
 
         public IMyCubeGrid GetPreviewGrid(long projectorId, int subgridIndex)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
                 return null;
 
             return subgrid.PreviewGrid;
@@ -46,7 +46,7 @@ namespace MultigridProjector.Logic
 
         public IMyCubeGrid GetBuiltGrid(long projectorId, int subgridIndex)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
                 return null;
 
             return subgrid.BuiltGrid;
@@ -54,7 +54,7 @@ namespace MultigridProjector.Logic
 
         public BlockState GetBlockState(long projectorId, int subgridIndex, Vector3I position)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
                 return BlockState.Unknown;
 
             if (!subgrid.TryGetBlockState(position, out var blockState))
@@ -65,7 +65,7 @@ namespace MultigridProjector.Logic
 
         public bool GetBlockStates(Dictionary<Vector3I, BlockState> blockStates, long projectorId, int subgridIndex, BoundingBoxI box, int mask)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
                 return false;
 
             foreach (var (position, blockState) in subgrid.IterBlockStates(box, mask))
@@ -76,7 +76,7 @@ namespace MultigridProjector.Logic
 
         public Dictionary<Vector3I, BlockLocation> GetBaseConnections(long projectorId, int subgridIndex)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
                 return null;
 
             return subgrid.BaseConnections
@@ -85,7 +85,7 @@ namespace MultigridProjector.Logic
 
         public Dictionary<Vector3I, BlockLocation> GetTopConnections(long projectorId, int subgridIndex)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
                 return null;
 
             return subgrid.TopConnections
@@ -110,7 +110,7 @@ namespace MultigridProjector.Logic
 
         public ulong GetStateHash(long projectorId, int subgridIndex)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
                 return 0;
 
             return subgrid.StateHash;
@@ -118,10 +118,154 @@ namespace MultigridProjector.Logic
 
         public bool IsSubgridComplete(long projectorId, int subgridIndex)
         {
-            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi)
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
                 return false;
 
             return subgrid.Stats.IsBuildCompleted;
+        }
+
+        public void GetStats(long projectorId, Api.ProjectionStats stats)
+        {
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.IsValidForApi)
+            {
+                stats.TotalBlocks = 0;
+                return;
+            }
+
+            CopyStats(stats, projection.Stats);
+        }
+
+        public void GetSubgridStats(long projectorId, int subgridIndex, Api.ProjectionStats stats)
+        {
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
+            {
+                stats.TotalBlocks = 0;
+                return;
+            }
+
+            CopyStats(stats, subgrid.Stats);
+        }
+
+        private static void CopyStats(Api.ProjectionStats stats, ProjectionStats total)
+        {
+            stats.TotalBlocks = total.TotalBlocks;
+            stats.TotalArmorBlocks = total.TotalArmorBlocks;
+            stats.RemainingBlocks = total.RemainingBlocks;
+            stats.RemainingArmorBlocks = total.RemainingArmorBlocks;
+            stats.BuildableBlocks = total.BuildableBlocks;
+
+            stats.RemainingBlocksPerType.Clear();
+            foreach (var (def, count) in total.RemainingBlocksPerType)
+                stats.RemainingBlocksPerType[def.Id] = count;
+        }
+
+        public void EnablePreview(long projectorId, bool enable)
+        {
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.IsValidForApi)
+                return;
+
+            var projector = projection.Projector;
+            var showOnlyBuildable = projector.GetShowOnlyBuildable();
+
+            foreach (var subgrid in projection.SupportedSubgrids)
+            {
+                foreach (var block in subgrid.Blocks.Values)
+                {
+                    if (block.PreviewEnabled == enable)
+                        continue;
+
+                    block.PreviewEnabled = enable;
+                    block.UpdateVisual(projector, showOnlyBuildable);
+                }
+            }
+        }
+
+        public void EnableSubgridPreview(long projectorId, int subgridIndex, bool enable)
+        {
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
+                return;
+
+            var projector = projection.Projector;
+            var showOnlyBuildable = projector.GetShowOnlyBuildable();
+
+            foreach (var block in subgrid.Blocks.Values)
+            {
+                if (block.PreviewEnabled == enable)
+                    continue;
+
+                block.PreviewEnabled = enable;
+                block.UpdateVisual(projector, showOnlyBuildable);
+            }
+        }
+
+        public void EnableBlockPreview(long projectorId, int subgridIndex, Vector3I position, bool enable)
+        {
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
+                return;
+
+            if (!subgrid.Blocks.TryGetValue(position, out var block))
+                return;
+
+            if (block.PreviewEnabled == enable)
+                return;
+
+            block.PreviewEnabled = enable;
+
+            var projector = projection.Projector;
+            var showOnlyBuildable = projector.GetShowOnlyBuildable();
+            block.UpdateVisual(projector, showOnlyBuildable);
+        }
+
+        public bool IsPreviewEnabled(long projectorId, int subgridIndex, Vector3I position)
+        {
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
+                return false;
+
+            if (!subgrid.Blocks.TryGetValue(position, out var block))
+                return false;
+
+            return block.PreviewEnabled;
+        }
+
+        public void EnableWelding(long projectorId, bool enable)
+        {
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.IsValidForApi)
+                return;
+
+            foreach (var subgrid in projection.SupportedSubgrids)
+            foreach (var block in subgrid.Blocks.Values)
+                block.WeldingEnabled = enable;
+        }
+
+        public void EnableSubgridWelding(long projectorId, int subgridIndex, bool enable)
+        {
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
+                return;
+
+            foreach (var block in subgrid.Blocks.Values)
+                block.WeldingEnabled = enable;
+        }
+
+        public void EnableBlockWelding(long projectorId, int subgridIndex, Vector3I position, bool enable)
+        {
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
+                return;
+
+            if (!subgrid.Blocks.TryGetValue(position, out var block))
+                return;
+
+            block.WeldingEnabled = enable;
+        }
+
+        public bool IsWeldingEnabled(long projectorId, int subgridIndex, Vector3I position)
+        {
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
+                return false;
+
+            if (!subgrid.Blocks.TryGetValue(position, out var block))
+                return false;
+
+            return block.WeldingEnabled;
         }
 
         #endregion
@@ -148,6 +292,16 @@ namespace MultigridProjector.Logic
             (Func<long, string>) Api.GetYaml,
             (Func<long, int, ulong>) Api.GetStateHash,
             (Func<long, int, bool>) Api.IsSubgridComplete,
+            (Func<long, int[], List<MyDefinitionId>, List<int>, int>) ModApiGetStats,
+            (Func<long, int, int[], List<MyDefinitionId>, List<int>, int>) ModApiGetSubgridStats,
+            (Action<long, bool>) Api.EnablePreview,
+            (Action<long, int, bool>) Api.EnableSubgridPreview,
+            (Action<long, int, Vector3I, bool>) Api.EnableBlockPreview,
+            (Func<long, int, Vector3I, bool>) Api.IsPreviewEnabled,
+            (Action<long, bool>) Api.EnableWelding,
+            (Action<long, int, bool>) Api.EnableSubgridWelding,
+            (Action<long, int, Vector3I, bool>) Api.EnableBlockWelding,
+            (Func<long, int, Vector3I, bool>) Api.IsWeldingEnabled,
         });
 
         private static int ModApiGetBlockState(long projectorId, int subgridIndex, Vector3I position) => (int) Api.GetBlockState(projectorId, subgridIndex, position);
@@ -187,6 +341,41 @@ namespace MultigridProjector.Logic
             return true;
         }
 
+        private static int ModApiGetStats(long projectorId, int[] counts, List<MyDefinitionId> definitionIds, List<int> blockCounts)
+        {
+            if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.IsValidForApi)
+                return 0;
+
+            return ModApiCopyStats(projection.Stats, counts, definitionIds, blockCounts);
+        }
+
+        private static int ModApiGetSubgridStats(long projectorId, int subgridIndex, int[] counts, List<MyDefinitionId> definitionIds, List<int> blockCounts)
+        {
+            if (!MultigridProjection.TryFindSubgrid(projectorId, subgridIndex, out var projection, out var subgrid) || !projection.IsValidForApi || !subgrid.Supported)
+                return 0;
+
+            return ModApiCopyStats(subgrid.Stats, counts, definitionIds, blockCounts);
+        }
+
+        private static int ModApiCopyStats(ProjectionStats stats, int[] counts, List<MyDefinitionId> definitionIds, List<int> blockCounts)
+        {
+            if (!stats.Valid)
+                return 0;
+
+            counts[0] = stats.TotalArmorBlocks;
+            counts[1] = stats.RemainingBlocks;
+            counts[2] = stats.RemainingArmorBlocks;
+            counts[3] = stats.BuildableBlocks;
+
+            definitionIds.Clear();
+            definitionIds.AddRange(stats.RemainingBlocksPerType.Keys.Select(blockDefinition => blockDefinition.Id));
+
+            blockCounts.Clear();
+            blockCounts.AddRange(stats.RemainingBlocksPerType.Values);
+
+            return stats.TotalBlocks;
+        }
+
         #endregion
 
         #region ProgrammableBlock API
@@ -206,6 +395,16 @@ namespace MultigridProjector.Logic
             new Func<long, string>(Api.GetYaml),
             new Func<long, int, ulong>(Api.GetStateHash),
             new Func<long, int, bool>(Api.IsSubgridComplete),
+            new Func<long, int[], List<MyDefinitionId>, List<int>, int>(ModApiGetStats),
+            new Func<long, int, int[], List<MyDefinitionId>, List<int>, int>(ModApiGetSubgridStats),
+            new Action<long, bool>(Api.EnablePreview),
+            new Action<long, int, bool>(Api.EnableSubgridPreview),
+            new Action<long, int, Vector3I, bool>(Api.EnableBlockPreview),
+            new Func<long, int, Vector3I, bool>(Api.IsPreviewEnabled),
+            new Action<long, bool>(Api.EnableWelding),
+            new Action<long, int, bool>(Api.EnableSubgridWelding),
+            new Action<long, int, Vector3I, bool>(Api.EnableBlockWelding),
+            new Func<long, int, Vector3I, bool>(Api.IsWeldingEnabled),
         });
 
         public static void RegisterProgrammableBlockApi()
