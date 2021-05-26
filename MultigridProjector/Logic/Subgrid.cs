@@ -35,8 +35,11 @@ namespace MultigridProjector.Logic
         // Initial statistics of the subgrid with none of the blocks welded
         public readonly ProjectionStats InitialStats = new ProjectionStats();
 
-        // Welding state statistics collected by the background worker
-        public readonly ProjectionStats Stats = new ProjectionStats();
+        // Latest welding state statistics collected by the background worker
+        public ProjectionStats Stats { get; private set; } = new ProjectionStats();
+
+        // Welding state statistics being collected by the background worker, then swapped with Stats
+        private ProjectionStats stats = new ProjectionStats();
 
         // Indicates whether the built grid is connected to the projector
         public bool IsConnectedToProjector;
@@ -620,14 +623,21 @@ namespace MultigridProjector.Logic
 
             IsUpdateRequested = false;
 
-            Stats.Clear();
+            stats.Clear();
 
-            ulong stateHash = unchecked (0xdeadbeafdeadbeaful * (ulong) (1 + Index));
+            var stateHash = unchecked (0xdeadbeafdeadbeaful * (ulong) (1 + Index));
             foreach (var projectedBlock in Blocks.Values)
             {
                 projectedBlock.DetectBlock(projector, BuiltGrid);
-                Stats.RegisterBlock(projectedBlock.Preview, projectedBlock.State);
+                stats.RegisterBlock(projectedBlock.Preview, projectedBlock.State);
                 stateHash = unchecked ((stateHash << 11) - stateHash) ^ (ulong)projectedBlock.State;
+            }
+
+            using (BuiltGridLock.Read())
+            {
+                var oldStats = Stats;
+                Stats = stats;
+                stats = oldStats;
             }
 
             StateHash = stateHash;

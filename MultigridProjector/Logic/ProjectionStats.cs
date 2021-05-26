@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -73,6 +72,9 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Add(ProjectionStats other)
         {
+            if (!other.Valid)
+                return;
+
             TotalBlocks += other.TotalBlocks;
             TotalArmorBlocks += other.TotalArmorBlocks;
 

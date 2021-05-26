@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Threading;
 using MultigridProjector.Utilities;
 using ParallelTasks;
 using Sandbox.Game.Entities.Blocks;
