@@ -106,7 +106,7 @@ namespace MultigridProjector.Api
         {
             if (!Available)
                 return null;
-            
+
             var topPositions = new List<Vector3I>();
             var gridIndices = new List<int>();
             var basePositions = new List<Vector3I>();
@@ -157,6 +157,124 @@ namespace MultigridProjector.Api
             return fn(projectorId, subgridIndex);
         }
 
+        public void GetStats(long projectorId, ProjectionStats stats)
+        {
+            if (!Available)
+                return;
+
+            var fn = (Func<long, int[], List<MyDefinitionId>, List<int>, int>) api[13];
+
+            var v = new int[4];
+            var d = new List<MyDefinitionId>();
+            var c = new List<int>();
+            stats.TotalBlocks = fn(projectorId, v, d, c);
+
+            CopyStats(stats, v, d, c);
+        }
+
+        public void GetSubgridStats(long projectorId, int subgridIndex, ProjectionStats stats)
+        {
+            if (!Available)
+                return;
+
+            var fn = (Func<long, int, int[], List<MyDefinitionId>, List<int>, int>) api[14];
+
+            var v = new int[4];
+            var d = new List<MyDefinitionId>();
+            var c = new List<int>();
+            stats.TotalBlocks = fn(projectorId, subgridIndex, v, d, c);
+
+            CopyStats(stats, v, d, c);
+        }
+
+        private static void CopyStats(ProjectionStats stats, int[] v, List<MyDefinitionId> d, List<int> c)
+        {
+            if (!stats.Valid)
+                return;
+
+            stats.TotalArmorBlocks = v[0];
+            stats.RemainingBlocks = v[1];
+            stats.RemainingArmorBlocks = v[2];
+            stats.RemainingBlocks = v[3];
+
+            stats.RemainingBlocksPerType.Clear();
+            var n = d.Count;
+            for (var i = 0; i < n; i++)
+                stats.RemainingBlocksPerType[d[i]] = c[i];
+        }
+
+        public void EnablePreview(long projectorId, bool enable)
+        {
+            if (!Available)
+                return;
+
+            var fn = (Action<long, bool>) api[15];
+            fn(projectorId, enable);
+        }
+
+        public void EnableSubgridPreview(long projectorId, int subgridIndex, bool enable)
+        {
+            if (!Available)
+                return;
+
+            var fn = (Action<long, int, bool>) api[16];
+            fn(projectorId, subgridIndex, enable);
+        }
+
+        public void EnableBlockPreview(long projectorId, int subgridIndex, Vector3I position, bool enable)
+        {
+            if (!Available)
+                return;
+
+            var fn = (Action<long, int, Vector3I, bool>) api[17];
+            fn(projectorId, subgridIndex, position, enable);
+        }
+
+        public bool IsPreviewEnabled(long projectorId, int subgridIndex, Vector3I position)
+        {
+            if (!Available)
+                return false;
+
+            var fn = (Func<long, int, Vector3I, bool>) api[18];
+            return fn(projectorId, subgridIndex, position);
+        }
+
+        public void EnableWelding(long projectorId, bool enable)
+        {
+            if (!Available)
+                return;
+
+            var fn = (Action<long, bool>) api[19];
+            fn(projectorId, enable);
+        }
+
+        public void EnableSubgridWelding(long projectorId, int subgridIndex, bool enable)
+        {
+            if (!Available)
+                return;
+
+            var fn = (Action<long, int, bool>) api[20];
+            fn(projectorId, subgridIndex, enable);
+        }
+
+        public void EnableBlockWelding(long projectorId, int subgridIndex, Vector3I position, bool enable)
+        {
+            if (!Available)
+                return;
+
+            var fn = (Action<long, int, Vector3I, bool>) api[21];
+            fn(projectorId, subgridIndex, position, enable);
+        }
+
+        public bool IsWeldingEnabled(long projectorId, int subgridIndex, Vector3I position)
+        {
+            if (!Available)
+                return false;
+
+            var fn = (Func<long, int, Vector3I, bool>) api[22];
+            return fn(projectorId, subgridIndex, position);
+        }
+
         public MultigridProjectorModAgent()
         {
             MyAPIGateway.Utilities.RegisterMessageHandler(ModApiResponseId, HandleModMessage);
@@ -166,7 +284,7 @@ namespace MultigridProjector.Api
         private void HandleModMessage(object obj)
         {
             api = obj as object[];
-            if (api == null || api.Length < 12)
+            if (api == null || api.Length < 23)
                 return;
 
             Version = api[0] as string;
