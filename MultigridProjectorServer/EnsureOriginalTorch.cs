@@ -66,9 +66,17 @@ namespace MultigridProjectorServer
             if (methodInfo == null)
                 return $"Could not get method information for the {declaringType.Name}.{methodName} method patched in class {patchType.Name}";
 
-            var actualDigest = HashMethodBody(methodInfo).ToString("x8");
-            if (!ensureOriginal._allowedHexDigests.Contains(actualDigest))
-                return $"Body of patched method {declaringType.Name}.{methodName} has changed: actual {actualDigest}, expected one of {ensureOriginal.AllowedHexDigestsAsText}\"";
+            try
+            {
+                var actualDigest = HashMethodBody(methodInfo).ToString("x8");
+                if (!ensureOriginal._allowedHexDigests.Contains(actualDigest))
+                    return $"Body of patched method {declaringType.Name}.{methodName} has changed: actual {actualDigest}, expected one of {ensureOriginal.AllowedHexDigestsAsText}\"";
+            }
+            catch (TargetInvocationException e)
+            {
+                // Silencing rare exception
+                PluginLog.Error(e,$"Failed to verify body of method {declaringType.Name}.{methodName}");
+            }
 
             return "";
         }
