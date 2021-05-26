@@ -143,7 +143,6 @@ namespace MultigridProjector.Logic
             CreateSubgrids();
             MarkSupportedSubgrids();
             CreateUpdateWork();
-            AutoAlignBlueprint();
 
             Projector.PropertiesChanged += OnPropertiesChanged;
 
@@ -153,6 +152,8 @@ namespace MultigridProjector.Logic
                 subgrid.RequestUpdate();
 
             ForceUpdateProjection();
+
+            AutoAlignBlueprint();
         }
 
         public void Destroy()

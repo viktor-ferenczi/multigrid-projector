@@ -10,7 +10,7 @@
     <method v="2">
       <option name="Build Solution" enabled="true" />
       <option name="RunConfigurationTask" enabled="true" run_configuration_name="Deploy Client Release" run_configuration_type="BatchConfigurationType" />
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Deploy API Test Mod" run_configuration_type="BatchConfigurationType" />
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Deploy Mods" run_configuration_type="BatchConfigurationType" />
     </method>
   </configuration>
 </component>
