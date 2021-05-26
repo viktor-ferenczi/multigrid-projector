@@ -64,36 +64,36 @@ namespace MultigridProjector.Logic
         public bool Initialized { get; private set; }
 
         private bool IsUpdateRequested => Initialized && Subgrids.Any(subgrid => subgrid.IsUpdateRequested);
-        private bool IsBuildCompleted => Initialized && _stats.IsBuildCompleted;
+        private bool IsBuildCompleted => Initialized && stats.IsBuildCompleted;
 
         // Mechanical connection block locations in the preview grids by EntityId
         // public readonly Dictionary<long, BlockLocation> MechanicalConnectionBlockLocations = new Dictionary<long, BlockLocation>();
 
         // Latest aggregated statistics, suitable for built completeness decision and formatting as text
-        private readonly ProjectionStats _stats = new ProjectionStats();
+        private readonly ProjectionStats stats = new ProjectionStats();
 
         // Background task to update the block states and collect welding completion statistics
-        private MultigridUpdateWork _updateWork;
+        private MultigridUpdateWork updateWork;
 
         // Keep projection flag saved for change detection
-        private bool _keepProjection;
+        private bool latestKeepProjection;
 
         // Show only buildable flag saved for change detection
-        private bool _showOnlyBuildable;
+        private bool latestShowOnlyBuildable;
 
         // Offset and rotation for change detection
-        private Vector3I _projectionOffset;
-        private Vector3I _projectionRotation;
+        private Vector3I latestProjectionOffset;
+        private Vector3I latestProjectionRotation;
 
         // Scan sequence number, increased every time the preview grids are successfully scanned for block changes
         public long ScanNumber;
         public bool HasScanned => ScanNumber > 0;
 
         // YAML generated from the current state, cleared when the scan number changes
-        private volatile string _yaml;
+        private volatile string latestYaml;
 
         // Requests a remap operation on building the next functional (non-armor) block
-        private bool _requestRemap;
+        private bool requestRemap;
 
         // Controls when the plugin and Mod API can access projector information already
         public bool IsValidForApi => Initialized && HasScanned;
@@ -129,11 +129,11 @@ namespace MultigridProjector.Logic
             Clipboard = projector.GetClipboard();
             GridBuilders = gridBuilders;
 
-            _keepProjection = Projector.GetKeepProjection();
-            _showOnlyBuildable = Projector.GetShowOnlyBuildable();
+            latestKeepProjection = Projector.GetKeepProjection();
+            latestShowOnlyBuildable = Projector.GetShowOnlyBuildable();
 
-            _projectionOffset = Projector.ProjectionOffset;
-            _projectionRotation = Projector.ProjectionRotation;
+            latestProjectionOffset = Projector.ProjectionOffset;
+            latestProjectionRotation = Projector.ProjectionRotation;
 
             if (Projector.Closed)
                 return;
@@ -167,11 +167,11 @@ namespace MultigridProjector.Logic
 
             Projector.PropertiesChanged -= OnPropertiesChanged;
 
-            _updateWork.OnUpdateWorkCompleted -= OnUpdateWorkCompletedWithErrorHandler;
-            _updateWork.Dispose();
-            _updateWork = null;
+            updateWork.OnUpdateWorkCompleted -= OnUpdateWorkCompletedWithErrorHandler;
+            updateWork.Dispose();
+            updateWork = null;
 
-            _stats.Clear();
+            stats.Clear();
 
             foreach (var subgrid in Subgrids)
                 subgrid.Dispose();
@@ -286,8 +286,8 @@ namespace MultigridProjector.Logic
 
         private void CreateUpdateWork()
         {
-            _updateWork = new MultigridUpdateWork(this);
-            _updateWork.OnUpdateWorkCompleted += OnUpdateWorkCompletedWithErrorHandler;
+            updateWork = new MultigridUpdateWork(this);
+            updateWork.OnUpdateWorkCompleted += OnUpdateWorkCompletedWithErrorHandler;
         }
 
         private void AutoAlignBlueprint()
@@ -407,13 +407,13 @@ namespace MultigridProjector.Logic
                 return;
             }
 
-            if (!_updateWork.IsComplete)
+            if (!updateWork.IsComplete)
                 return;
 
             Projector.SetShouldUpdateProjection(false);
             Projector.SetForceUpdateProjection(false);
 
-            _updateWork.Start();
+            updateWork.Start();
         }
 
         private void HidePreviewGrids()
@@ -439,8 +439,8 @@ namespace MultigridProjector.Logic
         private void DetectKeepProjectionChange()
         {
             var keepProjection = Projector.GetKeepProjection();
-            if (_keepProjection == keepProjection) return;
-            _keepProjection = keepProjection;
+            if (latestKeepProjection == keepProjection) return;
+            latestKeepProjection = keepProjection;
 
             // Remove projection if the build is complete and Keep Projection is unchecked
             if (!keepProjection && IsBuildCompleted)
@@ -450,20 +450,20 @@ namespace MultigridProjector.Logic
         private void DetectShowOnlyBuildableChange()
         {
             var showOnlyBuildable = Projector.GetShowOnlyBuildable();
-            if (_showOnlyBuildable == showOnlyBuildable) return;
-            _showOnlyBuildable = showOnlyBuildable;
+            if (latestShowOnlyBuildable == showOnlyBuildable) return;
+            latestShowOnlyBuildable = showOnlyBuildable;
 
             UpdatePreviewBlockVisuals();
         }
 
         private void DetectOffsetRotationChange()
         {
-            if (Projector.ProjectionOffset == _projectionOffset &&
-                Projector.ProjectionRotation == _projectionRotation)
+            if (Projector.ProjectionOffset == latestProjectionOffset &&
+                Projector.ProjectionRotation == latestProjectionRotation)
                 return;
 
-            _projectionOffset = Projector.ProjectionOffset;
-            _projectionRotation = Projector.ProjectionRotation;
+            latestProjectionOffset = Projector.ProjectionOffset;
+            latestProjectionRotation = Projector.ProjectionRotation;
 
             RescanFullProjection();
         }
@@ -488,9 +488,9 @@ namespace MultigridProjector.Logic
                 return;
 
             ScanNumber++;
-            _yaml = null;
+            latestYaml = null;
 
-            PluginLog.Debug($"Scan #{ScanNumber} of {Projector.GetDebugName()}: {_updateWork.SubgridsScanned} subgrids, {_updateWork.BlocksScanned} blocks");
+            PluginLog.Debug($"Scan #{ScanNumber} of {Projector.GetDebugName()}: {updateWork.SubgridsScanned} subgrids, {updateWork.BlocksScanned} blocks");
 
             Projector.SetLastUpdate(MySandboxGame.TotalGamePlayTimeInMilliseconds);
 
@@ -505,8 +505,8 @@ namespace MultigridProjector.Logic
             AggregateStatistics();
             UpdateProjectorStats();
 
-            if (Sync.IsServer && _stats.BuiltOnlyArmorBlocks)
-                _requestRemap = true;
+            if (Sync.IsServer && stats.BuiltOnlyArmorBlocks)
+                requestRemap = true;
 
             if (!Sync.IsDedicated)
             {
@@ -522,7 +522,7 @@ namespace MultigridProjector.Logic
                 Projector.RaisePropertiesChanged();
             }
 
-            if (!_keepProjection && IsBuildCompleted)
+            if (!latestKeepProjection && IsBuildCompleted)
                 Projector.RequestRemoveProjection();
         }
 
@@ -531,7 +531,7 @@ namespace MultigridProjector.Logic
             if (requireScan && !HasScanned)
                 return "";
 
-            var yaml = _yaml;
+            var yaml = latestYaml;
             if (yaml != null)
                 return yaml;
 
@@ -574,25 +574,25 @@ namespace MultigridProjector.Logic
             }
 
             yaml = sb.ToString();
-            _yaml = yaml;
-            return _yaml;
+            latestYaml = yaml;
+            return latestYaml;
         }
 
         private void AggregateStatistics()
         {
-            _stats.Clear();
+            stats.Clear();
             foreach (var subgrid in SupportedSubgrids)
-                _stats.Add(subgrid.Stats);
+                stats.Add(subgrid.Stats);
         }
 
         [Everywhere]
         public void UpdateProjectorStats()
         {
-            Projector.SetTotalBlocks(_stats.TotalBlocks);
-            Projector.SetRemainingBlocks(_stats.RemainingBlocks);
-            Projector.SetRemainingArmorBlocks(_stats.RemainingArmorBlocks);
-            Projector.SetBuildableBlocksCount(_stats.BuildableBlocks);
-            Projector.GetRemainingBlocksPerType().Update(_stats.RemainingBlocksPerType);
+            Projector.SetTotalBlocks(stats.TotalBlocks);
+            Projector.SetRemainingBlocks(stats.RemainingBlocks);
+            Projector.SetRemainingArmorBlocks(stats.RemainingArmorBlocks);
+            Projector.SetBuildableBlocksCount(stats.BuildableBlocks);
+            Projector.GetRemainingBlocksPerType().Update(stats.RemainingBlocksPerType);
             Projector.SetStatsDirty(true);
         }
 
@@ -602,7 +602,7 @@ namespace MultigridProjector.Logic
                 return;
 
             foreach (var subgrid in SupportedSubgrids)
-                subgrid.UpdatePreviewBlockVisuals(Projector, _showOnlyBuildable);
+                subgrid.UpdatePreviewBlockVisuals(Projector, latestShowOnlyBuildable);
         }
 
         // FIXME: Refactor, simplify
@@ -1088,7 +1088,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             UpdateGridTransformations();
 
-            if (_updateWork == null || !_updateWork.IsComplete)
+            if (updateWork == null || !updateWork.IsComplete)
                 return;
 
             if (IsUpdateRequested)
@@ -1160,9 +1160,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             // Allow rebuilding the blueprint without EntityId collisions without power-cycling the projector,
             // relies on the detection of cutting down the built grids by the lack of functional blocks, see
             // where _requestRemap is set to true
-            if (_requestRemap && previewFatBlock != null)
+            if (requestRemap && previewFatBlock != null)
             {
-                _requestRemap = false;
+                requestRemap = false;
                 PluginLog.Debug($"Remapping blueprint loaded into projector {Projector.CustomName} [{Projector.EntityId}] in preparation for building it again");
                 MyEntities.RemapObjectBuilderCollection(GridBuilders);
             }
@@ -1695,7 +1695,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         [Everywhere]
         public void RemoveProjection(bool keepProjection)
         {
-            if (!_keepProjection && _stats.IsBuildCompleted)
+            if (!latestKeepProjection && stats.IsBuildCompleted)
                 keepProjection = false;
 
             Projector.SetHiddenBlock(null);
