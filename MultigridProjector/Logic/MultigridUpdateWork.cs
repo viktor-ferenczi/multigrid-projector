@@ -14,17 +14,17 @@ namespace MultigridProjector.Logic
 
         // Access to the projection
         // Concurrency: The update work must write only into the dedicated members of subgrids
-        private MultigridProjection _projection;
-        private MyProjectorBase Projector => _projection.Projector;
-        private IEnumerable<Subgrid> SupportedSubgrids => _projection.SupportedSubgrids;
+        private MultigridProjection projection;
+        private MyProjectorBase Projector => projection.Projector;
+        private IEnumerable<Subgrid> SupportedSubgrids => projection.SupportedSubgrids;
 
         // Task control
-        private Task _task;
-        private volatile bool _stop;
-        private bool _allGridsProcessed;
-        private bool ShouldStop => _stop || !_projection.Initialized || Projector.Closed;
+        private Task task;
+        private volatile bool stop;
+        private bool allGridsProcessed;
+        private bool ShouldStop => stop || !projection.Initialized || Projector.Closed;
 
-        public bool IsComplete => _task.IsComplete;
+        public bool IsComplete => task.IsComplete;
 
         // Subgrid scan statistics for performance logging only (no functionality affected)
         public int SubgridsScanned;
@@ -35,19 +35,19 @@ namespace MultigridProjector.Logic
 
         public MultigridUpdateWork(MultigridProjection projection)
         {
-            _projection = projection;
+            this.projection = projection;
         }
 
         public void Dispose()
         {
             Cancel();
 
-            if (!_task.IsComplete)
+            if (!task.IsComplete)
             {
-                _task.Wait(true);
+                task.Wait(true);
             }
 
-            _projection = null;
+            projection = null;
         }
 
         public void Start()
@@ -55,9 +55,9 @@ namespace MultigridProjector.Logic
             if (!IsComplete)
                 return;
 
-            _stop = false;
-            _allGridsProcessed = false;
-            _task = Parallel.Start(this, OnComplete);
+            stop = false;
+            allGridsProcessed = false;
+            task = Parallel.Start(this, OnComplete);
         }
 
         private void Cancel()
@@ -65,7 +65,7 @@ namespace MultigridProjector.Logic
             if (IsComplete)
                 return;
 
-            _stop = true;
+            stop = true;
         }
 
         public void DoWork(WorkData workData = null)
@@ -83,7 +83,7 @@ namespace MultigridProjector.Logic
                 return;
             }
 
-            _allGridsProcessed = !ShouldStop;
+            allGridsProcessed = !ShouldStop;
         }
 
         private void UpdateBlockStatesAndCollectStatistics(WorkData workData = null)
@@ -117,7 +117,7 @@ namespace MultigridProjector.Logic
 
         private void OnComplete()
         {
-            if (!_allGridsProcessed)
+            if (!allGridsProcessed)
                 return;
 
             OnUpdateWorkCompleted?.Invoke();

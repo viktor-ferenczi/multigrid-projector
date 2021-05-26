@@ -25,7 +25,7 @@ namespace MultigridProjector.Logic
         public readonly MySlimBlock Preview;
 
         // Preview block visual state
-        private VisualState _visual = VisualState.None;
+        private VisualState latestVisual = VisualState.None;
 
         // Position of the block on the built grid (not valid for the preview grid)
         private Vector3I BuiltPosition { get; set; } = Vector3I.MinValue;
@@ -89,10 +89,10 @@ namespace MultigridProjector.Logic
         public void UpdateVisual(MyProjectorBase projector, bool showOnlyBuildable)
         {
             var visual = GetVisualState(showOnlyBuildable);
-            if (visual == _visual)
+            if (visual == latestVisual)
                 return;
 
-            _visual = visual;
+            latestVisual = visual;
 
             switch (visual)
             {
