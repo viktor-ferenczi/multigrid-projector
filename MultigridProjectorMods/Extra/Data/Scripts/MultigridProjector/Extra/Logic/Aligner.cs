@@ -5,7 +5,7 @@ using VRageMath;
 // ReSharper disable once CheckNamespace
 namespace MultigridProjector.Extra
 {
-    public class AlignerClient
+    public class Aligner
     {
         private const int FirstRepeatPeriod = 18;
         private const int RepeatPeriod = 6;
@@ -13,7 +13,7 @@ namespace MultigridProjector.Extra
         private static readonly Vector3I MinOffset = new Vector3I(-50, -50, -50);
         private static readonly Vector3I MaxOffset = new Vector3I(+50, +50, +50);
 
-        private static AlignerClient instance;
+        private static Aligner instance;
 
         private IMyProjector projector;
         private Vector3I offset;
@@ -23,7 +23,7 @@ namespace MultigridProjector.Extra
 
         private bool Active => projector != null;
 
-        public AlignerClient()
+        public Aligner()
         {
             instance = this;
         }

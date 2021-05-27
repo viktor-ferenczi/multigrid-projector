@@ -8,39 +8,35 @@ namespace MultigridProjector.Extra
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
     public class Session : MySessionComponentBase
     {
-        public static bool IsServer;
-        public static bool IsDedicated;
+        public static bool IsServer { get; private set; }
+        public static bool IsDedicated { get; private set; }
+        public static bool IsMultiplayer { get; private set; }
 
-        public static Session Instance;
-        private bool initialized;
+        private static Session instance;
 
-        public AlignerClient AlignerClient { get; private set; }
+        private Aligner aligner;
 
         public override void UpdateBeforeSimulation()
         {
-            if (!initialized)
+            if (instance == null)
                 Initialize();
         }
 
         private void Initialize()
         {
-            Instance = this;
+            instance = this;
 
             IsServer = MyAPIGateway.Multiplayer.IsServer || MyAPIGateway.Session.OnlineMode == MyOnlineModeEnum.OFFLINE;
             IsDedicated = IsServer && MyAPIGateway.Utilities.IsDedicated;
+            IsMultiplayer = MyAPIGateway.Multiplayer.MultiplayerActive;
 
-            // TODO: Consider client/server/dedicated
-            AlignerClient = new AlignerClient();
-
-            initialized = true;
+            aligner = new Aligner();
         }
+
 
         public override void HandleInput()
         {
-            if (!initialized)
-                return;
-
-            Instance?.AlignerClient?.HandleInput();
+            instance?.aligner?.HandleInput();
         }
     }
 }

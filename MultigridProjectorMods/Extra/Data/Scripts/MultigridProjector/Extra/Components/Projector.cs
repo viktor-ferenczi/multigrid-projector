@@ -40,8 +40,8 @@ namespace MultigridProjector.Extra
             var checkbox = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlCheckbox, IMyProjector>("ManualAlignment");
             checkbox.Visible = (_) => false;
             checkbox.Enabled = IsProjecting;
-            checkbox.Getter = AlignerClient.Getter;
-            checkbox.Setter = AlignerClient.Setter;
+            checkbox.Getter = Aligner.Getter;
+            checkbox.Setter = Aligner.Setter;
             checkbox.Title = MyStringId.GetOrCompute("Manual Alignment");
             checkbox.Tooltip = MyStringId.GetOrCompute("Allows the player to manually align the projection using keys familiar from block placement");
             checkbox.SupportsMultipleBlocks = false;
@@ -49,10 +49,10 @@ namespace MultigridProjector.Extra
 
             var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ToggleManualAlignment");
             action.Enabled = IsProjecting;
-            action.Action = AlignerClient.Toggle;
+            action.Action = Aligner.Toggle;
             action.ValidForGroups = false;
             action.Name = new StringBuilder("Toggle Manual Alignment");
-            action.Writer = (b, s) => s.Append(AlignerClient.Getter(b) ? "Aligning" : "Align");
+            action.Writer = (b, s) => s.Append(Aligner.Getter(b) ? "Aligning" : "Align");
             action.InvalidToolbarTypes = new List<MyToolbarType> {MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator};
             MyAPIGateway.TerminalControls.AddAction<IMyProjector>(action);
         }
@@ -62,7 +62,7 @@ namespace MultigridProjector.Extra
             var button = MyAPIGateway.TerminalControls.CreateControl<IMyTerminalControlButton, IMyProjector>("LoadRepairProjection");
             button.Visible = IsWorking;
             button.Enabled = IsWorkingButNotProjecting;
-            button.Action = RepairClient.LoadMechanicalGroup;
+            button.Action = Repair.LoadMechanicalGroup;
             button.Title = MyStringId.GetOrCompute("Load Repair Projection");
             button.Tooltip = MyStringId.GetOrCompute("Loads the projector's own grid as a repair projection.");
             button.SupportsMultipleBlocks = false;

@@ -9,7 +9,7 @@ using VRage.ObjectBuilders;
 // ReSharper disable once CheckNamespace
 namespace MultigridProjector.Extra
 {
-    public static class RepairClient
+    public static class Repair
     {
         public static void LoadMechanicalGroup(IMyTerminalBlock block)
         {
@@ -75,8 +75,8 @@ namespace MultigridProjector.Extra
 
         private static void Cleanup(string filename)
         {
-            MyAPIGateway.Utilities.DeleteFileInLocalStorage(filename, typeof(RepairClient));
-            MyAPIGateway.Utilities.DeleteFileInLocalStorage(filename + "B5", typeof(RepairClient));
+            MyAPIGateway.Utilities.DeleteFileInLocalStorage(filename, typeof(Repair));
+            MyAPIGateway.Utilities.DeleteFileInLocalStorage(filename + "B5", typeof(Repair));
         }
     }
 }

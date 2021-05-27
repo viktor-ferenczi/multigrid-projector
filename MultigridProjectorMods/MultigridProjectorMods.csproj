@@ -69,11 +69,10 @@
         <Compile Include="ApiTest\Data\Scripts\MultigridProjector\ModApiTest\MultigridProjectorModApiTest.cs" />
         <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Components\Projector.cs" />
         <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Components\Session.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Client\AlignerClient.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Logic\Aligner.cs" />
         <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\HudAPIv2.cs" />
         <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\Input.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Client\RepairClient.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Server\AlignerServer.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Logic\Repair.cs" />
         <Compile Include="MechanicalKeybinds\Data\Scripts\Mechanic\Keeeeeeeeeeeeeen.cs" />
         <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalAdvMotorComponent.cs" />
         <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalBlockComponent.cs" />
