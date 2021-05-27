@@ -1,5 +1,4 @@
 using System;
-using ProtoBuf;
 using Sandbox.ModAPI;
 using VRage.Input;
 using VRageMath;
@@ -15,17 +14,17 @@ namespace MultigridProjector.Extra
         private static readonly Vector3I MinOffset = new Vector3I(-50, -50, -50);
         private static readonly Vector3I MaxOffset = new Vector3I(+50, +50, +50);
 
-        private static readonly MyKeys[] offsetKeys =
+        private static readonly MyKeys[][] OffsetKeys =
         {
-            MyKeys.S,
-            MyKeys.W,
-            MyKeys.D,
-            MyKeys.A,
-            MyKeys.C,
-            MyKeys.Space,
+            new[]{MyKeys.S},
+            new[]{MyKeys.W},
+            new[]{MyKeys.D, MyKeys.Right},
+            new[]{MyKeys.A, MyKeys.Left},
+            new[]{MyKeys.C, MyKeys.Down},
+            new[]{MyKeys.Space, MyKeys.Up},
         };
 
-        private static readonly MyKeys[] rotationKeys =
+        private static readonly MyKeys[] RotationKeys =
         {
             MyKeys.Delete,
             MyKeys.PageDown,
@@ -96,21 +95,26 @@ namespace MultigridProjector.Extra
             var pressed = MyKeys.None;
             for (var directionIndex = 0; directionIndex < 6; directionIndex++)
             {
-                var key = offsetKeys[directionIndex];
-                if (MyAPIGateway.Input.IsKeyPress(key))
+                foreach (var offsetKey in OffsetKeys[directionIndex])
                 {
+                    if (!MyAPIGateway.Input.IsKeyPress(offsetKey))
+                        continue;
+
                     var increment = GetIncrementByDirection(directionIndex);
                     offset = NormalizeProjectorOffset(offset + increment);
-                    pressed = key;
+                    pressed = offsetKey;
                     break;
                 }
 
-                key = rotationKeys[directionIndex];
-                if (MyAPIGateway.Input.IsKeyPress(key))
+                if (pressed != MyKeys.None)
+                    break;
+
+                var rotationKey = RotationKeys[directionIndex];
+                if (MyAPIGateway.Input.IsKeyPress(rotationKey))
                 {
                     var increment = GetIncrementByDirection(directionIndex);
                     rotation = NormalizeProjectorRotation(rotation + increment);
-                    pressed = key;
+                    pressed = rotationKey;
                     break;
                 }
             }
