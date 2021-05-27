@@ -1,3 +1,5 @@
+using System;
+using ProtoBuf;
 using Sandbox.ModAPI;
 using VRage.Input;
 using VRageMath;
@@ -5,30 +7,17 @@ using VRageMath;
 // ReSharper disable once CheckNamespace
 namespace MultigridProjector.Extra
 {
-    public class Aligner
+    public class Aligner : IDisposable
     {
+        private const int Magic = 0x51ddf2d4;
+
         private const int FirstRepeatPeriod = 18;
         private const int RepeatPeriod = 6;
 
         private static readonly Vector3I MinOffset = new Vector3I(-50, -50, -50);
         private static readonly Vector3I MaxOffset = new Vector3I(+50, +50, +50);
 
-        private static Aligner instance;
-
-        private IMyProjector projector;
-        private Vector3I offset;
-        private Vector3I rotation;
-        private MyKeys lastPressed;
-        private int repeatCountdown;
-
-        private bool Active => projector != null;
-
-        public Aligner()
-        {
-            instance = this;
-        }
-
-        private readonly MyKeys[] offsetKeys =
+        private static readonly MyKeys[] offsetKeys =
         {
             MyKeys.S,
             MyKeys.W,
@@ -38,7 +27,7 @@ namespace MultigridProjector.Extra
             MyKeys.Space,
         };
 
-        private readonly MyKeys[] rotationKeys =
+        private static readonly MyKeys[] rotationKeys =
         {
             MyKeys.Delete,
             MyKeys.PageDown,
@@ -48,17 +37,41 @@ namespace MultigridProjector.Extra
             MyKeys.End,
         };
 
+        private static Aligner instance;
+
+        private IMyProjector controlledProjector;
+        private Vector3I offset;
+        private Vector3I rotation;
+        private MyKeys lastPressed;
+        private int repeatCountdown;
+
+        private bool Active => controlledProjector != null;
+
+        public Aligner()
+        {
+            instance = this;
+            Comms.PacketReceived += OnPacketReceived;
+        }
+
+        public void Dispose()
+        {
+            Comms.PacketReceived -= OnPacketReceived;
+        }
+
         // ReSharper disable once ParameterHidesMember
         private void Assign(IMyProjector projector)
         {
-            this.projector = projector;
+            if (!Comms.HasLocalPlayer)
+                return;
+
+            controlledProjector = projector;
             offset = projector.ProjectionOffset;
             rotation = projector.ProjectionRotation;
         }
 
         private void Release()
         {
-            projector = null;
+            controlledProjector = null;
         }
 
         public void HandleInput()
@@ -108,12 +121,12 @@ namespace MultigridProjector.Extra
                 }
             }
 
-            if (projector.ProjectionOffset == offset &&
-                projector.ProjectionRotation == rotation)
+            if (controlledProjector.ProjectionOffset == offset &&
+                controlledProjector.ProjectionRotation == rotation)
                 return;
 
-            projector.ProjectionOffset = offset;
-            projector.ProjectionRotation = rotation;
+            controlledProjector.ProjectionOffset = offset;
+            controlledProjector.ProjectionRotation = rotation;
 
             if (pressed == MyKeys.None)
             {
@@ -135,7 +148,7 @@ namespace MultigridProjector.Extra
         {
             var direction = (Base6Directions.Direction) directionIndex;
             var directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
-            var closestProjectorDirection = projector.WorldMatrix.GetClosestDirection(directionVector);
+            var closestProjectorDirection = controlledProjector.WorldMatrix.GetClosestDirection(directionVector);
             return Base6Directions.IntDirections[(int) closestProjectorDirection];
         }
 
@@ -159,6 +172,32 @@ namespace MultigridProjector.Extra
         public static void Toggle(IMyTerminalBlock block)
         {
             Setter(block, !Getter(block));
+        }
+
+        [ProtoContract]
+        private struct Payload
+        {
+            [ProtoMember(1)]
+            public long projectorId;
+
+            [ProtoMember(1)]
+            public bool assign;
+        }
+
+        private void OnPacketReceived(Packet packet)
+        {
+            if (packet.magic != Magic)
+                return;
+
+            var payload = MyAPIGateway.Utilities.SerializeFromBinary<Payload>(packet.payload);
+            var projector = MyAPIGateway.Entities.GetEntityById(payload.projectorId) as IMyProjector;
+            if (projector == null)
+                return;
+
+            if (payload.assign)
+                Assign(projector);
+            else
+                Release();
         }
     }
 }

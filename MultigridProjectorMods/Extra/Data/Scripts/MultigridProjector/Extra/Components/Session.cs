@@ -1,19 +1,15 @@
-using Sandbox.ModAPI;
-using VRage.Game;
 using VRage.Game.Components;
 
 // ReSharper disable once CheckNamespace
 namespace MultigridProjector.Extra
 {
+    // ReSharper disable once UnusedType.Global
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
     public class Session : MySessionComponentBase
     {
-        public static bool IsServer { get; private set; }
-        public static bool IsDedicated { get; private set; }
-        public static bool IsMultiplayer { get; private set; }
-
         private static Session instance;
 
+        private Comms comms;
         private Aligner aligner;
 
         public override void UpdateBeforeSimulation()
@@ -25,14 +21,22 @@ namespace MultigridProjector.Extra
         private void Initialize()
         {
             instance = this;
-
-            IsServer = MyAPIGateway.Multiplayer.IsServer || MyAPIGateway.Session.OnlineMode == MyOnlineModeEnum.OFFLINE;
-            IsDedicated = IsServer && MyAPIGateway.Utilities.IsDedicated;
-            IsMultiplayer = MyAPIGateway.Multiplayer.MultiplayerActive;
-
+            comms = new Comms();
             aligner = new Aligner();
         }
 
+        protected override void UnloadData()
+        {
+            aligner?.Dispose();
+            aligner = null;
+
+            comms?.Dispose();
+            comms = null;
+
+            instance = null;
+
+            base.UnloadData();
+        }
 
         public override void HandleInput()
         {

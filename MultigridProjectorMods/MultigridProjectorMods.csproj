@@ -33,6 +33,9 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
+        <Reference Include="ProtoBuf.Net.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <HintPath>..\GameBin64\ProtoBuf.Net.Core.dll</HintPath>
+        </Reference>
         <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
             <HintPath>..\GameBin64\Sandbox.Common.dll</HintPath>
         </Reference>
@@ -73,6 +76,9 @@
         <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\HudAPIv2.cs" />
         <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\Input.cs" />
         <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Logic\Repair.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Multiplayer\Comms.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Multiplayer\Packet.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Multiplayer\Role.cs" />
         <Compile Include="MechanicalKeybinds\Data\Scripts\Mechanic\Keeeeeeeeeeeeeen.cs" />
         <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalAdvMotorComponent.cs" />
         <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalBlockComponent.cs" />
