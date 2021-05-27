@@ -4,22 +4,27 @@ Additional features building on top of the Multigrid Projector plugin.
 
 [b]It is a regular mod which needs to be added to the world[/b]. This is [b]not[/b] a plugin! This is [b]not[/b] a mod version of the Multigrid Projector.
 
-[h2]Features[/h2]
+[h2]Features work without the MGP[/h2]
 [list]
 [*] Projector control panel button to load a self-repair projection for the projector's own mechanical group (ship)
 [*] Intuitive manual alignment of the projection with familiar keybinds and proper mapping of directions
 [/list]
 
-More features useful for projectors and console blocks are expected to be added in the future.
+[h2]Features require the MGP[/h2]
+[list]
+[*] None so far
+[/list]
 
-[i]On loading the self-repair projection the projector's "Keep projection" checkbox is enabled.[/i]
+More features useful for projectors and console blocks are expected to be added to this mod in the future.
 
-[i]The "Load Repair Projection" button is at the bottom and enabled only if no other blueprint is loaded into the projector.[/i]
+[i]Upon loading the self-repair projection "Keep projection" is automatically enabled.[/i]
 
-[url=https://steamcommunity.com/sharedfiles/filedetails/?id=2498941484]Test World[/url]
+[h2]Want to know more?[/h2]
+[list]
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2498941484]Test World[/url]
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416]MGP client plugin[/url]
+[/list]
 
-[h2]Multigrid Projector[/h2]
+[h2]Support[/h2]
 
-[url=https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416]Multigrid Projector client plugin[/url]
-
-Please join the [url=https://discord.gg/PYPFPGf3Ca]SE Mods Discord[/url] for more information or hands-on help.
+[url=https://discord.gg/PYPFPGf3Ca]SE Mods Discord[/url]
