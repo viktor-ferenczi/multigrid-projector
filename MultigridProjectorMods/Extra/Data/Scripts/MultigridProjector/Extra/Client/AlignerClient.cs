@@ -34,8 +34,8 @@ namespace MultigridProjector.Extra
             MyKeys.W,
             MyKeys.D,
             MyKeys.A,
-            MyKeys.Space,
             MyKeys.C,
+            MyKeys.Space,
         };
 
         private readonly MyKeys[] rotationKeys =
@@ -68,7 +68,7 @@ namespace MultigridProjector.Extra
 
             if (MyAPIGateway.Gui.ChatEntryVisible ||
                 MyAPIGateway.Gui.IsCursorVisible ||
-                MyAPIGateway.Input.IsKeyPress(MyKeys.Escape))
+                MyAPIGateway.Session.LocalHumanPlayer.Character.ControllerInfo.IsLocallyHumanControlled())
             {
                 Release();
                 return;
