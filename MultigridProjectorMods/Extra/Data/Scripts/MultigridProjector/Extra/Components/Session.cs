@@ -21,8 +21,13 @@ namespace MultigridProjector.Extra
         private void Initialize()
         {
             instance = this;
+
             comms = new Comms();
-            aligner = new Aligner();
+
+            if (Comms.HasLocalPlayer)
+            {
+                aligner = new Aligner();
+            }
         }
 
         protected override void UnloadData()

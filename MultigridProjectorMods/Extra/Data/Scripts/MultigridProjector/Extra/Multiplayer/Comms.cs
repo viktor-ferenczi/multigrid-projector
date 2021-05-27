@@ -9,16 +9,20 @@ namespace MultigridProjector.Extra
     {
         public static Role Role;
         public static bool HasLocalPlayer => Role != Role.DedicatedServer;
+        public static bool IsServer => Role != Role.MultiplayerClient;
+        public static ulong SteamId;
 
-        public static event Action<Packet> PacketReceived;
+        public delegate void OnPacketReceived(ushort handlerId, Packet packet, ulong fromSteamId, bool fromServer);
+
+        public static event OnPacketReceived PacketReceived;
 
         private const ushort Channel = 29719;
 
         public Comms()
         {
             Role = DetectRole();
-
-            MyAPIGateway.Multiplayer.RegisterMessageHandler(Channel, receive);
+            SteamId = MyAPIGateway.Multiplayer.MyId;
+            MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(Channel, receive);
         }
 
         private static Role DetectRole()
@@ -34,23 +38,23 @@ namespace MultigridProjector.Extra
 
         public void Dispose()
         {
-            MyAPIGateway.Multiplayer.UnregisterMessageHandler(Channel, receive);
+            MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(Channel, receive);
         }
 
-        private static void receive(byte[] data)
+        private static void receive(ushort handlerId, byte[] data, ulong fromSteamId, bool fromServer)
         {
             var packet = MyAPIGateway.Utilities.SerializeFromBinary<Packet>(data);
-            PacketReceived?.Invoke(packet);
+            PacketReceived?.Invoke(handlerId, packet, fromSteamId, fromServer);
         }
 
-        private static void SendToServer(Packet packet, bool reliable=true)
+        private static void SendToServer(ushort handlerId, Packet packet, bool reliable = true)
         {
             switch (Role)
             {
                 case Role.SinglePlayer:
                 case Role.MultiplayerServer:
                 case Role.DedicatedServer:
-                    PacketReceived?.Invoke(packet);
+                    PacketReceived?.Invoke(handlerId, packet, SteamId, IsServer);
                     break;
 
                 case Role.MultiplayerClient:
@@ -60,11 +64,11 @@ namespace MultigridProjector.Extra
             }
         }
 
-        private static void SendToClient(Packet packet, ulong steamId, bool reliable = true)
+        private static void SendToClient(ushort handlerId, Packet packet, ulong steamId, bool reliable = true)
         {
-            if (Role == Role.SinglePlayer || Role != Role.DedicatedServer && steamId == MyAPIGateway.Multiplayer.MyId)
+            if (Role == Role.SinglePlayer || Role != Role.DedicatedServer && steamId == SteamId)
             {
-                PacketReceived?.Invoke(packet);
+                PacketReceived?.Invoke(handlerId, packet, SteamId, IsServer);
                 return;
             }
 

@@ -31,6 +31,9 @@ namespace MultigridProjector.Extra
 
             initialized = true;
 
+            if (!Comms.HasLocalPlayer)
+                return;
+
             CreateManualAlignmentButton();
             CreateLoadRepairProjectionButton();
         }
