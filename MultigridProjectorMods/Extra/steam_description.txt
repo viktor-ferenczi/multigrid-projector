@@ -23,7 +23,7 @@ More features useful for projectors and console blocks are expected to be added 
 
 [h2]Want to know more?[/h2]
 [list]
-[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2498941484]Test World[/url]
+[*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2500645063]Test World[/url]
 [*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416]MGP client plugin[/url]
 [/list]
 
