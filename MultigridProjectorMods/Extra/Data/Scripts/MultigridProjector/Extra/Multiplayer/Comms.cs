@@ -8,21 +8,24 @@ namespace MultigridProjector.Extra
     public class Comms : IDisposable
     {
         public static Role Role;
-        public static bool HasLocalPlayer => Role != Role.DedicatedServer;
-        public static bool IsServer => Role != Role.MultiplayerClient;
-        public static ulong SteamId;
+        private const ushort Channel = 0x351a;
 
-        public delegate void OnPacketReceived(ushort handlerId, Packet packet, ulong fromSteamId, bool fromServer);
+        public delegate void OnPacketReceived(ushort handlerId, byte[] data, ulong fromSteamId, bool fromServer);
 
         public static event OnPacketReceived PacketReceived;
-
-        private const ushort Channel = 29719;
 
         public Comms()
         {
             Role = DetectRole();
-            SteamId = MyAPIGateway.Multiplayer.MyId;
-            MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(Channel, receive);
+
+            if (Role != Role.SinglePlayer)
+                MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(Channel, packetReceived);
+        }
+
+        public void Dispose()
+        {
+            if (Role != Role.SinglePlayer)
+                MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(Channel, packetReceived);
         }
 
         private static Role DetectRole()
@@ -36,42 +39,19 @@ namespace MultigridProjector.Extra
             return Role.SinglePlayer;
         }
 
-        public void Dispose()
+        private static void packetReceived(ushort handlerId, byte[] data, ulong fromSteamId, bool fromServer)
         {
-            MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(Channel, receive);
+            PacketReceived?.Invoke(handlerId, data, fromSteamId, fromServer);
         }
 
-        private static void receive(ushort handlerId, byte[] data, ulong fromSteamId, bool fromServer)
+        public static void SendToServer<T>(ushort handlerId, T packet, bool reliable = true)
         {
-            var packet = MyAPIGateway.Utilities.SerializeFromBinary<Packet>(data);
-            PacketReceived?.Invoke(handlerId, packet, fromSteamId, fromServer);
+            var data = MyAPIGateway.Utilities.SerializeToBinary(packet);
+            MyAPIGateway.Multiplayer.SendMessageToServer(Channel, data, reliable);
         }
 
-        private static void SendToServer(ushort handlerId, Packet packet, bool reliable = true)
+        public static void SendToClient<T>(ushort handlerId, T packet, ulong steamId, bool reliable = true)
         {
-            switch (Role)
-            {
-                case Role.SinglePlayer:
-                case Role.MultiplayerServer:
-                case Role.DedicatedServer:
-                    PacketReceived?.Invoke(handlerId, packet, SteamId, IsServer);
-                    break;
-
-                case Role.MultiplayerClient:
-                    var data = MyAPIGateway.Utilities.SerializeToBinary(packet);
-                    MyAPIGateway.Multiplayer.SendMessageToServer(Channel, data, reliable);
-                    break;
-            }
-        }
-
-        private static void SendToClient(ushort handlerId, Packet packet, ulong steamId, bool reliable = true)
-        {
-            if (Role == Role.SinglePlayer || Role != Role.DedicatedServer && steamId == SteamId)
-            {
-                PacketReceived?.Invoke(handlerId, packet, SteamId, IsServer);
-                return;
-            }
-
             var data = MyAPIGateway.Utilities.SerializeToBinary(packet);
             MyAPIGateway.Multiplayer.SendMessageTo(Channel, data, steamId, reliable);
         }

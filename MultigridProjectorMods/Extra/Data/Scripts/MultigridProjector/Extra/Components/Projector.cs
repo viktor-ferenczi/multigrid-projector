@@ -31,7 +31,7 @@ namespace MultigridProjector.Extra
 
             initialized = true;
 
-            if (!Comms.HasLocalPlayer)
+            if (Comms.Role == Role.DedicatedServer)
                 return;
 
             CreateManualAlignmentButton();

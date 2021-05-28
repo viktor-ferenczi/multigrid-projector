@@ -77,7 +77,6 @@
         <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\Input.cs" />
         <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Logic\Repair.cs" />
         <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Multiplayer\Comms.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Multiplayer\Packet.cs" />
         <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Multiplayer\Role.cs" />
         <Compile Include="MechanicalKeybinds\Data\Scripts\Mechanic\Keeeeeeeeeeeeeen.cs" />
         <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalAdvMotorComponent.cs" />

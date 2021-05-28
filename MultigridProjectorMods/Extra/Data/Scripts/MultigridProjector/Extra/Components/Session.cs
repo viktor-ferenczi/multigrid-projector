@@ -1,3 +1,4 @@
+using System;
 using VRage.Game.Components;
 
 // ReSharper disable once CheckNamespace
@@ -23,11 +24,7 @@ namespace MultigridProjector.Extra
             instance = this;
 
             comms = new Comms();
-
-            if (Comms.HasLocalPlayer)
-            {
-                aligner = new Aligner();
-            }
+            aligner = new Aligner();
         }
 
         protected override void UnloadData()
