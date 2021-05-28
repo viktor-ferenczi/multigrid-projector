@@ -51,7 +51,7 @@ namespace MultigridProjector.Extra
             MyAPIGateway.TerminalControls.AddControl<IMyProjector>(checkbox);
 
             var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ToggleManualAlignment");
-            action.Enabled = IsProjecting;
+            action.Enabled = IsWorking;
             action.Action = Aligner.Toggle;
             action.ValidForGroups = false;
             action.Name = new StringBuilder("Toggle Manual Alignment");

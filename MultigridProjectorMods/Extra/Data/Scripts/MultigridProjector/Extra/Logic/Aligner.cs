@@ -71,7 +71,8 @@ namespace MultigridProjector.Extra
 
             if (MyAPIGateway.Gui.ChatEntryVisible ||
                 MyAPIGateway.Gui.IsCursorVisible ||
-                MyAPIGateway.Session.LocalHumanPlayer.Character.ControllerInfo.IsLocallyHumanControlled())
+                MyAPIGateway.Session.LocalHumanPlayer.Character.ControllerInfo.IsLocallyHumanControlled() ||
+                !projector.IsProjecting)
             {
                 Release();
                 return;
@@ -164,7 +165,10 @@ namespace MultigridProjector.Extra
 
         public static bool Getter(IMyTerminalBlock block)
         {
-            return instance?.Active ?? false;
+            return instance != null &&
+                   instance.Active &&
+                   instance.projector.EntityId == block.EntityId &&
+                   instance.projector.IsProjecting;
         }
 
         public static void Setter(IMyTerminalBlock block, bool enabled)
@@ -173,7 +177,7 @@ namespace MultigridProjector.Extra
             if (projector == null)
                 return;
 
-            if (enabled)
+            if (enabled && projector.IsProjecting)
                 instance?.Assign(projector);
             else
                 instance?.Release();
