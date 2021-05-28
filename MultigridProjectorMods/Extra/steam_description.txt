@@ -1,13 +1,15 @@
 [h1]Multigrid Projector Extra[/h1]
 
-Additional features building on top of the Multigrid Projector plugin.
+Additional useful functionality and extra convenience features for the projector block.
+
+Despite its name this mod also work with the vanilla game, but some features require the Multigrid Projector plugin.
 
 [b]It is a regular mod which needs to be added to the world[/b]. This is [b]not[/b] a plugin! This is [b]not[/b] a mod version of the Multigrid Projector.
 
 [h2]Features work without the MGP[/h2]
 [list]
 [*] Projector control panel button to load a self-repair projection for the projector's own mechanical group (ship)
-[*] Intuitive manual alignment of the projection with familiar keybinds and proper mapping of directions
+[*] Intuitive manual alignment of the projection with familiar character and block movement
 [/list]
 
 [h2]Features require the MGP[/h2]
