@@ -32,8 +32,8 @@ namespace MultigridProjector.Extra
 
         private static readonly MyKeys[] RotationKeys =
         {
-            MyKeys.Delete,
             MyKeys.PageDown,
+            MyKeys.Delete,
             MyKeys.PageUp,
             MyKeys.Insert,
             MyKeys.Home,
