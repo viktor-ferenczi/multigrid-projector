@@ -1,5 +1,4 @@
 using System;
-using ProtoBuf;
 using Sandbox.ModAPI;
 using VRage.Input;
 using VRageMath;
@@ -10,8 +9,6 @@ namespace MultigridProjector.Extra
     public class Aligner : IDisposable
     {
         #region Constants
-
-        private const ushort HandlerId = 0x51dd;
 
         private const int FirstRepeatPeriod = 18;
         private const int RepeatPeriod = 6;
@@ -60,14 +57,10 @@ namespace MultigridProjector.Extra
         public Aligner()
         {
             instance = this;
-
-            Comms.PacketReceived += OnPacketReceived;
         }
 
         public void Dispose()
         {
-            Comms.PacketReceived -= OnPacketReceived;
-
             Release();
         }
 
@@ -139,8 +132,6 @@ namespace MultigridProjector.Extra
 
             repeatCountdown = pressed == lastPressed ? RepeatPeriod : FirstRepeatPeriod;
             lastPressed = pressed;
-
-            SendOffsetAndRotationToServer();
         }
 
         // ReSharper disable once ParameterHidesMember
@@ -191,47 +182,6 @@ namespace MultigridProjector.Extra
         public static void Toggle(IMyTerminalBlock block)
         {
             Setter(block, !Getter(block));
-        }
-
-        #endregion
-
-        #region Networking
-
-        [ProtoContract]
-        private struct Packet
-        {
-            [ProtoMember(2)] public long projectorId;
-
-            [ProtoMember(3)] public Vector3I offset;
-
-            [ProtoMember(4)] public Vector3I rotation;
-        }
-
-        // Client only
-        private void SendOffsetAndRotationToServer()
-        {
-            if (Comms.Role != Role.MultiplayerClient)
-                return;
-
-            Comms.SendToServer(HandlerId, new Packet
-            {
-                projectorId = projector.EntityId,
-                offset = offset,
-                rotation = rotation
-            });
-        }
-
-        // Server only
-        private static void OnPacketReceived(ushort handlerId, byte[] data, ulong fromSteamId, bool fromServer)
-        {
-            var packet = MyAPIGateway.Utilities.SerializeFromBinary<Packet>(data);
-            var projector = MyAPIGateway.Entities.GetEntityById(packet.projectorId) as IMyProjector;
-            if (projector == null)
-                return;
-
-            projector.ProjectionOffset = packet.offset;
-            projector.ProjectionRotation = packet.rotation;
-            projector.UpdateOffsetAndRotation();
         }
 
         #endregion
