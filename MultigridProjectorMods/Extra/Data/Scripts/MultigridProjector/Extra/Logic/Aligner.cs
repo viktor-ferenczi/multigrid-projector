@@ -22,22 +22,22 @@ namespace MultigridProjector.Extra
 
         private static readonly MyKeys[][] OffsetKeys =
         {
-            new[] {MyKeys.S},
             new[] {MyKeys.W},
-            new[] {MyKeys.D, MyKeys.Right},
+            new[] {MyKeys.S},
             new[] {MyKeys.A, MyKeys.Left},
-            new[] {MyKeys.C, MyKeys.Down},
+            new[] {MyKeys.D, MyKeys.Right},
             new[] {MyKeys.Space, MyKeys.Up},
+            new[] {MyKeys.C, MyKeys.Down},
         };
 
         private static readonly MyKeys[] RotationKeys =
         {
+            MyKeys.Home,
             MyKeys.PageDown,
-            MyKeys.Delete,
             MyKeys.PageUp,
             MyKeys.Insert,
-            MyKeys.Home,
             MyKeys.End,
+            MyKeys.Delete,
         };
 
         #endregion
@@ -98,8 +98,7 @@ namespace MultigridProjector.Extra
                     if (!MyAPIGateway.Input.IsKeyPress(offsetKey))
                         continue;
 
-                    var increment = GetIncrementByDirection(directionIndex);
-                    offset = NormalizeProjectorOffset(offset + increment);
+                    Move(directionIndex);
                     pressed = offsetKey;
                     break;
                 }
@@ -110,8 +109,7 @@ namespace MultigridProjector.Extra
                 var rotationKey = RotationKeys[directionIndex];
                 if (MyAPIGateway.Input.IsKeyPress(rotationKey))
                 {
-                    var increment = GetIncrementByDirection(directionIndex);
-                    rotation = NormalizeProjectorRotation(rotation + increment);
+                    Rotate(directionIndex);
                     pressed = rotationKey;
                     break;
                 }
@@ -127,6 +125,36 @@ namespace MultigridProjector.Extra
             lastPressed = pressed;
 
             UpdateOffsetAndRotation();
+        }
+
+        private void Move(int directionIndex)
+        {
+            var direction = (Base6Directions.Direction) directionIndex;
+            var directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
+            var closestDirectionOnProjector = projector.WorldMatrix.GetClosestDirection(directionVector);
+
+            var step = Base6Directions.IntDirections[(int) closestDirectionOnProjector];
+            var movedOffset = Vector3I.Max(MinOffset, Vector3I.Min(MaxOffset, offset - step));
+
+            offset = Vector3I.Max(MinOffset, Vector3I.Min(MaxOffset, movedOffset));
+        }
+
+        private void Rotate(int directionIndex)
+        {
+            var direction = (Base6Directions.Direction) directionIndex;
+            var directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
+            var closestProjectorDirection = projector.WorldMatrix.GetClosestDirection(directionVector);
+            var projectorRotationAxis = Base6Directions.GetVector(closestProjectorDirection);
+
+            var yawPitchRoll = rotation * 0.5 * Math.PI;
+            var q = QuaternionD.CreateFromYawPitchRoll(yawPitchRoll.X, yawPitchRoll.Y, yawPitchRoll.Z);
+            var w = QuaternionD.CreateFromAxisAngle(projectorRotationAxis, 0.5 * Math.PI);
+            var m = MatrixD.CreateFromQuaternion(q * w);
+
+            var forward = Base6Directions.GetClosestDirection(m.Forward);
+            var up = Base6Directions.GetClosestDirection(m.Up);
+
+            rotation = OrientationAlgebra.ProjectionRotationFromForwardAndUp(forward, up);
         }
 
         private void UpdateOffsetAndRotation()
@@ -152,20 +180,6 @@ namespace MultigridProjector.Extra
         private void Release()
         {
             projector = null;
-        }
-
-        private static Vector3I NormalizeProjectorOffset(Vector3I offset) => Vector3I.Max(MinOffset, Vector3I.Min(MaxOffset, offset));
-
-        private static Vector3I NormalizeProjectorRotation(Vector3I r) => new Vector3I(NormalizeRotationValue(r.X), NormalizeRotationValue(r.Y), NormalizeRotationValue(r.Z));
-
-        private static int NormalizeRotationValue(int v) => ((v + 1) & 3) - 1;
-
-        private Vector3I GetIncrementByDirection(int directionIndex)
-        {
-            var direction = (Base6Directions.Direction) directionIndex;
-            var directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
-            var closestProjectorDirection = projector.WorldMatrix.GetClosestDirection(directionVector);
-            return Base6Directions.IntDirections[(int) closestProjectorDirection];
         }
 
         public static bool Getter(IMyTerminalBlock block)

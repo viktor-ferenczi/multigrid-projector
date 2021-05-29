@@ -1,4 +1,4 @@
-namespace MultigridProjectorMods.Extra.Data.Scripts.MultigridProjector.Extra.Common
+namespace MultigridProjector.Extra
 {
     public static class ActionIcons
     {

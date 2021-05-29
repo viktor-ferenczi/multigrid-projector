@@ -1,7 +1,5 @@
-using System;
 using System.Collections.Generic;
 using System.Text;
-using MultigridProjectorMods.Extra.Data.Scripts.MultigridProjector.Extra.Common;
 using VRage.Game.Components;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.ModAPI;
