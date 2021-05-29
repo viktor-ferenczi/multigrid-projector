@@ -52,7 +52,7 @@ namespace MultigridProjector.Extra
             checkbox.SupportsMultipleBlocks = false;
             MyAPIGateway.TerminalControls.AddControl<IMyProjector>(checkbox);
 
-            IMyTerminalAction action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ToggleManualAlignment");
+            var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ToggleManualAlignment");
             action.Enabled = (_) => true;
             action.Action = Aligner.Toggle;
             action.ValidForGroups = false;
