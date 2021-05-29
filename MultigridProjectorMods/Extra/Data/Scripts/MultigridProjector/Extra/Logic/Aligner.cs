@@ -32,11 +32,11 @@ namespace MultigridProjector.Extra
 
         private static readonly MyKeys[] RotationKeys =
         {
-            MyKeys.Home,
-            MyKeys.PageDown,
             MyKeys.PageUp,
             MyKeys.Insert,
+            MyKeys.Home,
             MyKeys.End,
+            MyKeys.PageDown,
             MyKeys.Delete,
         };
 
@@ -149,7 +149,7 @@ namespace MultigridProjector.Extra
             var yawPitchRoll = rotation * 0.5 * Math.PI;
             var q = QuaternionD.CreateFromYawPitchRoll(yawPitchRoll.X, yawPitchRoll.Y, yawPitchRoll.Z);
             var w = QuaternionD.CreateFromAxisAngle(projectorRotationAxis, 0.5 * Math.PI);
-            var m = MatrixD.CreateFromQuaternion(q * w);
+            var m = MatrixD.CreateFromQuaternion(w * q);
 
             var forward = Base6Directions.GetClosestDirection(m.Forward);
             var up = Base6Directions.GetClosestDirection(m.Up);
