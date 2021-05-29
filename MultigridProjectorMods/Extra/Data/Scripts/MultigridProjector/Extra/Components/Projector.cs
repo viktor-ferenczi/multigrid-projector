@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
+using MultigridProjectorMods.Extra.Data.Scripts.MultigridProjector.Extra.Common;
 using VRage.Game.Components;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.ModAPI;
@@ -50,10 +52,11 @@ namespace MultigridProjector.Extra
             checkbox.SupportsMultipleBlocks = false;
             MyAPIGateway.TerminalControls.AddControl<IMyProjector>(checkbox);
 
-            var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ToggleManualAlignment");
-            action.Enabled = IsWorking;
+            IMyTerminalAction action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ToggleManualAlignment");
+            action.Enabled = (_) => true;
             action.Action = Aligner.Toggle;
             action.ValidForGroups = false;
+            action.Icon = ActionIcons.MOVING_OBJECT_TOGGLE;
             action.Name = new StringBuilder("Toggle Manual Alignment");
             action.Writer = (b, s) => s.Append(Aligner.Getter(b) ? "Aligning" : "Align");
             action.InvalidToolbarTypes = new List<MyToolbarType> {MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator};

@@ -117,14 +117,6 @@ namespace MultigridProjector.Extra
                 }
             }
 
-            if (projector.ProjectionOffset == offset &&
-                projector.ProjectionRotation == rotation)
-                return;
-
-            projector.ProjectionOffset = offset;
-            projector.ProjectionRotation = rotation;
-            projector.UpdateOffsetAndRotation();
-
             if (pressed == MyKeys.None)
             {
                 lastPressed = MyKeys.None;
@@ -133,6 +125,19 @@ namespace MultigridProjector.Extra
 
             repeatCountdown = pressed == lastPressed ? RepeatPeriod : FirstRepeatPeriod;
             lastPressed = pressed;
+
+            UpdateOffsetAndRotation();
+        }
+
+        private void UpdateOffsetAndRotation()
+        {
+            if (projector.ProjectionOffset == offset &&
+                projector.ProjectionRotation == rotation)
+                return;
+
+            projector.ProjectionOffset = offset;
+            projector.ProjectionRotation = rotation;
+            projector.UpdateOffsetAndRotation();
         }
 
         // ReSharper disable once ParameterHidesMember
@@ -165,10 +170,7 @@ namespace MultigridProjector.Extra
 
         public static bool Getter(IMyTerminalBlock block)
         {
-            return instance != null &&
-                   instance.Active &&
-                   instance.projector.EntityId == block.EntityId &&
-                   instance.projector.IsProjecting;
+            return instance?.projector?.EntityId == block.EntityId && instance.projector.IsProjecting;
         }
 
         public static void Setter(IMyTerminalBlock block, bool enabled)

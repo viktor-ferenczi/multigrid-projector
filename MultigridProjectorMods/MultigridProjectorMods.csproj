@@ -70,6 +70,7 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ApiTest\Data\Scripts\MultigridProjector\ModApiTest\MultigridProjectorModApiTest.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Common\ActionIcons.cs" />
         <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Components\Projector.cs" />
         <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Components\Session.cs" />
         <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Logic\Aligner.cs" />
