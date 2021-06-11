@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Sandbox.ModAPI;
+using Sandbox.ModAPI.Interfaces;
 using VRage.Game;
 using VRage.Game.ModAPI;
 using VRage.ObjectBuilders;
@@ -20,6 +21,9 @@ namespace MultigridProjector.Extra
             var grids = CollectGrids(projector);
             var definitions = CreateBlueprint(projector, grids);
             LoadIntoProjector(projector, definitions);
+
+            projector.SetValueBool("KeepProjection", true);
+            ProjectionAlignment.AlignToRepairProjector(projector, definitions.ShipBlueprints[0].CubeGrids[0]);
         }
 
         private static List<IMyCubeGrid> CollectGrids(IMyProjector projector)
