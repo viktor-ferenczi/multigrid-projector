@@ -33,6 +33,9 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
+        <Reference Include="ProtoBuf.Net.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <HintPath>..\GameBin64\ProtoBuf.Net.Core.dll</HintPath>
+        </Reference>
         <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
             <HintPath>..\GameBin64\Sandbox.Common.dll</HintPath>
         </Reference>
@@ -55,6 +58,9 @@
         <Reference Include="VRage.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
             <HintPath>..\GameBin64\VRage.Game.dll</HintPath>
         </Reference>
+        <Reference Include="VRage.Input, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <HintPath>..\TorchDir\DedicatedServer64\VRage.Input.dll</HintPath>
+        </Reference>
         <Reference Include="VRage.Library, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
             <HintPath>..\GameBin64\VRage.Library.dll</HintPath>
         </Reference>
@@ -64,7 +70,27 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="ApiTest\Data\Scripts\MultigridProjector\ModApiTest\MultigridProjectorModApiTest.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extras\Projector.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Common\ActionIcons.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Common\OrientationAlgebra.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Common\ProjectionAlignment.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Components\Projector.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Components\Session.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Logic\Aligner.cs" />
+        <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\HudAPIv2.cs" />
+        <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\Input.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Logic\Repair.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Multiplayer\Comms.cs" />
+        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Multiplayer\Role.cs" />
+        <Compile Include="MechanicalKeybinds\Data\Scripts\Mechanic\Keeeeeeeeeeeeeen.cs" />
+        <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalAdvMotorComponent.cs" />
+        <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalBlockComponent.cs" />
+        <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalBlockController.cs" />
+        <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalBlockData.cs" />
+        <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalCockpitController.cs" />
+        <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalMotorComponent.cs" />
+        <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalPistonComponent.cs" />
+        <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\MechanicalRemoteController.cs" />
+        <Content Include="MechanicalKeybinds\Data\Scripts\Mechanic\SEMCore.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
     <ItemGroup>
@@ -80,6 +106,9 @@
       <Content Include="Extra\thumb.jpg">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Content>
+      <Content Include="MechanicalKeybinds\Data\EntityComponents.sbc" />
+      <Content Include="MechanicalKeybinds\metadata.mod" />
+      <Content Include="MechanicalKeybinds\thumb.jpg" />
     </ItemGroup>
     <ItemGroup>
       <PackageReference Include="Lib.Harmony" Version="2.0.4" />

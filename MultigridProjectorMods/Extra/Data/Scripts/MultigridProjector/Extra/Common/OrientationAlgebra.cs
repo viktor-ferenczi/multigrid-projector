@@ -1,6 +1,6 @@
 using VRageMath;
 
-namespace MultigridProjector.Utilities
+namespace MultigridProjector.Extra
 {
     public static class OrientationAlgebra
     {
@@ -84,17 +84,10 @@ namespace MultigridProjector.Utilities
             Vector3I.Zero,
         };
 
-        public static bool ProjectionRotationFromForwardAndUp(Base6Directions.Direction forward, Base6Directions.Direction up, out Vector3I rotation)
+        public static Vector3I ProjectionRotationFromForwardAndUp(Base6Directions.Direction forward, Base6Directions.Direction up)
         {
             var index = ((int) forward * 6 + (int) up) % 36;
-            if (!ValidOrientations[index])
-            {
-                rotation = Vector3I.Zero;
-                return false;
-            }
-
-            rotation = ProjectionRotations[index];
-            return true;
+            return ValidOrientations[index] ? ProjectionRotations[index] : Vector3I.Zero;
         }
     }
 }
