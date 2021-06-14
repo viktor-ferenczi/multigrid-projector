@@ -88,10 +88,15 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="RobotArm\Program.cs" />
+        <Compile Include="RobotArm\Cfg.cs" />
+        <Compile Include="RobotArm\Shared.cs" />
+        <Compile Include="RobotArm\MgpApi.cs" />
+        <Compile Include="RobotArm\Main.cs" />
         <None Include="Skeleton\Explained\ProgramExplained.cs" />
         <None Include="Skeleton\Skeleton.cs" />
         <None Include="Skeleton\SpaceEngineersProgram.cs" />
+        <Compile Include="RobotArm\Tests.cs" />
+        <Compile Include="RobotArm\Util.cs" />
         <Compile Include="Tests.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
