@@ -104,6 +104,9 @@
       <PackageReference Include="Lib.Harmony" Version="2.0.4" />
       <PackageReference Include="NUnit" Version="3.13.2" />
     </ItemGroup>
+    <ItemGroup>
+      <Content Include="RobotArm\merge_program.py" />
+    </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
