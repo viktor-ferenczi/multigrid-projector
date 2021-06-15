@@ -89,14 +89,21 @@
     </ItemGroup>
     <ItemGroup>
         <Compile Include="RobotArm\Cfg.cs" />
-        <Compile Include="RobotArm\Shared.cs" />
+        <Compile Include="RobotArm\Segments.cs" />
+        <Compile Include="RobotArm\CollisionDetectingRobotArm.cs" />
         <Compile Include="RobotArm\MgpApi.cs" />
         <Compile Include="RobotArm\Main.cs" />
         <None Include="Skeleton\Explained\ProgramExplained.cs" />
         <None Include="Skeleton\Skeleton.cs" />
         <None Include="Skeleton\SpaceEngineersProgram.cs" />
+        <Compile Include="RobotArm\RobotArm.cs" />
+        <Compile Include="RobotArm\RotorReverser.cs" />
+        <Compile Include="RobotArm\Shipyard.cs" />
+        <Compile Include="RobotArm\Subgrid.cs" />
         <Compile Include="RobotArm\Tests.cs" />
         <Compile Include="RobotArm\Util.cs" />
+        <Compile Include="RobotArm\WelderArm.cs" />
+        <Compile Include="RobotArm\WelderArmState.cs" />
         <Compile Include="Tests.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
@@ -106,6 +113,7 @@
     </ItemGroup>
     <ItemGroup>
       <Content Include="RobotArm\merge_program.py" />
+      <Content Include="RobotArm\world_steam_description.txt" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
