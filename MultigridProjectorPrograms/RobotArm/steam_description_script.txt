@@ -1,15 +1,14 @@
 [h1]Robotic Welder Arm Control v1[/h1]
 
-[url=https://steamcommunity.com/sharedfiles/filedetails/?id=2517203096]The world is here![/url]
-
 [h2]Requirements[/h2]
 [list]
 [*] Experimental mode enabled in the game (so the Programmable Block works)
 [*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416]Multigrid Projector client plugin[/url]
 [/list]
 
-[h2]How to use[/h2]
+[h2]How to test the script[/h2]
 [list]
+[*] Subscribe to [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2517203096]this world[/url]
 [*] Create and enter the world
 [*] Join the Testers faction
 [*] Spawn to the medical room

@@ -17,6 +17,9 @@
 
 [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2517216899]The script is here![/url]
 
+[h2]Blueprint[/h2]
+[url=https://steamcommunity.com/sharedfiles/filedetails/?id=1362405276]Drone Support Dropship[/url] by BlackArmor
+
 [h2]Remarks[/h2]
 [list]
 [*] Tested only in single player in creative mode so far.
