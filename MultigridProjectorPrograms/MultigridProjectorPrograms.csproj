@@ -113,7 +113,8 @@
     </ItemGroup>
     <ItemGroup>
       <Content Include="RobotArm\merge_program.py" />
-      <Content Include="RobotArm\world_steam_description.txt" />
+      <Content Include="RobotArm\steam_description_script.txt" />
+      <Content Include="RobotArm\steam_description_world.txt" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
