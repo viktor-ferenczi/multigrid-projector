@@ -18,7 +18,7 @@ namespace MultigridProjector.Extra
         private static volatile bool initialized;
 
         private static bool IsWorkingButNotProjecting(IMyTerminalBlock block) => IsValid(block) && block.IsWorking && (block as IMyProjector)?.IsProjecting == false;
-        private static bool IsProjecting(IMyTerminalBlock block) => IsValid(block) && block.IsWorking && (block as IMyProjector)?.IsProjecting == true;
+        private static bool IsProjecting(IMyTerminalBlock block) => IsWorking(block) && (block as IMyProjector)?.IsProjecting == true;
         private static bool IsWorking(IMyTerminalBlock block) => IsValid(block) && block.IsWorking;
         private static bool IsValid(IMyTerminalBlock block) => block.CubeGrid?.Physics != null;
 
