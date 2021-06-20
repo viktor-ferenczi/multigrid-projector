@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 using HarmonyLib;
 using MultigridProjector.Utilities;
 using VRage.Plugins;
@@ -10,6 +11,7 @@ namespace MultigridProjectorDedicated
     {
         private static Harmony Harmony => new Harmony("com.spaceengineers.multigridprojector");
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         public void Init(object gameInstance)
         {
             PluginLog.Logger = new PluginLogger();
@@ -27,7 +29,7 @@ namespace MultigridProjectorDedicated
                     return;
                 }
 
-                Harmony.PatchAll();
+                Harmony.PatchAll(Assembly.GetExecutingAssembly());
             }
             catch (Exception e)
             {
