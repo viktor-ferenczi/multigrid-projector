@@ -1,9 +1,9 @@
 using System;
+using System.Reflection;
 using HarmonyLib;
 using MultigridProjector.Api;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
-using Sandbox.ModAPI;
 using Torch;
 using Torch.API;
 using Torch.API.Managers;
@@ -30,6 +30,7 @@ namespace MultigridProjectorServer
 
         private static Harmony Harmony => new Harmony("com.spaceengineers.multigridprojector");
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         public override void Init(ITorchBase torch)
         {
             base.Init(torch);
@@ -49,7 +50,7 @@ namespace MultigridProjectorServer
                 return;
             }
 
-            Harmony.PatchAll();
+            Harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             _sessionManager = torch.Managers.GetManager<TorchSessionManager>();
             _sessionManager.SessionStateChanged += SessionStateChanged;

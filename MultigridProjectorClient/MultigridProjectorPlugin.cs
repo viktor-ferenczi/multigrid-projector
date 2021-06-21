@@ -1,9 +1,7 @@
 ﻿using System;
+using System.Reflection;
 using HarmonyLib;
-using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
-using Sandbox.Game.World;
-using Sandbox.ModAPI;
 using VRage.Plugins;
 
 namespace MultigridProjectorClient
@@ -13,6 +11,7 @@ namespace MultigridProjectorClient
     {
         private static Harmony Harmony => new Harmony("com.spaceengineers.multigridprojector");
 
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.NoInlining)]
         public void Init(object gameInstance)
         {
             PluginLog.Logger = new PluginLogger();
@@ -30,7 +29,7 @@ namespace MultigridProjectorClient
                     return;
                 }
 
-                Harmony.PatchAll();
+                Harmony.PatchAll(Assembly.GetExecutingAssembly());
             }
             catch (Exception e)
             {
@@ -44,7 +43,7 @@ namespace MultigridProjectorClient
         {
             // NOTE: Unpatching caused problems for other plugins, so just keeping the plugin installed all the time, which is common practice with Plugin Loader
             // PluginLog.Info("Unloading the Multigrid Projector Client Plugin");
-            // _harmony.UnpatchAll();
+            // Harmony.UnpatchAll();
 
             PluginLog.Info("Unloaded client plugin");
         }

@@ -40,7 +40,6 @@ namespace MultigridProjector.ModApiTest
         public override void Close()
         {
             projector = null;
-            base.Close();
         }
 
         public override void UpdateBeforeSimulation100()
