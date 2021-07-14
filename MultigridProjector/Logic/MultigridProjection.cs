@@ -156,7 +156,7 @@ namespace MultigridProjector.Logic
             AutoAlignBlueprint();
         }
 
-        public void Destroy()
+        private void Destroy()
         {
             using (Projections.Write())
                 if (!Projections.Remove(Projector.EntityId))
@@ -707,6 +707,7 @@ namespace MultigridProjector.Logic
                             subgrid.PreviewGrid.PositionComp.SetWorldMatrix(ref wm, skipTeleportCheck: true);
                             subgrid.Positioned = true;
                             gridsToPosition--;
+                            // ReSharper disable once RedundantJumpStatement
                             continue;
                         }
                     }
