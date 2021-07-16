@@ -41,10 +41,14 @@ namespace MultigridProjector.Logic
         {
             Cancel();
 
-            if (!IsComplete)
-            {
-                task.Wait(true);
-            }
+            // Caused freeze on two hosted Torch servers 3 times, as reporter by Babyboarder.
+            // Experimenting with just letting the background task fail (if any is running),
+            // which is better than a complete server lock-up.
+            //
+            // if (!IsComplete)
+            // {
+            //     task.Wait(true);
+            // }
 
             projection = null;
         }
