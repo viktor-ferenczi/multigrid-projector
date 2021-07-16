@@ -41,10 +41,14 @@ namespace MultigridProjector.Logic
         {
             Cancel();
 
-            if (!task.IsComplete)
-            {
-                task.Wait(true);
-            }
+            // Caused freeze on two hosted Torch servers 3 times, as reporter by Babyboarder.
+            // Experimenting with just letting the background task fail (if any is running),
+            // which is better than a complete server lock-up.
+            //
+            // if (!IsComplete)
+            // {
+            //     task.Wait(true);
+            // }
 
             projection = null;
         }
@@ -85,7 +89,7 @@ namespace MultigridProjector.Logic
             allGridsProcessed = !ShouldStop;
         }
 
-        private void UpdateBlockStatesAndCollectStatistics(WorkData workData = null)
+        private void UpdateBlockStatesAndCollectStatistics()
         {
             SubgridsScanned = 0;
             BlocksScanned = 0;

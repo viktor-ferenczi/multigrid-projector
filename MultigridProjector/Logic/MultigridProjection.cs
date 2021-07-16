@@ -156,7 +156,7 @@ namespace MultigridProjector.Logic
             AutoAlignBlueprint();
         }
 
-        public void Destroy()
+        private void Destroy()
         {
             using (Projections.Write())
                 if (!Projections.Remove(Projector.EntityId))
@@ -707,6 +707,7 @@ namespace MultigridProjector.Logic
                             subgrid.PreviewGrid.PositionComp.SetWorldMatrix(ref wm, skipTeleportCheck: true);
                             subgrid.Positioned = true;
                             gridsToPosition--;
+                            // ReSharper disable once RedundantJumpStatement
                             continue;
                         }
                     }
@@ -1608,12 +1609,6 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         public static void ProjectorInit(MyProjectorBase projector, MyObjectBuilder_CubeBlock objectBuilder)
         {
             if (projector.CubeGrid == null || !projector.AllowWelding)
-                return;
-
-            // Projected projector?
-            // Prevents ghost subgrids in case of blueprints with nested projections.
-            // NOTE: projector.CubeGrid.IsPreview is still false, so don't depend on that!
-            if (projector.Physics == null)
                 return;
 
             if (!(objectBuilder is MyObjectBuilder_ProjectorBase projectorBuilder))
