@@ -15,15 +15,28 @@ namespace MultigridProjector.Logic
         // Concurrency: The update work must write only into the dedicated members of subgrids
         private MultigridProjection projection;
         private MyProjectorBase Projector => projection.Projector;
+
+        // Subgrids supported for welding from projection, skips grids connected via connector (ships, missiles)
         private IEnumerable<Subgrid> SupportedSubgrids => projection.SupportedSubgrids;
 
-        // Task control
+        // Background worker task
         private Task task;
+
+        // Set to true to explicitly signal the background worker to stop
         private volatile bool stop;
-        private bool allGridsProcessed;
+
+        // Set to true when the background worker successfully finishes grid scanning
+        private volatile bool gridScanSucceeded;
+
+        // True value causes the running background worker to stop prematurely,
+        // this should be triggered if the result of the grid scanning is not needed anymore
         private bool ShouldStop => stop || !projection.Initialized || Projector.Closed;
 
-        public bool IsComplete => task.IsComplete;
+        // Explicitly set to true only while the worker is running
+        private volatile bool isRunning;
+
+        // True value indicates that the background worker has finished executing (regardless of success/failure)
+        public bool IsComplete => !isRunning && task.IsComplete;
 
         // Subgrid scan statistics for performance logging only (no functionality affected)
         public int SubgridsScanned;
@@ -39,16 +52,10 @@ namespace MultigridProjector.Logic
 
         public void Dispose()
         {
-            Cancel();
+            stop = true;
 
-            // Caused freeze on two hosted Torch servers 3 times, as reporter by Babyboarder.
-            // Experimenting with just letting the background task fail (if any is running),
-            // which is better than a complete server lock-up.
-            //
-            // if (!IsComplete)
-            // {
-            //     task.Wait(true);
-            // }
+            if (isRunning)
+                task.Wait(true);
 
             projection = null;
         }
@@ -59,34 +66,27 @@ namespace MultigridProjector.Logic
                 return;
 
             stop = false;
-            allGridsProcessed = false;
+            gridScanSucceeded = false;
             task = Parallel.Start(this, OnComplete);
-        }
-
-        private void Cancel()
-        {
-            if (IsComplete)
-                return;
-
-            stop = true;
         }
 
         public void DoWork(WorkData workData = null)
         {
-            if (ShouldStop) return;
-
+            isRunning = true;
             try
             {
                 UpdateBlockStatesAndCollectStatistics();
                 FindBuiltMechanicalConnections();
+                gridScanSucceeded = !ShouldStop;
             }
             catch (Exception e)
             {
                 PluginLog.Error(e, "Update work failed");
-                return;
             }
-
-            allGridsProcessed = !ShouldStop;
+            finally
+            {
+                isRunning = false;
+            }
         }
 
         private void UpdateBlockStatesAndCollectStatistics()
@@ -101,7 +101,7 @@ namespace MultigridProjector.Logic
                 var blockCount = subgrid.UpdateBlockStatesBackgroundWork(Projector);
 
                 BlocksScanned += blockCount;
-                if(blockCount > 0)
+                if (blockCount > 0)
                     SubgridsScanned++;
             }
         }
@@ -120,10 +120,8 @@ namespace MultigridProjector.Logic
 
         private void OnComplete()
         {
-            if (!allGridsProcessed)
-                return;
-
-            OnUpdateWorkCompleted?.Invoke();
+            if (gridScanSucceeded)
+                OnUpdateWorkCompleted?.Invoke();
         }
     }
 }

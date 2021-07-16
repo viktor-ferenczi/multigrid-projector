@@ -48,6 +48,8 @@ namespace MultigridProjector.Logic
 
         // Subgrids of the projection, associated built grids as they appear, block status information, statistics
         public readonly List<Subgrid> Subgrids = new List<Subgrid>();
+
+        // Subgrids supported for welding from projection, skips grids connected via connector (ships, missiles)
         public IEnumerable<Subgrid> SupportedSubgrids => Subgrids.Where(s => s.Supported);
 
         // Bidirectional mapping of corresponding base and top blocks by their grid index and min cube positions
