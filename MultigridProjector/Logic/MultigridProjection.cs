@@ -1611,12 +1611,6 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             if (projector.CubeGrid == null || !projector.AllowWelding)
                 return;
 
-            // Projected projector?
-            // Prevents ghost subgrids in case of blueprints with nested projections.
-            // NOTE: projector.CubeGrid.IsPreview is still false, so don't depend on that!
-            if (projector.Physics == null)
-                return;
-
             if (!(objectBuilder is MyObjectBuilder_ProjectorBase projectorBuilder))
                 return;
 
