@@ -26,10 +26,18 @@ namespace MultigridProjector.Patches
                     return false;
                 
                 projector.RemapObjectBuilders();
-                
+
                 // Call patched SetNewBlueprint
-                var methodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint");
-                methodInfo.Invoke(projector, new object[] {projector.GetOriginalGridBuilders()});
+                var gridBuilders = projector.GetOriginalGridBuilders();
+                if (gridBuilders != null && gridBuilders.Count > 0)
+                {
+                    var methodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint");
+                    methodInfo.Invoke(projector, new object[] {gridBuilders});
+                }
+                else
+                {
+                    PluginLog.Warn($"Remap is called on an empty projector: \"{projector.CustomName}\" [{projector.EntityId}] on grid \"{projector.CubeGrid?.DisplayName ?? projector.CubeGrid?.Name}\" [{projector.CubeGrid?.EntityId}]");
+                }
             }
             catch (Exception e)
             {
