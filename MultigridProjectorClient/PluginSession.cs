@@ -1,5 +1,4 @@
 using MultigridProjector.Logic;
-using MultigridProjector.Utilities;
 using VRage.Game;
 using VRage.Game.Components;
 
@@ -13,8 +12,7 @@ namespace MultigridProjectorClient
 
         public override void Init(MyObjectBuilder_SessionComponent sessionComponent)
         {
-            if (MultigridProjection.Projections.Count != 0)
-                PluginLog.Warn($"{MultigridProjection.Projections.Count} projections are active on loading session, there should be none!");
+            MultigridProjection.EnsureNoProjections();
 
             mgpSession = new MultigridProjectorSession();
         }
@@ -27,8 +25,7 @@ namespace MultigridProjectorClient
                 mgpSession = null;
             }
 
-            if (MultigridProjection.Projections.Count != 0)
-                PluginLog.Warn($"{MultigridProjection.Projections.Count} projections are active on unloading session, there should be none!");
+            MultigridProjection.EnsureNoProjections();
         }
 
         public override void UpdateAfterSimulation()
