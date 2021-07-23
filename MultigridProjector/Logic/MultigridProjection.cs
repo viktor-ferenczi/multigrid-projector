@@ -1192,7 +1192,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             // Allow rebuilding the blueprint without EntityId collisions without power-cycling the projector,
             // relies on the detection of cutting down the built grids by the lack of functional blocks, see
-            // where _requestRemap is set to true
+            // where requestRemap is set to true
             if (requestRemap && previewFatBlock != null)
             {
                 requestRemap = false;
