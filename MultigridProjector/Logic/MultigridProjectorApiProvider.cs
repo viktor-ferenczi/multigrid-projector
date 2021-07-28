@@ -143,7 +143,8 @@ namespace MultigridProjector.Logic
                 return;
             }
 
-            CopyStats(stats, subgrid.Stats);
+            using (subgrid.BlocksLock.Read())
+                CopyStats(stats, subgrid.Stats);
         }
 
         private static void CopyStats(Api.ProjectionStats stats, ProjectionStats total)
@@ -167,7 +168,7 @@ namespace MultigridProjector.Logic
             var projector = projection.Projector;
             var showOnlyBuildable = projector.GetShowOnlyBuildable();
 
-            foreach (var subgrid in projection.SupportedSubgrids)
+            foreach (var subgrid in projection.GetSupportedSubgrids())
             {
                 foreach (var block in subgrid.Blocks.Values)
                 {
@@ -232,7 +233,7 @@ namespace MultigridProjector.Logic
             if (!MultigridProjection.TryFindProjectionByProjector(projectorId, out var projection) || !projection.IsValidForApi)
                 return;
 
-            foreach (var subgrid in projection.SupportedSubgrids)
+            foreach (var subgrid in projection.GetSupportedSubgrids())
             foreach (var block in subgrid.Blocks.Values)
                 block.WeldingEnabled = enable;
         }
