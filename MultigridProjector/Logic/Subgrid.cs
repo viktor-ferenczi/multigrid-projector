@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
-using System.Threading;
 using MultigridProjector.Api;
 using MultigridProjector.Utilities;
 using MultigridProjector.Extensions;
@@ -512,6 +511,7 @@ namespace MultigridProjector.Logic
         }
 
         [Everywhere]
+        // ReSharper disable once UnusedParameter.Local
         private void OnGridSplit(MyCubeGrid grid1, MyCubeGrid grid2)
         {
             var builtGrid = BuiltGrid;

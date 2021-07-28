@@ -49,6 +49,7 @@ namespace MultigridProjector.Logic
         // Subgrids of the projection, associated built grids as they appear, block status information, statistics
         private readonly List<Subgrid> subgrids = new List<Subgrid>();
         private readonly RwLock subgridsLock = new RwLock();
+
         public Subgrid[] GetSupportedSubgrids()
         {
             using (subgridsLock.Read())
@@ -76,6 +77,19 @@ namespace MultigridProjector.Logic
 
         // Latest aggregated statistics, suitable for built completeness decision and formatting as text
         private readonly ProjectionStats stats = new ProjectionStats();
+
+        public ProjectionStats Stats
+        {
+            get
+            {
+                var s = new ProjectionStats();
+
+                using (subgridsLock.Read())
+                    s.Add(stats);
+
+                return s;
+            }
+        }
 
         // Background task to update the block states and collect welding completion statistics
         private MultigridUpdateWork updateWork;
@@ -670,7 +684,7 @@ namespace MultigridProjector.Logic
 
                 foreach (var subgrid in SupportedSubgrids)
                 {
-                    if(subgrid.Positioned)
+                    if (subgrid.Positioned)
                         continue;
 
                     var gridBuilder = subgrid.GridBuilder;
@@ -867,7 +881,7 @@ namespace MultigridProjector.Logic
             var smallToLarge = baseSubgrid.GridSizeEnum != topSubgrid.GridSizeEnum;
             baseConnection.Block.RecreateTop(baseConnection.Block.BuiltBy, smallToLarge);
 
-            // Need to try again every 2 seconds, because building the top part may fail due to objects in the way 
+            // Need to try again every 2 seconds, because building the top part may fail due to objects in the way
             ShouldUpdateProjection();
         }
 
@@ -1607,6 +1621,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                             baseConnection.ClearBuiltBlock();
                             continue;
                         }
+
                         if (topConnection.Block.CubeGrid.EntityId != topSubgrid.BuiltGrid.EntityId)
                         {
                             topConnection.ClearBuiltBlock();
