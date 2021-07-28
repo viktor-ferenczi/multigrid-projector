@@ -20,14 +20,17 @@ using VRage.Input;
 using VRage.Utils;
 using VRageMath;
 
+// ReSharper disable InconsistentNaming
 namespace MultigridProjectorClient.Extra
 {
     [HarmonyPatch(typeof(MyGuiScreenGamePlay))]
     [HarmonyPatch("HandleUnhandledInput")]
     [EnsureOriginal("5bf3b399")]
+    // ReSharper disable once UnusedType.Global
     public static class MyGuiScreenGamePlay_HandleUnhandledInput
     {
         [ClientOnly]
+        // ReSharper disable once UnusedMember.Local
         private static bool Prefix()
         {
             // If ProjectorAligner is active then it will be handling input instead
@@ -44,9 +47,11 @@ namespace MultigridProjectorClient.Extra
     [HarmonyPatch(typeof(MyCubeBuilder))]
     [HarmonyPatch("HandleGameInput")]
     [EnsureOriginal("9b537014")]
+    // ReSharper disable once UnusedType.Global
     public static class MyCubeBuilder_HandleGameInput
     {
         [ClientOnly]
+        // ReSharper disable once UnusedMember.Local
         private static bool Prefix()
         {
             // Disable input if ProjectorAligner is active (it is handling it instead)
@@ -61,9 +66,11 @@ namespace MultigridProjectorClient.Extra
     [HarmonyPatch(typeof(MyClipboardComponent))]
     [HarmonyPatch("HandleGameInput")]
     [EnsureOriginal("4ef70c94")]
+    // ReSharper disable once UnusedType.Global
     public static class MyClipboardComponent_HandleGameInput
     {
         [ClientOnly]
+        // ReSharper disable once UnusedMember.Local
         private static bool Prefix()
         {
             // Disable input if ProjectorAligner is active (it is handling it instead)
@@ -165,10 +172,7 @@ namespace MultigridProjectorClient.Extra
         {
             if (Config.CurrentConfig.ShowDialogs)
             {
-                MyGuiScreenMessageBox alignerDialog = AlignerDialog.CreateDialog(() =>
-                {
-                    Instance?.Assign(projector);
-                });
+                MyGuiScreenMessageBox alignerDialog = AlignerDialog.CreateDialog(() => { Instance?.Assign(projector); });
 
                 MyGuiSandbox.AddScreen(alignerDialog);
             }
@@ -268,19 +272,19 @@ namespace MultigridProjectorClient.Extra
             OrientationAlgebra.ProjectionRotationFromForwardAndUp(forward, up, out rotation);
         }
 
-        public void Assign(IMyProjector projector)
+        private void Assign(IMyProjector selectedProjector)
         {
             // Make sure the action passed an active projector
             // Some blocks (eg button panels) will call this regardless of the projector's state
-            if (!IsProjecting(projector))
+            if (!IsProjecting(selectedProjector))
             {
                 MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", "No projection to align!");
                 return;
             }
 
-            this.projector = projector;
-            offset = projector.ProjectionOffset;
-            rotation = projector.ProjectionRotation;
+            projector = selectedProjector;
+            offset = selectedProjector.ProjectionOffset;
+            rotation = selectedProjector.ProjectionRotation;
 
             MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", "Manual projection alignment started, press ESC to cancel it");
         }
@@ -288,11 +292,11 @@ namespace MultigridProjectorClient.Extra
         private void Release()
         {
             projector = null;
-            
+
             // Prevented NRE while unloading Session
-            if (MyHud.Static == null) 
+            if (MyHud.Static == null)
                 return;
-            
+
             MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", "Manual projection alignment cancelled");
         }
 

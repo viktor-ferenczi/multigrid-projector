@@ -1,5 +1,4 @@
 ﻿using MultigridProjectorClient.Utilities;
-using Sandbox.Game;
 using Sandbox.Graphics.GUI;
 using System;
 using System.Collections.Generic;

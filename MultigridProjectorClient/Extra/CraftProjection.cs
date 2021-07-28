@@ -1,8 +1,8 @@
-﻿using Entities.Blocks;
+﻿using System;
+using Entities.Blocks;
 using HarmonyLib;
 using MultigridProjector.Extensions;
 using MultigridProjector.Logic;
-using MultigridProjector.Utilities;
 using MultigridProjectorClient.Utilities;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
@@ -13,18 +13,15 @@ using Sandbox.Game.Gui;
 using Sandbox.Game.World;
 using Sandbox.Graphics.GUI;
 using Sandbox.ModAPI;
-using Sandbox.ModAPI.Ingame;
-using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Text;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRage.Game.ModAPI;
 using VRage.Game.ModAPI.Ingame;
 using VRage.Utils;
 
+// ReSharper disable SuggestVarOrType_Elsewhere
 namespace MultigridProjectorClient.Extra
 {
     internal static class CraftProjection
@@ -74,26 +71,21 @@ namespace MultigridProjectorClient.Extra
                 // If no newline is found the whole name is used (eg modded blocks)
                 string name = MyDefinitionManager.Static.TryGetBlueprintDefinitionByResultId(id).DisplayNameText;
 
-                int index = name.IndexOf("\n");
+                int index = name.IndexOf("\n", StringComparison.Ordinal);
                 if (index != -1)
                 {
                     name = name.Substring(0, index);
                 }
 
                 // Discard the "." after "Comp."
-                int index2 = name.IndexOf("Comp.");
+                int index2 = name.IndexOf("Comp.", StringComparison.Ordinal);
                 if (index2 != -1)
                 {
-                    name = name.Substring(0, index2+4);
+                    name = name.Substring(0, index2 + 4);
                 }
 
-                int inventoryAmount = 0;
-                if (inventoryComponents.ContainsKey(id))
-                    inventoryAmount = inventoryComponents[id];
-
-                int requiredAmount = 0;
-                if (requiredComponents.ContainsKey(id))
-                    requiredAmount = requiredComponents[id];
+                int inventoryAmount = inventoryComponents.GetValueOrDefault(id);
+                int requiredAmount = requiredComponents.GetValueOrDefault(id);
 
                 MyGuiControlTable.Row row = new MyGuiControlTable.Row();
                 row.AddCell(new MyGuiControlTable.Cell(name));
@@ -194,7 +186,8 @@ namespace MultigridProjectorClient.Extra
                 MyCubeBlockDefinition.Component component = blockComponents[i];
                 MyComponentStack.GroupInfo groupInfo = slimBlock.ComponentStack.GetGroupInfo(i);
 
-                AddComponents(ref components, new Dictionary<MyDefinitionId, int>() {
+                AddComponents(ref components, new Dictionary<MyDefinitionId, int>()
+                {
                     { component.Definition.Id, groupInfo.MountedCount }
                 });
             }
@@ -211,7 +204,7 @@ namespace MultigridProjectorClient.Extra
 
             foreach (MyCubeGrid grid in grids.Cast<MyCubeGrid>())
             {
-                foreach(MyCubeBlock block in grid.GetFatBlocks())
+                foreach (MyCubeBlock block in grid.GetFatBlocks())
                 {
                     if (!block.HasInventory)
                         continue;
@@ -220,7 +213,7 @@ namespace MultigridProjectorClient.Extra
                     {
                         List<MyPhysicalInventoryItem> items = block.GetInventory(i).GetItems();
 
-                        foreach(MyPhysicalInventoryItem item in items)
+                        foreach (MyPhysicalInventoryItem item in items)
                         {
                             MyDefinitionId id = item.GetDefinitionId();
                             int count = (int)item.Amount;
@@ -273,10 +266,7 @@ namespace MultigridProjectorClient.Extra
                 MyDefinitionId id = component.Key;
                 int blueprintAmount = component.Value;
 
-                int inventoryAmount = 0;
-                if (inventoryComponents.ContainsKey(id))
-                    inventoryAmount = inventoryComponents[id];
-
+                int inventoryAmount = inventoryComponents.GetValueOrDefault(id);
                 int requiredAmount = blueprintAmount - inventoryAmount;
 
                 if (requiredAmount < 0)

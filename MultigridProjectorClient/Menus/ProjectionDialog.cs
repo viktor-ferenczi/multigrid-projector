@@ -1,8 +1,6 @@
 ﻿using MultigridProjectorClient.Utilities;
 using Sandbox.Graphics.GUI;
 using System.Text;
-using VRage;
-using VRage.Scripting;
 using VRage.Utils;
 using VRageMath;
 

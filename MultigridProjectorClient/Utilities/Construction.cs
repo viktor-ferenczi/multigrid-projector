@@ -157,13 +157,13 @@ namespace MultigridProjectorClient.Utilities
             if (!TryGetSubgrid(projectedBlock, out Subgrid subgrid))
                 return null;
 
+            if (!subgrid.HasBuilt)
+                return null;
+
             MyCubeGrid builtGrid = subgrid.BuiltGrid;
             MyCubeGrid previewGrid = subgrid.PreviewGrid;
 
-            if (builtGrid == null)
-                return null;
-
-            // Get the block on the built grid of the subgrid in the same position as the projectd block
+            // Get the block on the built grid of the subgrid in the same position as the projected block
             Vector3I blockPos = builtGrid.WorldToGridInteger(previewGrid.GridIntegerToWorld(projectedBlock.Position));
             MySlimBlock blockAtPos = builtGrid.GetCubeBlock(blockPos);
 
