@@ -33,7 +33,7 @@ namespace MultigridProjector.Logic
         public MyCubeSize GridSizeEnum => PreviewGrid.GridSizeEnum;
 
         // Initial statistics of the subgrid with none of the blocks welded
-        public readonly ProjectionStats InitialStats = new ProjectionStats();
+        private readonly ProjectionStats initialStats = new ProjectionStats();
 
         // Latest welding state statistics collected by the background worker
         public ProjectionStats Stats { get; private set; } = new ProjectionStats();
@@ -58,6 +58,7 @@ namespace MultigridProjector.Logic
 
         // Projected and built block states, built block changes are detected by the background worker, visuals are updated by the main thread
         public Dictionary<Vector3I, ProjectedBlock> Blocks;
+        public readonly RwLock BlocksLock = new RwLock();
 
         // Indicates that the preview grid has been positioned correctly during an update
         public bool Positioned;
@@ -110,19 +111,20 @@ namespace MultigridProjector.Logic
         private void CollectInitialStats()
         {
             foreach (var slimBlock in PreviewGrid.CubeBlocks)
-                InitialStats.RegisterBlock(slimBlock, BlockState.NotBuildable);
+                initialStats.RegisterBlock(slimBlock, BlockState.NotBuildable);
 
-            Stats.Add(InitialStats);
+            Stats.Add(initialStats);
         }
 
         public void Dispose()
         {
+            UnregisterBuiltGrid();
+
             BaseConnections.Clear();
             TopConnections.Clear();
 
-            UnregisterBuiltGrid();
-
-            Blocks.Clear();
+            using (BlocksLock.Write())
+                Blocks.Clear();
         }
 
         private void FindMechanicalConnections(MultigridProjection projection)
@@ -178,7 +180,8 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private bool TryGetProjectedBlock(Vector3I previewPosition, out ProjectedBlock projectedBlock)
         {
-            return Blocks.TryGetValue(previewPosition, out projectedBlock);
+            using (BlocksLock.Read())
+                return Blocks.TryGetValue(previewPosition, out projectedBlock);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -211,9 +214,10 @@ namespace MultigridProjector.Logic
         public bool HasBuildableBlockAtPosition(Vector3I position)
         {
             using (BuiltGridLock.Read())
-            {
-                return HasBuilt && TryGetBlockState(position, out var blockState) && blockState == BlockState.Buildable;
-            }
+                if (!HasBuilt)
+                    return false;
+
+            return TryGetBlockState(position, out var blockState) && blockState == BlockState.Buildable;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -225,14 +229,17 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IEnumerable<(Vector3I, BlockState)> IterBlockStates(BoundingBoxI box, int mask)
         {
-            foreach (var (position, projectedBlock) in Blocks)
+            using (BlocksLock.Read())
             {
-                var blockState = projectedBlock.State;
-                if (((int) blockState & mask) == 0)
-                    continue;
+                foreach (var (position, projectedBlock) in Blocks)
+                {
+                    var blockState = projectedBlock.State;
+                    if (((int) blockState & mask) == 0)
+                        continue;
 
-                if (box.Contains(position) == ContainmentType.Contains)
-                    yield return (position, blockState);
+                    if (box.Contains(position) == ContainmentType.Contains)
+                        yield return (position, blockState);
+                }
             }
         }
 
@@ -272,13 +279,13 @@ namespace MultigridProjector.Logic
             {
                 BuiltGrid = grid;
                 StateHash = 0;
-
-                foreach (var fatBlock in BuiltGrid.GetFatBlocks<MyTerminalBlock>())
-                    fatBlock.CheckConnectionChanged += OnCheckConnectionChanged;
-
-                ConnectGridEvents();
-                RequestUpdate();
             }
+
+            foreach (var fatBlock in BuiltGrid.GetFatBlocks<MyTerminalBlock>())
+                fatBlock.CheckConnectionChanged += OnCheckConnectionChanged;
+
+            ConnectGridEvents();
+            RequestUpdate();
         }
 
         public void UnregisterBuiltGrid()
@@ -286,30 +293,33 @@ namespace MultigridProjector.Logic
             if (!HasBuilt)
                 return;
 
+            DisconnectGridEvents();
+
+            foreach (var terminalBlock in BuiltGrid.GetFatBlocks<MyTerminalBlock>())
+                terminalBlock.CheckConnectionChanged -= OnCheckConnectionChanged;
+
             using (BuiltGridLock.Write())
             {
-                DisconnectGridEvents();
-
-                foreach (var terminalBlock in BuiltGrid.GetFatBlocks<MyTerminalBlock>())
-                    terminalBlock.CheckConnectionChanged -= OnCheckConnectionChanged;
-
                 BuiltGrid = null;
                 StateHash = 0;
+            }
 
-                Stats.Clear();
-                Stats.Add(InitialStats);
+            Stats.Clear();
+            Stats.Add(initialStats);
 
+            using (BlocksLock.Read())
+            {
                 foreach (var projectedBlock in Blocks.Values)
                     projectedBlock.Clear();
-
-                foreach (var baseConnection in BaseConnections.Values)
-                    baseConnection.ClearBuiltBlock();
-
-                foreach (var topConnection in TopConnections.Values)
-                    topConnection.ClearBuiltBlock();
-
-                RequestUpdate();
             }
+
+            foreach (var baseConnection in BaseConnections.Values)
+                baseConnection.ClearBuiltBlock();
+
+            foreach (var topConnection in TopConnections.Values)
+                topConnection.ClearBuiltBlock();
+
+            RequestUpdate();
         }
 
         #endregion
@@ -409,9 +419,14 @@ namespace MultigridProjector.Logic
             if (previewSlimBlock == null)
                 return;
 
-            if (!Blocks.TryGetValue(previewSlimBlock.Position, out var projectedBlock))
-                return;
+            ProjectedBlock projectedBlock;
+            using (BlocksLock.Read())
+            {
+                if (!Blocks.TryGetValue(previewSlimBlock.Position, out projectedBlock))
+                    return;
+            }
 
+            // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (projectedBlock.State)
             {
                 case BlockState.BeingBuilt:
@@ -535,12 +550,18 @@ namespace MultigridProjector.Logic
             if (!Supported)
             {
                 HideUnsupportedPreviewGrid(projector);
-                Blocks.Clear();
+
+                using (BlocksLock.Write())
+                    Blocks.Clear();
+
                 return;
             }
 
-            foreach (var projectedBlock in Blocks.Values)
-                projectedBlock.UpdateVisual(projector, showOnlyBuildable);
+            using (BlocksLock.Read())
+            {
+                foreach (var projectedBlock in Blocks.Values)
+                    projectedBlock.UpdateVisual(projector, showOnlyBuildable);
+            }
         }
 
         private void HideUnsupportedPreviewGrid(MyProjectorBase projector)
@@ -626,11 +647,19 @@ namespace MultigridProjector.Logic
             stats.Clear();
 
             var stateHash = unchecked (0xdeadbeafdeadbeaful * (ulong) (1 + Index));
-            foreach (var projectedBlock in Blocks.Values)
+
+            MyCubeGrid builtGrid;
+            using (BuiltGridLock.Read())
+                builtGrid = BuiltGrid;
+
+            using (BlocksLock.Read())
             {
-                projectedBlock.DetectBlock(projector, BuiltGrid);
-                stats.RegisterBlock(projectedBlock.Preview, projectedBlock.State);
-                stateHash = unchecked ((stateHash << 11) - stateHash) ^ (ulong)projectedBlock.State;
+                foreach (var projectedBlock in Blocks.Values)
+                {
+                    projectedBlock.DetectBlock(projector, builtGrid);
+                    stats.RegisterBlock(projectedBlock.Preview, projectedBlock.State);
+                    stateHash = unchecked((stateHash << 11) - stateHash) ^ (ulong) projectedBlock.State;
+                }
             }
 
             using (BuiltGridLock.Read())
@@ -642,7 +671,8 @@ namespace MultigridProjector.Logic
 
             StateHash = stateHash;
 
-            return Blocks.Count;
+            using (BlocksLock.Read())
+                return Blocks.Count;
         }
 
         public void FindBuiltBaseConnectionsBackgroundWork()
@@ -650,22 +680,26 @@ namespace MultigridProjector.Logic
             if (!Supported)
                 return;
 
-            foreach (var (position, baseConnection) in BaseConnections)
+            using (BlocksLock.Read())
             {
-                if (!Blocks.TryGetValue(position, out var projectedBlock))
-                    continue;
-
-                switch (projectedBlock.State)
+                foreach (var (position, baseConnection) in BaseConnections)
                 {
-                    case BlockState.BeingBuilt:
-                    case BlockState.FullyBuilt:
-                        if (baseConnection.Found != null)
+                    if (!Blocks.TryGetValue(position, out var projectedBlock))
+                        continue;
+
+                    // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+                    switch (projectedBlock.State)
+                    {
+                        case BlockState.BeingBuilt:
+                        case BlockState.FullyBuilt:
+                            if (baseConnection.Found != null)
+                                break;
+                            baseConnection.Found = (MyMechanicalConnectionBlockBase) projectedBlock.SlimBlock.FatBlock;
                             break;
-                        baseConnection.Found = (MyMechanicalConnectionBlockBase) projectedBlock.SlimBlock.FatBlock;
-                        break;
-                    default:
-                        baseConnection.Found = null;
-                        break;
+                        default:
+                            baseConnection.Found = null;
+                            break;
+                    }
                 }
             }
         }
@@ -675,21 +709,25 @@ namespace MultigridProjector.Logic
             if (!Supported)
                 return;
 
-            foreach (var (position, topConnection) in TopConnections)
+            using (BlocksLock.Read())
             {
-                if (!Blocks.TryGetValue(position, out var projectedBlock))
-                    continue;
-
-                switch (projectedBlock.State)
+                foreach (var (position, topConnection) in TopConnections)
                 {
-                    case BlockState.BeingBuilt:
-                    case BlockState.FullyBuilt:
-                        topConnection.Found = (MyAttachableTopBlockBase) projectedBlock.SlimBlock.FatBlock;
-                        break;
+                    if (!Blocks.TryGetValue(position, out var projectedBlock))
+                        continue;
 
-                    default:
-                        topConnection.Found = null;
-                        break;
+                    // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
+                    switch (projectedBlock.State)
+                    {
+                        case BlockState.BeingBuilt:
+                        case BlockState.FullyBuilt:
+                            topConnection.Found = (MyAttachableTopBlockBase) projectedBlock.SlimBlock.FatBlock;
+                            break;
+
+                        default:
+                            topConnection.Found = null;
+                            break;
+                    }
                 }
             }
         }

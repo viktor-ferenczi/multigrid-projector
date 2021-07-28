@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using MultigridProjector.Utilities;
 using ParallelTasks;
 using Sandbox.Game.Entities.Blocks;
@@ -15,9 +14,6 @@ namespace MultigridProjector.Logic
         // Concurrency: The update work must write only into the dedicated members of subgrids
         private MultigridProjection projection;
         private MyProjectorBase Projector => projection.Projector;
-
-        // Subgrids supported for welding from projection, skips grids connected via connector (ships, missiles)
-        private IEnumerable<Subgrid> SupportedSubgrids => projection.SupportedSubgrids;
 
         // Background worker task
         private Task task;
@@ -75,9 +71,13 @@ namespace MultigridProjector.Logic
             isRunning = true;
             try
             {
-                UpdateBlockStatesAndCollectStatistics();
-                FindBuiltMechanicalConnections();
-                gridScanSucceeded = !ShouldStop;
+                var supportedSubgrids = projection?.GetSupportedSubgrids();
+                if (supportedSubgrids != null)
+                {
+                    UpdateBlockStatesAndCollectStatistics(supportedSubgrids);
+                    FindBuiltMechanicalConnections(supportedSubgrids);
+                    gridScanSucceeded = !ShouldStop;
+                }
             }
             catch (Exception e)
             {
@@ -89,12 +89,12 @@ namespace MultigridProjector.Logic
             }
         }
 
-        private void UpdateBlockStatesAndCollectStatistics()
+        private void UpdateBlockStatesAndCollectStatistics(Subgrid[] supportedSubgrids)
         {
             SubgridsScanned = 0;
             BlocksScanned = 0;
 
-            foreach (var subgrid in SupportedSubgrids)
+            foreach (var subgrid in supportedSubgrids)
             {
                 if (ShouldStop) break;
 
@@ -106,9 +106,9 @@ namespace MultigridProjector.Logic
             }
         }
 
-        private void FindBuiltMechanicalConnections()
+        private void FindBuiltMechanicalConnections(Subgrid[] supportedSubgrids)
         {
-            foreach (var subgrid in SupportedSubgrids)
+            foreach (var subgrid in supportedSubgrids)
             {
                 if (ShouldStop) break;
                 subgrid.FindBuiltBaseConnectionsBackgroundWork();

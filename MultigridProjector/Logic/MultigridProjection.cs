@@ -39,37 +39,40 @@ namespace MultigridProjector.Logic
     // FIXME: Refactor this class
     public class MultigridProjection
     {
-        public static readonly RwLockDictionary<long, MultigridProjection> Projections = new RwLockDictionary<long, MultigridProjection>();
-        public static readonly HashSet<long> ProjectorsWithBlueprintLoaded = new HashSet<long>();
+        private static readonly RwLockDictionary<long, MultigridProjection> Projections = new RwLockDictionary<long, MultigridProjection>();
+        private static readonly HashSet<long> ProjectorsWithBlueprintLoaded = new HashSet<long>();
 
-        public readonly MyProjectorBase Projector;
-        public readonly MyProjectorClipboard Clipboard;
-        public readonly List<MyObjectBuilder_CubeGrid> GridBuilders;
+        internal readonly MyProjectorBase Projector;
+        internal readonly List<MyObjectBuilder_CubeGrid> GridBuilders;
+        private readonly MyProjectorClipboard clipboard;
 
         // Subgrids of the projection, associated built grids as they appear, block status information, statistics
-        public readonly List<Subgrid> Subgrids = new List<Subgrid>();
+        private readonly List<Subgrid> subgrids = new List<Subgrid>();
+        private readonly RwLock subgridsLock = new RwLock();
+        public Subgrid[] GetSupportedSubgrids()
+        {
+            using (subgridsLock.Read())
+                return SupportedSubgrids.ToArray();
+        }
 
         // Subgrids supported for welding from projection, skips grids connected via connector (ships, missiles)
-        public IEnumerable<Subgrid> SupportedSubgrids => Subgrids.Where(s => s.Supported);
+        private IEnumerable<Subgrid> SupportedSubgrids => subgrids.Where(s => s.Supported);
 
         // Bidirectional mapping of corresponding base and top blocks by their grid index and min cube positions
-        public readonly Dictionary<BlockMinLocation, BlockMinLocation> BlueprintConnections = new Dictionary<BlockMinLocation, BlockMinLocation>();
+        internal readonly Dictionary<BlockMinLocation, BlockMinLocation> BlueprintConnections = new Dictionary<BlockMinLocation, BlockMinLocation>();
 
         // Preview base blocks by their grid index and min position
-        public readonly Dictionary<BlockMinLocation, MyMechanicalConnectionBlockBase> PreviewBaseBlocks = new Dictionary<BlockMinLocation, MyMechanicalConnectionBlockBase>();
+        internal readonly Dictionary<BlockMinLocation, MyMechanicalConnectionBlockBase> PreviewBaseBlocks = new Dictionary<BlockMinLocation, MyMechanicalConnectionBlockBase>();
 
         // Preview top blocks by their grid index and min position
-        public readonly Dictionary<BlockMinLocation, MyAttachableTopBlockBase> PreviewTopBlocks = new Dictionary<BlockMinLocation, MyAttachableTopBlockBase>();
+        internal readonly Dictionary<BlockMinLocation, MyAttachableTopBlockBase> PreviewTopBlocks = new Dictionary<BlockMinLocation, MyAttachableTopBlockBase>();
 
-        public int GridCount => GridBuilders.Count;
-        public List<MyCubeGrid> PreviewGrids => Clipboard.PreviewGrids;
-        public bool Initialized { get; private set; }
+        internal int GridCount => GridBuilders.Count;
+        internal List<MyCubeGrid> PreviewGrids => clipboard.PreviewGrids;
+        internal bool Initialized { get; private set; }
 
-        private bool IsUpdateRequested => Initialized && Subgrids.Any(subgrid => subgrid.IsUpdateRequested);
+        private bool IsUpdateRequested => Initialized && subgrids.Any(subgrid => subgrid.IsUpdateRequested);
         private bool IsBuildCompleted => Initialized && stats.IsBuildCompleted;
-
-        // Mechanical connection block locations in the preview grids by EntityId
-        // public readonly Dictionary<long, BlockLocation> MechanicalConnectionBlockLocations = new Dictionary<long, BlockLocation>();
 
         // Latest aggregated statistics, suitable for built completeness decision and formatting as text
         private readonly ProjectionStats stats = new ProjectionStats();
@@ -88,21 +91,31 @@ namespace MultigridProjector.Logic
         private Vector3I latestProjectionRotation;
 
         // Scan sequence number, increased every time the preview grids are successfully scanned for block changes
-        public long ScanNumber;
-        public bool HasScanned => ScanNumber > 0;
+        internal long ScanNumber;
+        private bool HasScanned => ScanNumber > 0;
 
         // YAML generated from the current state, cleared when the scan number changes
-        private volatile string latestYaml;
+        private string latestYaml;
 
         // Requests a remap operation on building the next functional (non-armor) block
         private bool requestRemap;
 
         // Controls when the plugin and Mod API can access projector information already
-        public bool IsValidForApi => Initialized && HasScanned;
+        internal bool IsValidForApi => Initialized && HasScanned;
+
+        public static void EnsureNoProjections()
+        {
+            int projectionCount;
+            using (Projections.Read())
+                projectionCount = Projections.Count;
+
+            if (projectionCount != 0)
+                PluginLog.Warn($"{projectionCount} projections are active, but there should be none!");
+        }
 
         private static MultigridProjection Create(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
         {
-            using (Projections.Read())
+            using (Projections.Write())
             {
                 if (Projections.ContainsKey(projector.EntityId))
                     return null;
@@ -111,25 +124,16 @@ namespace MultigridProjector.Logic
             var projection = new MultigridProjection(projector, gridBuilders);
 
             using (Projections.Write())
-            {
-                if (Projections.TryGetValue(projector.EntityId, out var existingProjection))
-                {
-                    projection.Destroy();
-                    return existingProjection;
-                }
-
-                MultigridProjectorApiProvider.RegisterProgrammableBlockApi();
-
                 Projections[projector.EntityId] = projection;
-                return projection;
-            }
+
+            return projection;
         }
 
         private MultigridProjection(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
         {
             Projector = projector;
-            Clipboard = projector.GetClipboard();
             GridBuilders = gridBuilders;
+            clipboard = projector.GetClipboard();
 
             latestKeepProjection = Projector.GetKeepProjection();
             latestShowOnlyBuildable = Projector.GetShowOnlyBuildable();
@@ -156,15 +160,18 @@ namespace MultigridProjector.Logic
             ForceUpdateProjection();
 
             AutoAlignBlueprint();
+
+            MultigridProjectorApiProvider.RegisterProgrammableBlockApi();
         }
 
         private void Destroy()
         {
             using (Projections.Write())
-                if (!Projections.Remove(Projector.EntityId))
-                    return;
+                Projections.Remove(Projector.EntityId);
 
-            if (!Initialized) return;
+            if (!Initialized)
+                return;
+
             Initialized = false;
 
             Projector.PropertiesChanged -= OnPropertiesChanged;
@@ -175,10 +182,11 @@ namespace MultigridProjector.Logic
 
             stats.Clear();
 
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in subgrids)
                 subgrid.Dispose();
 
-            Subgrids.Clear();
+            using (subgridsLock.Write())
+                subgrids.Clear();
         }
 
         private void MapBlueprintBlocks()
@@ -223,11 +231,9 @@ namespace MultigridProjector.Logic
                     switch (slimBlock.FatBlock)
                     {
                         case MyMechanicalConnectionBlockBase baseBlock:
-                            // MechanicalConnectionBlockLocations[baseBlock.EntityId] = new BlockLocation(gridIndex, slimBlock.Position);
                             PreviewBaseBlocks[new BlockMinLocation(gridIndex, slimBlock.Min)] = baseBlock;
                             break;
                         case MyAttachableTopBlockBase topBlock:
-                            // MechanicalConnectionBlockLocations[topBlock.EntityId] = new BlockLocation(gridIndex, slimBlock.Position);
                             PreviewTopBlocks[new BlockMinLocation(gridIndex, slimBlock.Min)] = topBlock;
                             break;
                     }
@@ -237,30 +243,30 @@ namespace MultigridProjector.Logic
 
         private void CreateSubgrids()
         {
-            Subgrids.Add(new ProjectorSubgrid(this));
+            subgrids.Add(new ProjectorSubgrid(this));
 
             for (var gridIndex = 1; gridIndex < GridCount; gridIndex++)
-                Subgrids.Add(new Subgrid(this, gridIndex));
+                subgrids.Add(new Subgrid(this, gridIndex));
 
-            Subgrids[0].RegisterBuiltGrid(Projector.CubeGrid);
+            subgrids[0].RegisterBuiltGrid(Projector.CubeGrid);
         }
 
         private void MarkSupportedSubgrids()
         {
-            Subgrids[0].Supported = true;
+            subgrids[0].Supported = true;
 
-            foreach (var _ in Subgrids)
+            foreach (var _ in subgrids)
             {
                 var modified = 0;
 
-                foreach (var subgrid in Subgrids)
+                foreach (var subgrid in subgrids)
                 {
                     if (!subgrid.Supported)
                         continue;
 
                     foreach (var baseConnection in subgrid.BaseConnections.Values)
                     {
-                        var topSubgrid = Subgrids[baseConnection.TopLocation.GridIndex];
+                        var topSubgrid = subgrids[baseConnection.TopLocation.GridIndex];
                         if (topSubgrid.Supported)
                             continue;
 
@@ -271,7 +277,7 @@ namespace MultigridProjector.Logic
 
                     foreach (var topConnection in subgrid.TopConnections.Values)
                     {
-                        var baseSubgrid = Subgrids[topConnection.BaseLocation.GridIndex];
+                        var baseSubgrid = subgrids[topConnection.BaseLocation.GridIndex];
                         if (baseSubgrid.Supported)
                             continue;
 
@@ -314,9 +320,7 @@ namespace MultigridProjector.Logic
         public static bool TryFindProjectionByProjector(long projectorId, out MultigridProjection projection)
         {
             using (Projections.Read())
-            {
                 return Projections.TryGetValue(projectorId, out projection);
-            }
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -324,38 +328,37 @@ namespace MultigridProjector.Logic
         {
             using (Projections.Read())
             {
-                if (!Projections.TryGetValue(projectorId, out projection) || !projection.Initialized)
+                if (!Projections.TryGetValue(projectorId, out projection))
                 {
                     subgrid = null;
                     return false;
                 }
+            }
 
+            if (!projection.Initialized)
+            {
+                subgrid = null;
+                return false;
+            }
+
+            using (projection.subgridsLock.Read())
+            {
                 if (subgridIndex < 0 || subgridIndex >= projection.GridCount)
                 {
                     subgrid = null;
                     return false;
                 }
 
-                subgrid = projection.Subgrids[subgridIndex];
-                if (!subgrid.Supported)
-                {
-                    subgrid = null;
-                    return false;
-                }
-
-                return true;
+                subgrid = projection.subgrids[subgridIndex];
             }
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool TryFindProjectionByProjectorClipboard(MyProjectorClipboard projectorClipboard, out MultigridProjection projection)
-        {
-            using (Projections.Read())
+            if (!subgrid.Supported)
             {
-                projection = Projections.Values.FirstOrDefault(p => p.Clipboard == projectorClipboard);
+                subgrid = null;
+                return false;
             }
 
-            return projection != null;
+            return true;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -367,10 +370,7 @@ namespace MultigridProjector.Logic
                 return false;
             }
 
-            using (Projections.Read())
-            {
-                gridIndex = PreviewGrids.IndexOf(grid);
-            }
+            gridIndex = PreviewGrids.IndexOf(grid);
 
             return gridIndex >= 0;
         }
@@ -379,26 +379,32 @@ namespace MultigridProjector.Logic
         public static bool TryFindProjectionByBuiltGrid(MyCubeGrid grid, out MultigridProjection projection, out Subgrid subgrid)
         {
             using (Projections.Read())
-            {
                 projection = Projections.Values.FirstOrDefault(p => p.TryFindSubgridByBuiltGrid(grid, out _));
-                if (projection == null || !projection.Initialized)
-                {
-                    subgrid = null;
-                    return false;
-                }
 
-                return projection.TryFindSubgridByBuiltGrid(grid, out subgrid);
+            if (projection == null)
+            {
+                subgrid = null;
+                return false;
             }
+
+            if (!projection.Initialized)
+            {
+                subgrid = null;
+                return false;
+            }
+
+            using (projection.subgridsLock.Read())
+                return projection.TryFindSubgridByBuiltGrid(grid, out subgrid);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryFindSubgridByBuiltGrid(MyCubeGrid grid, out Subgrid subgrid)
+        private bool TryFindSubgridByBuiltGrid(MyCubeGrid grid, out Subgrid subgrid)
         {
             subgrid = SupportedSubgrids.FirstOrDefault(s => s.BuiltGrid == grid);
             return subgrid != null;
         }
 
-        public void StartUpdateWork()
+        private void StartUpdateWork()
         {
             if (Projector.Closed)
                 return;
@@ -423,7 +429,7 @@ namespace MultigridProjector.Logic
             if (Sync.IsDedicated)
                 return;
 
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in subgrids)
                 subgrid.HidePreviewGrid(Projector);
         }
 
@@ -501,7 +507,7 @@ namespace MultigridProjector.Logic
             if (!Sync.IsServer)
                 ShouldUpdateProjection();
 
-            Clipboard.HasPreviewBBox = false;
+            clipboard.HasPreviewBBox = false;
 
             UpdateMechanicalConnections();
             AggregateStatistics();
@@ -530,6 +536,13 @@ namespace MultigridProjector.Logic
 
         public string GetYaml(bool requireScan = true)
         {
+            using (subgridsLock.Read())
+                return GetYamlUnsafe(requireScan);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private string GetYamlUnsafe(bool requireScan)
+        {
             if (requireScan && !HasScanned)
                 return "";
 
@@ -541,43 +554,51 @@ namespace MultigridProjector.Logic
             sb.AppendLine($"ProjectorEntityId: {Projector.EntityId}");
             sb.AppendLine($"ProjectorName: {Projector.GetSafeName()}");
             sb.AppendLine($"ScanNumber: {ScanNumber}");
-            sb.AppendLine($"SubgridCount: {Subgrids.Count}");
+            sb.AppendLine($"SubgridCount: {subgrids.Count}");
             sb.AppendLine($"Subgrids:");
-            foreach (var subgrid in Subgrids)
+            foreach (var subgrid in subgrids)
             {
                 if (!subgrid.Supported)
                     continue;
 
                 sb.AppendLine($"  Index: {subgrid.Index}");
                 sb.AppendLine($"  GridSize: {subgrid.PreviewGrid.GridSizeEnum}");
-                sb.AppendLine($"  HasBuilt: {subgrid.HasBuilt}");
-                sb.AppendLine($"  BuiltGridEntityId: {(subgrid.HasBuilt ? subgrid.BuiltGrid.EntityId : 0)}");
                 sb.AppendLine($"  PreviewGridEntityId: {subgrid.PreviewGrid.EntityId}");
-                sb.AppendLine($"  BlockCount: {subgrid.Blocks.Count}");
-                sb.AppendLine($"  Blocks:");
-                foreach (var (position, block) in subgrid.Blocks)
+                using (subgrid.BuiltGridLock.Read())
                 {
-                    sb.AppendLine($"    - Block: {block.SlimBlock?.FatBlock?.EntityId ?? 0}");
-                    sb.AppendLine($"      State: {block.State}");
-                    sb.AppendLine($"      Position: [{position.FormatYaml()}]");
-                    if (subgrid.BaseConnections.TryGetValue(position, out var baseConnection))
+                    sb.AppendLine($"  HasBuilt: {subgrid.HasBuilt}");
+                    sb.AppendLine($"  BuiltGridEntityId: {(subgrid.HasBuilt ? subgrid.BuiltGrid.EntityId : 0)}");
+                }
+
+                using (subgrid.BlocksLock.Read())
+                {
+                    sb.AppendLine($"  BlockCount: {subgrid.Blocks.Count}");
+                    sb.AppendLine($"  Blocks:");
+                    foreach (var (position, block) in subgrid.Blocks)
                     {
-                        sb.AppendLine($"      TopSubgrid: {baseConnection.TopLocation.GridIndex}");
-                        sb.AppendLine($"      TopPosition: {baseConnection.TopLocation.Position}");
-                        sb.AppendLine($"      IsConnected: {IsConnected(baseConnection)}");
-                    }
-                    else if (subgrid.TopConnections.TryGetValue(position, out var topConnection))
-                    {
-                        sb.AppendLine($"      BaseSubgrid: {topConnection.BaseLocation.GridIndex}");
-                        sb.AppendLine($"      BasePosition: {topConnection.BaseLocation.Position}");
-                        sb.AppendLine($"      IsConnected: {IsConnected(topConnection)}");
+                        sb.AppendLine($"    - Block: {block.SlimBlock?.FatBlock?.EntityId ?? 0}");
+                        sb.AppendLine($"      State: {block.State}");
+                        sb.AppendLine($"      Position: [{position.FormatYaml()}]");
+                        if (subgrid.BaseConnections.TryGetValue(position, out var baseConnection))
+                        {
+                            sb.AppendLine($"      TopSubgrid: {baseConnection.TopLocation.GridIndex}");
+                            sb.AppendLine($"      TopPosition: {baseConnection.TopLocation.Position}");
+                            sb.AppendLine($"      IsConnected: {IsConnected(baseConnection)}");
+                        }
+                        else if (subgrid.TopConnections.TryGetValue(position, out var topConnection))
+                        {
+                            sb.AppendLine($"      BaseSubgrid: {topConnection.BaseLocation.GridIndex}");
+                            sb.AppendLine($"      BasePosition: {topConnection.BaseLocation.Position}");
+                            sb.AppendLine($"      IsConnected: {IsConnected(topConnection)}");
+                        }
                     }
                 }
             }
 
             yaml = sb.ToString();
             latestYaml = yaml;
-            return latestYaml;
+
+            return yaml;
         }
 
         private void AggregateStatistics()
@@ -612,7 +633,7 @@ namespace MultigridProjector.Logic
         {
             // Align the preview grids to match any grids have already been built, align the rest of grids relative to other preview grids
 
-            if (!Initialized || PreviewGrids == null || PreviewGrids.Count == 0 || Subgrids.Count != PreviewGrids.Count)
+            if (!Initialized || PreviewGrids == null || PreviewGrids.Count == 0 || subgrids.Count != PreviewGrids.Count)
                 return;
 
             // Mark all subgrids as not positioned
@@ -635,12 +656,12 @@ namespace MultigridProjector.Logic
             worldMatrix.Translation += projectionOffset;
             firstPreviewGrid.PositionComp.Scale = 1f;
             firstPreviewGrid.PositionComp.SetWorldMatrix(ref worldMatrix, skipTeleportCheck: true);
-            Subgrids[0].Positioned = true;
+            subgrids[0].Positioned = true;
 
             // Further subgrids
             var gridsToPositionBefore = 0;
             var gridsToPosition = SupportedSubgrids.Count(s => !s.Positioned);
-            for (var i = 1; i < Subgrids.Count; i++)
+            for (var i = 1; i < subgrids.Count; i++)
             {
                 if (gridsToPosition == 0 || gridsToPosition == gridsToPositionBefore)
                     break;
@@ -680,10 +701,10 @@ namespace MultigridProjector.Logic
                     }
 
                     // Align the preview by top block connecting to an already positioned base block preview
-                    topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => Subgrids[c.BaseLocation.GridIndex].Positioned);
+                    topConnection = subgrid.TopConnections.Values.FirstOrDefault(c => subgrids[c.BaseLocation.GridIndex].Positioned);
                     if (topConnection != null)
                     {
-                        var baseSubgrid = Subgrids[topConnection.BaseLocation.GridIndex];
+                        var baseSubgrid = subgrids[topConnection.BaseLocation.GridIndex];
                         if (baseSubgrid.GridBuilder.PositionAndOrientation != null)
                         {
                             gridBuilder.PositionAndOrientation.Value.ToMatrixD(out var topMatrix);
@@ -697,10 +718,10 @@ namespace MultigridProjector.Logic
                     }
 
                     // Align the preview by base block connecting to an already positioned top block preview
-                    baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => Subgrids[c.TopLocation.GridIndex].Positioned);
+                    baseConnection = subgrid.BaseConnections.Values.FirstOrDefault(c => subgrids[c.TopLocation.GridIndex].Positioned);
                     if (baseConnection != null)
                     {
-                        var topSubgrid = Subgrids[baseConnection.TopLocation.GridIndex];
+                        var topSubgrid = subgrids[baseConnection.TopLocation.GridIndex];
                         if (topSubgrid.GridBuilder.PositionAndOrientation != null)
                         {
                             gridBuilder.PositionAndOrientation.Value.ToMatrixD(out var topMatrix);
@@ -744,7 +765,7 @@ namespace MultigridProjector.Logic
 
         private void RescanFullProjection()
         {
-            if (!Initialized || Projector.Closed || Subgrids.Count < 1)
+            if (!Initialized || Projector.Closed || subgrids.Count < 1)
                 return;
 
             foreach (var subgrid in SupportedSubgrids)
@@ -752,7 +773,7 @@ namespace MultigridProjector.Logic
                 subgrid.UnregisterBuiltGrid();
             }
 
-            Subgrids[0].RegisterBuiltGrid(Projector.CubeGrid);
+            subgrids[0].RegisterBuiltGrid(Projector.CubeGrid);
 
             ForceUpdateProjection();
         }
@@ -760,14 +781,14 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private TopConnection GetCounterparty(BaseConnection baseConnection, out Subgrid topSubgrid)
         {
-            topSubgrid = Subgrids[baseConnection.TopLocation.GridIndex];
+            topSubgrid = subgrids[baseConnection.TopLocation.GridIndex];
             return topSubgrid.TopConnections[baseConnection.TopLocation.Position];
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private BaseConnection GetCounterparty(TopConnection topConnection, out Subgrid baseSubgrid)
         {
-            baseSubgrid = Subgrids[topConnection.BaseLocation.GridIndex];
+            baseSubgrid = subgrids[topConnection.BaseLocation.GridIndex];
             return baseSubgrid.BaseConnections[topConnection.BaseLocation.Position];
         }
 
@@ -803,6 +824,9 @@ namespace MultigridProjector.Logic
 
         private void UpdateMechanicalConnections()
         {
+            if (subgrids.Count < 1)
+                return;
+
             foreach (var subgrid in SupportedSubgrids)
                 UpdateSubgridConnections(subgrid);
 
@@ -1114,18 +1138,25 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         [ServerOnly]
         public void BuildInternal(Vector3I previewCubeBlockPosition, long owner, long builder, bool requestInstant, long builtBy)
         {
-            if (!Initialized || Projector.Closed || Subgrids.Count == 0)
+            if (!Initialized || Projector.Closed)
                 return;
 
             // Allow welding only on the first subgrid if the client does not have the MGP plugin installed or an MGP unaware mod sends in a request
             var subgridIndex = builtBy >= 0 && builtBy < GridCount ? (int) builtBy : 0;
 
             // Find the subgrid to build on
-            var subgrid = Subgrids[subgridIndex];
+            Subgrid subgrid;
+            using (subgridsLock.Read())
+            {
+                if (subgridIndex < 0 || subgridIndex >= subgrids.Count)
+                    return;
+
+                subgrid = subgrids[subgridIndex];
+            }
+
+            // Preview (projected) grid
             var previewGrid = subgrid.PreviewGrid;
             if (previewGrid == null)
-                return;
-            if (!subgrid.HasBuilt)
                 return;
 
             // The subgrid must have a built grid registered already (they are registered as top/base blocks are built)
@@ -1133,10 +1164,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             using (subgrid.BuiltGridLock.Read())
             {
                 builtGrid = subgrid.BuiltGrid;
+                if (builtGrid == null)
+                    return;
             }
-
-            if (builtGrid == null)
-                return;
 
             // Sanity check: The latest known block states must allow for welding the block, ignore the build request if the block is unconfirmed
             if (!subgrid.HasBuildableBlockAtPosition(previewCubeBlockPosition))
@@ -1162,7 +1192,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             // Allow rebuilding the blueprint without EntityId collisions without power-cycling the projector,
             // relies on the detection of cutting down the built grids by the lack of functional blocks, see
-            // where _requestRemap is set to true
+            // where requestRemap is set to true
             if (requestRemap && previewFatBlock != null)
             {
                 requestRemap = false;
@@ -1242,15 +1272,20 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             fallback = false;
 
-            // The subgrid being built
-            if (gridIndex < 0 || gridIndex >= Subgrids.Count)
-                return BuildCheckResult.NotFound;
+            // Subgrid
+            Subgrid subgrid;
+            using (subgridsLock.Read())
+            {
+                if (gridIndex < 0 || gridIndex >= subgrids.Count)
+                    return BuildCheckResult.NotFound;
 
+                subgrid = subgrids[gridIndex];
+                if (!subgrid.Supported)
+                    return BuildCheckResult.NotWeldable;
+            }
+
+            // Must have a built grid
             MyCubeGrid builtGrid;
-            var subgrid = Subgrids[gridIndex];
-            if (!subgrid.Supported)
-                return BuildCheckResult.NotWeldable;
-
             using (subgrid.BuiltGridLock.Read())
             {
                 builtGrid = subgrid.BuiltGrid;
@@ -1311,16 +1346,18 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void FindProjectedBlock(Vector3D center, Vector3D reachFarPoint, ref MyWelder.ProjectionRaycastData raycastData)
+        private void FindProjectedBlock(Vector3D center, Vector3D reachFarPoint, ref MyWelder.ProjectionRaycastData raycastData)
         {
             if (!Initialized || Projector.Closed)
                 return;
 
             // Get intersecting grids from all preview grids
             // FIXME: Optimization would be to intersect only with the ones with a bounding box/sphere inside reachFarPoint of the center
-            var cubes = Subgrids
-                .Where(subgrid => subgrid.HasBuilt)
-                .SelectMany(subgrid => subgrid.PreviewGrid.RayCastBlocksAllOrdered(center, reachFarPoint)).ToList();
+            List<MyCube> cubes;
+            using (subgridsLock.Read())
+                cubes = SupportedSubgrids
+                    .Where(subgrid => subgrid.HasBuilt)
+                    .SelectMany(subgrid => subgrid.PreviewGrid.RayCastBlocksAllOrdered(center, reachFarPoint)).ToList();
 
             // Sort cubes by farthest to closest
             var cubeDistances = cubes
@@ -1448,27 +1485,27 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         // Based on the original code, but without taking up PCU for the projection
         public void InitializeClipboard()
         {
-            if (Clipboard.IsActive || Projector.IsActivating)
+            if (clipboard.IsActive || Projector.IsActivating)
                 return;
 
-            Clipboard.ResetGridOrientation();
+            clipboard.ResetGridOrientation();
 
-            var gridBuilders = Clipboard.CopiedGrids;
+            var gridBuilders = clipboard.CopiedGrids;
             if (!EnsureBuildableUnderLimits(gridBuilders))
                 return;
 
             Projector.SetIsActivating(true);
-            Clipboard.Activate(() =>
+            clipboard.Activate(() =>
             {
-                Clipboard.PreviewGrids?.SetProjector(Projector);
+                clipboard.PreviewGrids?.SetProjector(Projector);
 
                 Projector.SetForceUpdateProjection(true);
                 Projector.SetShouldUpdateTexts(true);
                 Projector.SetShouldResetBuildable(true);
 
-                Clipboard.ActuallyTestPlacement();
+                clipboard.ActuallyTestPlacement();
 
-                Projector.SetRotation(Clipboard, Projector.GetProjectionRotation());
+                Projector.SetRotation(clipboard, Projector.GetProjectionRotation());
                 Projector.NeedsUpdate |= MyEntityUpdateEnum.EACH_FRAME | MyEntityUpdateEnum.EACH_100TH_FRAME;
                 Projector.SetIsActivating(false);
             });
@@ -1530,7 +1567,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 subgrid.IsConnectedToProjector = false;
 
             // Flood fill along the connected mechanical connections
-            Subgrids[0].IsConnectedToProjector = true;
+            subgrids[0].IsConnectedToProjector = true;
             var supportedSubgridCount = SupportedSubgrids.Count();
             for (var connectedSubgrids = 1; connectedSubgrids < supportedSubgridCount;)
             {
@@ -1704,8 +1741,8 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             if (!keepProjection)
             {
-                Clipboard.Deactivate();
-                Clipboard.Clear();
+                clipboard.Deactivate();
+                clipboard.Clear();
                 Projector.SetOriginalGridBuilders(null);
             }
 
@@ -1827,6 +1864,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return true;
 
             projection.FindProjectedBlock(center, reachFarPoint, ref result);
+
             return false;
         }
 
