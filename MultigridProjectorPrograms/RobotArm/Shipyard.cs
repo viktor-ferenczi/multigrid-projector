@@ -85,14 +85,19 @@ namespace MultigridProjectorPrograms.RobotArm
 
         public void Update(IMyTextPanel lcdDetails, IMyTextPanel lcdStatus, IMyTextPanel lcdTimer)
         {
-            var subgridCount = mgp.GetSubgridCount(projector.EntityId);
-            if (!projector.Enabled || !mgp.Available || subgridCount < 1)
-            {
-                if (subgrids.Count == 0)
-                    return;
+            if (!mgp.Available)
+                return;
 
-                lcdDetails?.WriteText("Completed");
-                lcdStatus?.WriteText("");
+            var subgridCount = mgp.GetSubgridCount(projector.EntityId);
+            if (!projector.Enabled || subgridCount < 1)
+            {
+                if (totalTicks > 0)
+                {
+                    // Build finished
+                    lcdDetails?.WriteText("Completed");
+                    lcdStatus?.WriteText("");
+                    totalTicks = 0;
+                }
 
                 Reset();
 
