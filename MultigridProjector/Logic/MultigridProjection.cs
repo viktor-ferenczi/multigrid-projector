@@ -975,6 +975,7 @@ namespace MultigridProjector.Logic
 
             // Attach the existing top part to the newly created base
             var baseBlock = baseGrid.CubeBlocks.First().FatBlock as MyMechanicalConnectionBlockBase;
+            baseSubgrid.AddBlockToGroups(baseBlock);
             try
             {
                 baseBlock.Attach(topConnection.Block);

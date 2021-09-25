@@ -590,7 +590,7 @@ namespace MultigridProjector.Logic
         #region Named Groups
 
         [ServerOnly]
-        private void AddBlockToGroups(MyTerminalBlock terminalBlock)
+        public void AddBlockToGroups(MyTerminalBlock terminalBlock)
         {
             if (PreviewGrid == null || terminalBlock.CubeGrid.Closed)
                 return;
