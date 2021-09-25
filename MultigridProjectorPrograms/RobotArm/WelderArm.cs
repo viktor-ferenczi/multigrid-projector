@@ -65,7 +65,7 @@ namespace MultigridProjectorPrograms.RobotArm
             welder.Enabled = false;
         }
 
-        public void Reset(int countdown = 0)
+        public void Reset(int countdown = int.MaxValue)
         {
             State = WelderArmState.Retracting;
             TargetLocation = new BlockLocation();
