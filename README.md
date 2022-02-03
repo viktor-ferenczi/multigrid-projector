@@ -100,7 +100,7 @@ Thank you and enjoy!
 
 ### Prerequisites
 
-- .NET Framework 4.6.1
+- .NET Framework 4.8
 - [Space Engineers](https://spaceengineersgame.com)
 - [Torch](https://torchapi.net) extracted and executed once
 - [JetBrains Rider](https://jetbrains.com) or Visual Studio

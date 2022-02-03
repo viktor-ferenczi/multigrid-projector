@@ -9,7 +9,7 @@ using VRage.Game;
 namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
-    [EnsureOriginalTorch(typeof(MyProjectorBase), "GetObjectBuilderCubeBlock", null, "6b6ba5b3")]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "GetObjectBuilderCubeBlock", null, "66247c3b")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_GetObjectBuilderCubeBlock
