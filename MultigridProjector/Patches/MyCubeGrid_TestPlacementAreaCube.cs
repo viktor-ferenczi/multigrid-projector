@@ -25,6 +25,7 @@ namespace MultigridProjector.Patches
             typeof(MyEntity),
             typeof(bool),
             typeof(bool),
+            typeof(bool),
         },
         new []
         {
@@ -39,8 +40,9 @@ namespace MultigridProjector.Patches
             ArgumentType.Normal,
             ArgumentType.Normal,
             ArgumentType.Normal,
+            ArgumentType.Normal,
         })]
-    [EnsureOriginal("e8b488ba")]
+    [EnsureOriginal("e93c5c27")]
     // ReSharper disable once InconsistentNaming
     public class MyCubeGrid_TestPlacementAreaCube
     {

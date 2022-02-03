@@ -11,7 +11,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyProjectorBase))]
     [HarmonyPatch("CanBuild", typeof(MySlimBlock), typeof(bool))]
-    [EnsureOriginal("9e4488d4")]
+    [EnsureOriginal("52ad3019")]
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_CanBuild
     {

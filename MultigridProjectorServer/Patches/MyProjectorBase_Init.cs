@@ -10,7 +10,7 @@ using VRage.Game;
 namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
-    [EnsureOriginalTorch(typeof(MyProjectorBase), "Init", null, "8eb8034b")]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "Init", null, "aaf571e6")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_Init

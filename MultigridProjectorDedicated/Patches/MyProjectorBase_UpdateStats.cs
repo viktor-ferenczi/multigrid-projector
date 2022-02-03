@@ -9,7 +9,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyProjectorBase))]
     [HarmonyPatch("UpdateStats")]
-    [EnsureOriginal("ee9fdb75")]
+    [EnsureOriginal("15addd6e")]
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_UpdateStats
     {

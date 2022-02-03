@@ -9,7 +9,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyProjectorBase))]
     [HarmonyPatch("previewGrid_OnBlockAdded")]
-    [EnsureOriginal("95f13809")]
+    [EnsureOriginal("6238b43c")]
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_OnBlockAdded
     {
