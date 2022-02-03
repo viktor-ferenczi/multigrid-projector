@@ -63,7 +63,7 @@
             <HintPath>..\GameBin64\VRage.Game.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Input, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-			<HintPath>..\GameBin64\DedicatedServer64\VRage.Input.dll</HintPath>
+			<HintPath>..\GameBin64\VRage.Input.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Library, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
             <HintPath>..\GameBin64\VRage.Library.dll</HintPath>
