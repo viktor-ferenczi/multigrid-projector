@@ -111,7 +111,7 @@
       </Content>
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="Lib.Harmony" Version="2.0.4" />
+      <PackageReference Include="Lib.Harmony" Version="2.2.0" />
       <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     </ItemGroup>
     <ItemGroup>
