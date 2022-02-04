@@ -36,10 +36,10 @@ namespace MultigridProjector.Extensions
             return (List<MyBlockGroup>)BlockGroupsInfo.GetValue(grid);
         }
         
-        private static readonly MethodInfo AddGroupInfo = AccessTools.DeclaredMethod(typeof(MyCubeGrid), "AddGroup", new []{typeof(MyBlockGroup)});
-        public static void AddGroup(this MyCubeGrid obj, MyBlockGroup group)
+        private static readonly MethodInfo AddGroupInfo = AccessTools.DeclaredMethod(typeof(MyCubeGrid), "AddGroup", new []{typeof(MyBlockGroup), typeof(bool)});
+        public static void AddGroup(this MyCubeGrid obj, MyBlockGroup group, bool unionSameNameGroups = true)
         {
-            AddGroupInfo.Invoke(obj, new object[] {@group});
+            AddGroupInfo.Invoke(obj, new object[] {@group, unionSameNameGroups});
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
