@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using HarmonyLib;
 using MultigridProjector.Extensions;
 using Sandbox.Game.Multiplayer;
@@ -14,6 +15,8 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_Remap
     {
+        private static readonly MethodInfo SetNewBlueprintInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint");
+
         [ClientOnly]
         // ReSharper disable once InconsistentNaming
         private static bool Prefix(MyProjectorBase __instance)
@@ -31,8 +34,7 @@ namespace MultigridProjector.Patches
                 var gridBuilders = projector.GetOriginalGridBuilders();
                 if (gridBuilders != null && gridBuilders.Count > 0)
                 {
-                    var methodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint");
-                    methodInfo.Invoke(projector, new object[] {gridBuilders});
+                    SetNewBlueprintInfo.Invoke(projector, new object[] {gridBuilders});
                 }
                 else
                 {
