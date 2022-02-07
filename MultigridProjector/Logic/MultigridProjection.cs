@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -49,6 +50,7 @@ namespace MultigridProjector.Logic
         // Subgrids of the projection, associated built grids as they appear, block status information, statistics
         private readonly List<Subgrid> subgrids = new List<Subgrid>();
         private readonly RwLock subgridsLock = new RwLock();
+
         public Subgrid[] GetSupportedSubgrids()
         {
             using (subgridsLock.Read())
@@ -672,7 +674,7 @@ namespace MultigridProjector.Logic
 
                 foreach (var subgrid in SupportedSubgrids)
                 {
-                    if(subgrid.Positioned)
+                    if (subgrid.Positioned)
                         continue;
 
                     var gridBuilder = subgrid.GridBuilder;
@@ -750,7 +752,7 @@ namespace MultigridProjector.Logic
 
             var yaml = GetYaml(false);
             PluginLog.Error($"Projection with the above problem:\r\n{yaml}");
-            ((IMyProjector) Projector).Enabled = false;
+            ((IMyProjector)Projector).Enabled = false;
         }
 
         private void ShouldUpdateProjection()
@@ -950,7 +952,7 @@ namespace MultigridProjector.Logic
                 return;
 
             // Clone the block builder to prevent damaging the original blueprint
-            baseBlockBuilder = (MyObjectBuilder_CubeBlock) baseBlockBuilder.Clone();
+            baseBlockBuilder = (MyObjectBuilder_CubeBlock)baseBlockBuilder.Clone();
 
             // Make sure no EntityId collision will occur on re-welding a block on a previously disconnected (split)
             // part of a built subgrid which has not been destroyed (or garbage collected) yet
@@ -1093,7 +1095,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
                 case MyMotorStator motorStator:
                     motorStator.SetAngleToPhysics();
-                    motorStator.SetValueFloat("Displacement", ((MyMotorStator) baseConnection.Preview).DummyDisplacement);
+                    motorStator.SetValueFloat("Displacement", ((MyMotorStator)baseConnection.Preview).DummyDisplacement);
                     break;
             }
         }
@@ -1145,13 +1147,14 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return;
 
             // Allow welding only on the first subgrid if the client does not have the MGP plugin installed or an MGP unaware mod sends in a request
-            var subgridIndex = builtBy >= 0 && builtBy < GridCount ? (int) builtBy : 0;
+            var subgridIndex = builtBy >= 0 && builtBy < GridCount ? (int)builtBy : 0;
+            Debug.Assert(subgridIndex >= 0);
 
             // Find the subgrid to build on
             Subgrid subgrid;
             using (subgridsLock.Read())
             {
-                if (subgridIndex < 0 || subgridIndex >= subgrids.Count)
+                if (subgridIndex >= subgrids.Count)
                     return;
 
                 subgrid = subgrids[subgridIndex];
@@ -1227,7 +1230,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return;
 
             // Clone the block builder to prevent damaging the original blueprint
-            blockBuilder = (MyObjectBuilder_CubeBlock) blockBuilder.Clone();
+            blockBuilder = (MyObjectBuilder_CubeBlock)blockBuilder.Clone();
 
             // Make sure no EntityId collision will occur on re-welding a block on a previously disconnected (split)
             // part of a built subgrid which has not been destroyed (or garbage collected) yet
@@ -1243,7 +1246,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             // FIXME: This does not belong here, it should go into MyObjectBuilder_BatteryBlock.SetupForProjector. Maybe patch that instead!
             if (MyDefinitionManagerBase.Static != null && blockBuilder is MyObjectBuilder_BatteryBlock batteryBuilder)
             {
-                var cubeBlockDefinition = (MyBatteryBlockDefinition) MyDefinitionManager.Static.GetCubeBlockDefinition(batteryBuilder);
+                var cubeBlockDefinition = (MyBatteryBlockDefinition)MyDefinitionManager.Static.GetCubeBlockDefinition(batteryBuilder);
                 batteryBuilder.CurrentStoredPower = cubeBlockDefinition.InitialStoredPowerRatio * cubeBlockDefinition.MaxStoredPower;
             }
 
@@ -1324,7 +1327,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             if (!checkHavokIntersections)
                 return BuildCheckResult.OK;
 
-            var gridPlacementSettings = new MyGridPlacementSettings {SnapMode = SnapMode.OneFreeAxis};
+            var gridPlacementSettings = new MyGridPlacementSettings { SnapMode = SnapMode.OneFreeAxis };
             if (MyCubeGrid.TestPlacementAreaCube(builtGrid, ref gridPlacementSettings, min, max, previewBlock.Orientation, previewBlock.BlockDefinition, ignoredEntity: builtGrid, isProjected: true))
                 return BuildCheckResult.OK;
 
@@ -1414,8 +1417,8 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             // Build head of the right model and size according to the top connection's preview block
             var topDefinition = topConnection.Preview.BlockDefinition;
-            var constructorInfo = AccessTools.Constructor(typeof(MyCubeBlockDefinitionGroup));
-            var definitionGroup = (MyCubeBlockDefinitionGroup) constructorInfo.Invoke(new object[] { });
+            var constructorInfo = Validation.EnsureInfo(AccessTools.Constructor(typeof(MyCubeBlockDefinitionGroup)));
+            var definitionGroup = (MyCubeBlockDefinitionGroup)constructorInfo.Invoke(new object[] { });
             definitionGroup[MyCubeSize.Small] = topDefinition;
             definitionGroup[MyCubeSize.Large] = topDefinition;
 
@@ -1596,6 +1599,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                             baseConnection.ClearBuiltBlock();
                             continue;
                         }
+
                         if (topConnection.Block.CubeGrid.EntityId != topSubgrid.BuiltGrid.EntityId)
                         {
                             topConnection.ClearBuiltBlock();
@@ -1642,7 +1646,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             // Fix the inconsistent remapping the original implementation has done, this is
             // needed to be able to load back the projection properly from a saved world
-            var builderCubeBlock = (MyObjectBuilder_ProjectorBase) blockBuilder;
+            var builderCubeBlock = (MyObjectBuilder_ProjectorBase)blockBuilder;
             builderCubeBlock.ProjectedGrids = gridBuilders.Clone();
             MyEntities.RemapObjectBuilderCollection(builderCubeBlock.ProjectedGrids);
         }
@@ -1785,7 +1789,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 catch (Exception e)
                 {
                     PluginLog.Error(e, "Failed to initialize multigrid projection - Removing blueprint to avoid spamming the log.");
-                    ((IMyProjector) projector).SetProjectedGrid(null);
+                    ((IMyProjector)projector).SetProjectedGrid(null);
                     return false;
                 }
 
@@ -1806,7 +1810,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             catch (Exception e)
             {
                 PluginLog.Error(e, "UpdateAfterSimulation of multigrid projection failed - Removing blueprint to avoid spamming the log.");
-                ((IMyProjector) projector).SetProjectedGrid(null);
+                ((IMyProjector)projector).SetProjectedGrid(null);
             }
 
             // Based on the original code

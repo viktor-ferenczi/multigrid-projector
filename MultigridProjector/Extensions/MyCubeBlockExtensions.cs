@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
+using MultigridProjector.Utilities;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
@@ -37,7 +38,7 @@ namespace MultigridProjector.Extensions
                    previewBlock.Orientation.Up == blockBuilder.BlockOrientation.Up;
         }
         
-        private static readonly MethodInfo RecreateTopInfo = AccessTools.DeclaredMethod(typeof(MyMechanicalConnectionBlockBase), "RecreateTop");
+        private static readonly MethodInfo RecreateTopInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyMechanicalConnectionBlockBase), "RecreateTop"));
         public static void RecreateTop(this MyMechanicalConnectionBlockBase stator, long? builderId = null, bool smallToLarge = false, bool instantBuild = false)
         {
             RecreateTopInfo.Invoke(stator, new object[] {builderId, smallToLarge, instantBuild});

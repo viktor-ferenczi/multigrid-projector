@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using HarmonyLib;
+using MultigridProjector.Utilities;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.GameSystems;
@@ -24,19 +25,19 @@ namespace MultigridProjector.Extensions
             return $"{grid.GetSafeName()} [{grid.EntityId}]";
         }
 
-        private static readonly MethodInfo RayCastBlocksAllOrderedInfo = AccessTools.DeclaredMethod(typeof(MyCubeGrid), "RayCastBlocksAllOrdered");
+        private static readonly MethodInfo RayCastBlocksAllOrderedInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyCubeGrid), "RayCastBlocksAllOrdered"));
         public static List<MyCube> RayCastBlocksAllOrdered(this MyCubeGrid obj, Vector3D worldStart, Vector3D worldEnd)
         {
             return RayCastBlocksAllOrderedInfo.Invoke(obj, new object[] {worldStart, worldEnd}) as List<MyCube>;
         }
 
-        private static readonly FieldInfo BlockGroupsInfo = AccessTools.Field(typeof(MyCubeGrid), "BlockGroups");
+        private static readonly FieldInfo BlockGroupsInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyCubeGrid), "BlockGroups"));
         public static List<MyBlockGroup> GetBlockGroups(this MyCubeGrid grid)
         {
             return (List<MyBlockGroup>)BlockGroupsInfo.GetValue(grid);
         }
         
-        private static readonly MethodInfo AddGroupInfo = AccessTools.DeclaredMethod(typeof(MyCubeGrid), "AddGroup", new []{typeof(MyBlockGroup), typeof(bool)});
+        private static readonly MethodInfo AddGroupInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyCubeGrid), "AddGroup", new []{typeof(MyBlockGroup), typeof(bool)}));
         public static void AddGroup(this MyCubeGrid obj, MyBlockGroup group, bool unionSameNameGroups = true)
         {
             AddGroupInfo.Invoke(obj, new object[] {@group, unionSameNameGroups});

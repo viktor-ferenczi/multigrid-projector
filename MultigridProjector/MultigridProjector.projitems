@@ -32,6 +32,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\MultigridProjectorConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\OrientationAlgebra.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\PluginLog.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\Validation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\RwLock.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\RwLockDictionary.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\DictionaryExtensions.cs" />
