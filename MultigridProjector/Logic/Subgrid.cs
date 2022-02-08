@@ -598,8 +598,11 @@ namespace MultigridProjector.Logic
 
             // Add block to named groups
             var position = PreviewGrid.WorldToGridInteger(terminalBlock.SlimBlock.WorldPosition);
-            foreach (var blockGroup in GridBuilder.BlockGroups.Where(blockGroup => blockGroup.Blocks.Contains(position)))
+            foreach (var blockGroup in GridBuilder.BlockGroups)
             {
+                if (!blockGroup.Blocks.Contains(position))
+                    continue;
+
                 var newBlockGroup = MyBlockGroupExtensions.NewBlockGroup(blockGroup.Name);
                 newBlockGroup.GetTerminalBlocks().Add(terminalBlock);
                 terminalBlock.CubeGrid.AddGroup(newBlockGroup);
