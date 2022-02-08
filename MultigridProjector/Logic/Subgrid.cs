@@ -78,18 +78,9 @@ namespace MultigridProjector.Logic
             GridBuilder = projection.GridBuilders[index];
             PreviewGrid = projection.PreviewGrids[index];
 
-            DisableFunctionalBlocks();
             CreateBlockModels();
             CollectInitialStats();
             FindMechanicalConnections(projection);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private void DisableFunctionalBlocks()
-        {
-            // Disable all functional blocks in the preview to avoid side effects, prevents ghost subgrids from projectors
-            foreach (var functionalBlock in PreviewGrid.GetFatBlocks<MyFunctionalBlock>())
-                functionalBlock.Enabled = false;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

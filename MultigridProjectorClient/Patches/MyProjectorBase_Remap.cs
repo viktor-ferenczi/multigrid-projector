@@ -15,7 +15,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_Remap
     {
-        private static readonly MethodInfo SetNewBlueprintInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint");
+        private static readonly MethodInfo SetNewBlueprintInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint"));
 
         [ClientOnly]
         // ReSharper disable once InconsistentNaming

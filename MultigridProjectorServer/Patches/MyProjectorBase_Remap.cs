@@ -14,7 +14,7 @@ namespace MultigridProjectorServer.Patches
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_Remap
     {
-        private static readonly MethodInfo SetNewBlueprintInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint");
+        private static readonly MethodInfo SetNewBlueprintInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint"));
 
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof (MyProjectorBase).GetMethod("Remap", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes.Add(typeof (MyProjectorBase_Remap).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
         

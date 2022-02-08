@@ -18,7 +18,7 @@ namespace MultigridProjectorServer.Patches
         public static void Patch(PatchContext ctx) => ctx.GetPattern(typeof(MyProjectorClipboard).GetMethod("UpdateGridTransformations", BindingFlags.DeclaredOnly | BindingFlags.DeclaredOnly | BindingFlags.Instance | BindingFlags.NonPublic)).Prefixes
             .Add(typeof(MyProjectorClipboard_UpdateGridTransformations).GetMethod(nameof(Prefix), BindingFlags.Static | BindingFlags.NonPublic));
 
-        private static readonly FieldInfo ProjectorFieldInfo = AccessTools.Field(typeof(MyProjectorClipboard), "m_projector");
+        private static readonly FieldInfo ProjectorFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorClipboard), "m_projector"));
 
         [ServerOnly]
         // ReSharper disable once UnusedMember.Local

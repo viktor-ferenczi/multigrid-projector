@@ -19,77 +19,77 @@ namespace MultigridProjector.Extensions
     public static class MyProjectorBaseExtensions
     {
         // ReSharper disable once InconsistentNaming
-        private static readonly MethodInfo MyProjector_IsWorkingChangedMethodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "MyProjector_IsWorkingChanged");
+        private static readonly MethodInfo MyProjector_IsWorkingChangedMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "MyProjector_IsWorkingChanged"));
 
         public static void MyProjector_IsWorkingChanged(this MyProjectorBase projector, MyCubeBlock obj)
         {
             MyProjector_IsWorkingChangedMethodInfo.Invoke(projector, new object[] {obj});
         }
 
-        private static readonly MethodInfo IsProjectingMethodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "IsProjecting");
+        private static readonly MethodInfo IsProjectingMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "IsProjecting"));
 
         public static bool IsProjecting(this MyProjectorBase obj)
         {
             return (bool) IsProjectingMethodInfo.Invoke(obj, new object[] { });
         }
 
-        private static readonly MethodInfo RequestRemoveProjectionMethodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "RequestRemoveProjection");
+        private static readonly MethodInfo RequestRemoveProjectionMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "RequestRemoveProjection"));
 
         public static void RequestRemoveProjection(this MyProjectorBase obj)
         {
             RequestRemoveProjectionMethodInfo.Invoke(obj, new object[] { });
         }
 
-        private static readonly MethodInfo RemoveProjectionMethodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "RemoveProjection");
+        private static readonly MethodInfo RemoveProjectionMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "RemoveProjection"));
 
         public static void RemoveProjection(this MyProjectorBase obj, bool keepProjection)
         {
             RemoveProjectionMethodInfo.Invoke(obj, new object[] {keepProjection});
         }
 
-        private static readonly MethodInfo SendNewBlueprintMethodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SendNewBlueprint");
+        private static readonly MethodInfo SendNewBlueprintMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SendNewBlueprint"));
 
         public static void SendNewBlueprint(this MyProjectorBase obj, List<MyObjectBuilder_CubeGrid> projectedGrids)
         {
             SendNewBlueprintMethodInfo.Invoke(obj, new object[] {projectedGrids});
         }
 
-        private static readonly FieldInfo ClipboardFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_clipboard");
+        private static readonly FieldInfo ClipboardFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_clipboard"));
 
         public static MyProjectorClipboard GetClipboard(this MyProjectorBase projector)
         {
             return ClipboardFieldInfo.GetValue(projector) as MyProjectorClipboard;
         }
 
-        private static readonly FieldInfo BuildableBlocksCountFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_buildableBlocksCount");
+        private static readonly FieldInfo BuildableBlocksCountFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_buildableBlocksCount"));
 
         public static void SetBuildableBlocksCount(this MyProjectorBase projector, int value)
         {
             BuildableBlocksCountFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo ShowOnlyBuildableFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_showOnlyBuildable");
+        private static readonly FieldInfo ShowOnlyBuildableFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_showOnlyBuildable"));
 
         public static bool GetShowOnlyBuildable(this MyProjectorBase projector)
         {
             return (bool) ShowOnlyBuildableFieldInfo.GetValue(projector);
         }
 
-        private static readonly FieldInfo KeepProjectionFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_keepProjection");
+        private static readonly FieldInfo KeepProjectionFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_keepProjection"));
 
         public static bool GetKeepProjection(this MyProjectorBase projector)
         {
             return (Sync<bool, SyncDirection.BothWays>) KeepProjectionFieldInfo.GetValue(projector);
         }
 
-        private static readonly FieldInfo InstantBuildingEnabledFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_instantBuildingEnabled");
+        private static readonly FieldInfo InstantBuildingEnabledFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_instantBuildingEnabled"));
 
         public static bool GetInstantBuildingEnabled(this MyProjectorBase projector)
         {
             return (Sync<bool, SyncDirection.BothWays>) InstantBuildingEnabledFieldInfo.GetValue(projector);
         }
 
-        private static readonly FieldInfo ShouldUpdateTextsFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_shouldUpdateTexts");
+        private static readonly FieldInfo ShouldUpdateTextsFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_shouldUpdateTexts"));
 
         public static bool GetShouldUpdateTexts(this MyProjectorBase projector)
         {
@@ -101,63 +101,63 @@ namespace MultigridProjector.Extensions
             ShouldUpdateTextsFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo RemainingBlocksFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_remainingBlocks");
+        private static readonly FieldInfo RemainingBlocksFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_remainingBlocks"));
 
         public static void SetRemainingBlocks(this MyProjectorBase projector, int value)
         {
             RemainingBlocksFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly MethodInfo CanBuildMethodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "CanBuild", new[] {typeof(MySlimBlock)});
+        private static readonly MethodInfo CanBuildMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "CanBuild", new[] {typeof(MySlimBlock)}));
 
         public static bool CanBuild(this MyProjectorBase projector, MySlimBlock cubeBlock)
         {
             return (bool) CanBuildMethodInfo.Invoke(projector, new object[] {cubeBlock});
         }
 
-        private static readonly MethodInfo UpdateSoundsMethodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "UpdateSounds");
+        private static readonly MethodInfo UpdateSoundsMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "UpdateSounds"));
 
         public static void UpdateSounds(this MyProjectorBase projector)
         {
             UpdateSoundsMethodInfo.Invoke(projector, new object[] { });
         }
 
-        private static readonly MethodInfo UpdateTextMethodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "UpdateText");
+        private static readonly MethodInfo UpdateTextMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "UpdateText"));
 
         public static void UpdateText(this MyProjectorBase projector)
         {
             UpdateTextMethodInfo.Invoke(projector, new object[] { });
         }
 
-        private static readonly FieldInfo StatsDirtyFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_statsDirty");
+        private static readonly FieldInfo StatsDirtyFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_statsDirty"));
 
         public static void SetStatsDirty(this MyProjectorBase projector, bool value)
         {
             StatsDirtyFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo TotalBlocksFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_totalBlocks");
+        private static readonly FieldInfo TotalBlocksFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_totalBlocks"));
 
         public static void SetTotalBlocks(this MyProjectorBase projector, int value)
         {
             TotalBlocksFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo RemainingArmorBlocksFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_remainingArmorBlocks");
+        private static readonly FieldInfo RemainingArmorBlocksFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_remainingArmorBlocks"));
 
         public static void SetRemainingArmorBlocks(this MyProjectorBase projector, int value)
         {
             RemainingArmorBlocksFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo RemainingBlocksPerTypeFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_remainingBlocksPerType");
+        private static readonly FieldInfo RemainingBlocksPerTypeFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_remainingBlocksPerType"));
 
         public static Dictionary<MyCubeBlockDefinition, int> GetRemainingBlocksPerType(this MyProjectorBase projector)
         {
             return (Dictionary<MyCubeBlockDefinition, int>) RemainingBlocksPerTypeFieldInfo.GetValue(projector);
         }
 
-        private static readonly FieldInfo OriginalGridBuildersFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_originalGridBuilders");
+        private static readonly FieldInfo OriginalGridBuildersFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_originalGridBuilders"));
 
         public static List<MyObjectBuilder_CubeGrid> GetOriginalGridBuilders(this MyProjectorBase projector)
         {
@@ -169,7 +169,7 @@ namespace MultigridProjector.Extensions
             OriginalGridBuildersFieldInfo.SetValue(projector, gridBuilders);
         }
 
-        private static readonly FieldInfo ProjectionTimerFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_projectionTimer");
+        private static readonly FieldInfo ProjectionTimerFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_projectionTimer"));
 
         public static int GetProjectionTimer(this MyProjectorBase projector)
         {
@@ -181,21 +181,21 @@ namespace MultigridProjector.Extensions
             ProjectionTimerFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo HiddenBlockFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_hiddenBlock");
+        private static readonly FieldInfo HiddenBlockFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_hiddenBlock"));
 
         public static void SetHiddenBlock(this MyProjectorBase projector, MySlimBlock block)
         {
             HiddenBlockFieldInfo.SetValue(projector, block);
         }
 
-        private static readonly FieldInfo TierCanProjectFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_tierCanProject");
+        private static readonly FieldInfo TierCanProjectFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_tierCanProject"));
 
         public static bool GetTierCanProject(this MyProjectorBase obj)
         {
             return (bool) TierCanProjectFieldInfo.GetValue(obj);
         }
 
-        private static readonly FieldInfo RemoveRequestedFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_removeRequested");
+        private static readonly FieldInfo RemoveRequestedFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_removeRequested"));
 
         public static bool GetRemoveRequested(this MyProjectorBase projector)
         {
@@ -207,7 +207,7 @@ namespace MultigridProjector.Extensions
             RemoveRequestedFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo ShouldResetBuildableFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_shouldResetBuildable");
+        private static readonly FieldInfo ShouldResetBuildableFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_shouldResetBuildable"));
 
         public static bool GetShouldResetBuildable(this MyProjectorBase projector)
         {
@@ -219,7 +219,7 @@ namespace MultigridProjector.Extensions
             ShouldResetBuildableFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo ForceUpdateProjectionFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_forceUpdateProjection");
+        private static readonly FieldInfo ForceUpdateProjectionFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_forceUpdateProjection"));
 
         public static bool GetForceUpdateProjection(this MyProjectorBase projector)
         {
@@ -231,7 +231,7 @@ namespace MultigridProjector.Extensions
             ForceUpdateProjectionFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo ShouldUpdateProjectionFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_shouldUpdateProjection");
+        private static readonly FieldInfo ShouldUpdateProjectionFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_shouldUpdateProjection"));
 
         public static bool GetShouldUpdateProjection(this MyProjectorBase projector)
         {
@@ -243,7 +243,7 @@ namespace MultigridProjector.Extensions
             ShouldUpdateProjectionFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo LastUpdateFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_lastUpdate");
+        private static readonly FieldInfo LastUpdateFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_lastUpdate"));
 
         public static int GetLastUpdate(this MyProjectorBase projector)
         {
@@ -255,35 +255,35 @@ namespace MultigridProjector.Extensions
             LastUpdateFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly FieldInfo ProjectionRotationFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_projectionRotation");
+        private static readonly FieldInfo ProjectionRotationFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_projectionRotation"));
 
         public static Vector3I GetProjectionRotation(this MyProjectorBase projector)
         {
             return (Vector3I) ProjectionRotationFieldInfo.GetValue(projector);
         }
 
-        private static readonly FieldInfo ProjectionOffsetFieldInfo = AccessTools.Field(typeof(MyProjectorBase), "m_projectionOffset");
+        private static readonly FieldInfo ProjectionOffsetFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_projectionOffset"));
 
         public static Vector3I GetProjectionOffset(this MyProjectorBase projector)
         {
             return (Vector3I) ProjectionOffsetFieldInfo.GetValue(projector);
         }
 
-        private static readonly PropertyInfo IsActivatingFieldInfo = AccessTools.Property(typeof(MyProjectorBase), "IsActivating");
+        private static readonly PropertyInfo IsActivatingFieldInfo = Validation.EnsureInfo(AccessTools.Property(typeof(MyProjectorBase), "IsActivating"));
 
         public static void SetIsActivating(this MyProjectorBase projector, bool value)
         {
             IsActivatingFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly MethodInfo SetTransparencyMethodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetTransparency");
+        private static readonly MethodInfo SetTransparencyMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetTransparency"));
 
         public static void SetTransparency(this MyProjectorBase projector, MySlimBlock cubeBlock, float transparency)
         {
             SetTransparencyMethodInfo.Invoke(projector, new object[] {cubeBlock, transparency});
         }
 
-        private static readonly MethodInfo SetRotationMethodInfo = AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetRotation");
+        private static readonly MethodInfo SetRotationMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetRotation"));
 
         public static void SetRotation(this MyProjectorBase projector, MyGridClipboard clipboard, Vector3I rotation)
         {
