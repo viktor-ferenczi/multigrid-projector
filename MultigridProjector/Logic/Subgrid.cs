@@ -86,16 +86,26 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void CreateBlockModels()
         {
-            var blockBuilders = GridBuilder
-                .CubeBlocks
-                .ToDictionary(bb => (Vector3I) bb.Min);
+            var blockBuilders = new Dictionary<Vector3I, MyObjectBuilder_CubeBlock>();
+            foreach (var block in GridBuilder.CubeBlocks)
+                blockBuilders.Add(block.Min, block);
 
-            Blocks = PreviewGrid
-                .CubeBlocks
-                .Where(previewBlock => blockBuilders.ContainsKey(previewBlock.Min))
-                .ToDictionary(
-                    previewBlock => previewBlock.Position,
-                    previewBlock => new ProjectedBlock(previewBlock, blockBuilders[previewBlock.Min]));
+            var blocks = new Dictionary<Vector3I, ProjectedBlock>();
+            foreach (var previewBlock in PreviewGrid.CubeBlocks)
+            {
+                if (!blockBuilders.ContainsKey(previewBlock.Min))
+                    continue;
+
+                if (blocks.ContainsKey(previewBlock.Position))
+                {
+                    PluginLog.Logger.Warn($"Preview block collision: SubgridIndex: {Index}, Position={previewBlock.Position}, Min={previewBlock.Min}, Name: {previewBlock.FatBlock?.DebugName ?? "Armor"}, Grid: {previewBlock.CubeGrid.DebugName}");
+                    continue;
+                }
+
+                blocks.Add(previewBlock.Position, new ProjectedBlock(previewBlock, blockBuilders[previewBlock.Min]));
+            }
+
+            Blocks = blocks;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
