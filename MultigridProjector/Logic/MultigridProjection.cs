@@ -5,6 +5,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using HarmonyLib;
 using MultigridProjector.Utilities;
 using MultigridProjector.Extensions;
@@ -1351,31 +1352,61 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             return true;
         }
 
+        private const int MaxHandWeldableCubes = 32;
+
+        private class FindProjectedBlockLocals
+        {
+            public readonly MyCube[] Cubes = new MyCube[MaxHandWeldableCubes];
+            public readonly double[] Distances = new double[MaxHandWeldableCubes];
+        }
+
+        private readonly ThreadLocal<FindProjectedBlockLocals> findProjectedBlockLocals = new ThreadLocal<FindProjectedBlockLocals>();
+
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void FindProjectedBlock(Vector3D center, Vector3D reachFarPoint, ref MyWelder.ProjectionRaycastData raycastData)
         {
             if (!Initialized || Projector.Closed)
                 return;
 
-            // Get intersecting grids from all preview grids
-            // FIXME: Optimization would be to intersect only with the ones with a bounding box/sphere inside reachFarPoint of the center
-            List<MyCube> cubes;
-            using (subgridsLock.Read())
-                cubes = SupportedSubgrids
-                    .Where(subgrid => subgrid.HasBuilt)
-                    .SelectMany(subgrid => subgrid.PreviewGrid.RayCastBlocksAllOrdered(center, reachFarPoint)).ToList();
+            // Allocate the working arrays only once per thread to avoid allocations
+            var locals = findProjectedBlockLocals.Value ?? (findProjectedBlockLocals.Value = new FindProjectedBlockLocals());
+            var cubes = locals.Cubes;
+            var distances = locals.Distances;
 
-            // Sort cubes by farthest to closest
-            var cubeDistances = cubes
-                .Enumerate()
-                .Select(p => (p.Index, (p.Value.CubeBlock.WorldPosition - center).LengthSquared()))
-                .ToList();
-            cubeDistances.SortNoAlloc((a, b) => b.Item2.CompareTo(a.Item2));
+            // Get intersecting blocks from all preview grids
+            var count = 0;
+            using (subgridsLock.Read())
+            {
+                foreach (var subgrid in SupportedSubgrids)
+                {
+                    if (!subgrid.HasBuilt)
+                        continue;
+
+                    var hitCubes = subgrid.PreviewGrid.RayCastBlocksAllOrdered(center, reachFarPoint);
+                    foreach (var cube in hitCubes)
+                    {
+                        cubes[count++] = cube;
+                        if (count == MaxHandWeldableCubes)
+                            break;
+                    }
+
+                    if (count == MaxHandWeldableCubes)
+                        break;
+                }
+            }
+
+            // Measure the squared distances of intersected cubes
+            for (var i = 0; i < count; i++)
+                distances[i] = -(cubes[i].CubeBlock.WorldPosition - center).LengthSquared();
+
+            // Sort cubes in place by distance from farthest to closest,
+            // the reverse order is due to negating the distance above
+            Array.Sort(distances, cubes, 0, count);
 
             // Find the first one which can be built
-            foreach (var (cubeIndex, _) in cubeDistances)
+            for (var i = 0; i < count; i++)
             {
-                var slimBlock = cubes[cubeIndex].CubeBlock;
+                var slimBlock = cubes[i].CubeBlock;
                 var buildCheckResult = Projector.CanBuild(slimBlock, true);
 
                 // Bugfix for a bug most likely exists in the original projector/welding code:
@@ -1397,6 +1428,10 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 };
                 break;
             }
+
+            // Remove references to the cubes to allow for GC to clean them later
+            for (var i = 0; i < count; i++)
+                cubes[i] = null;
         }
 
         [ServerOnly]
