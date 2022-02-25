@@ -21,7 +21,7 @@ After enabling the plugin it will be active for all single player worlds you loa
 
 [h2]Server plugins[/h2]
 [list]
-[*] [url=https://torchapi.net/plugins/item/d9359ba0-9a69-41c3-971d-eb5170adb97e]Torch Server[/url] (updated automatically by Torch)
+[*] [url=https://torchapi.com/plugins/view/?guid=d9359ba0-9a69-41c3-971d-eb5170adb97e]Torch Server[/url] (updated automatically by Torch)
 [*] [url=https://www.ferenczi.eu/se/multigrid-projector/]Dedicated Server[/url] (requires manual updating)
 [/list]
 
@@ -31,7 +31,7 @@ After enabling the plugin it will be active for all single player worlds you loa
 [list]
 [*] [url=https://discord.gg/PYPFPGf3Ca]SE Mods Discord[/url]
 [*] [url=https://www.youtube.com/channel/UCc5ar3cW9qoOgdBb1FM_rxQ]YouTube Channel[/url]
-[*] [url=https://torchapi.net/plugins/item/d9359ba0-9a69-41c3-971d-eb5170adb97e]Torch plugin[/url]
+[*] [url=https://torchapi.com/plugins/view/?guid=d9359ba0-9a69-41c3-971d-eb5170adb97e]Torch plugin[/url]
 [*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2420963329]Test world[/url]
 [*] [url=https://github.com/viktor-ferenczi/multigrid-projector]Source code[/url]
 [*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2433810091]Mod API Test[/url]

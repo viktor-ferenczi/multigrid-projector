@@ -332,7 +332,8 @@ namespace MultigridProjector.Logic
             BuiltGrid.OnBlockIntegrityChanged += OnBlockIntegrityChangedWithErrorHandler;
             BuiltGrid.OnBlockAdded += OnBlockAddedWithErrorHandler;
             BuiltGrid.OnBlockRemoved += OnBlockRemovedWithErrorHandler;
-            BuiltGrid.OnGridSplit += OnGridSplitWithErrorHandler;
+            BuiltGrid.OnGridSplit += OnGridSplitOrMergeWithErrorHandler;
+            BuiltGrid.OnGridMerge += OnGridSplitOrMergeWithErrorHandler;
             BuiltGrid.OnClosing += OnGridClosingWithErrorHandler;
         }
 
@@ -341,7 +342,8 @@ namespace MultigridProjector.Logic
             BuiltGrid.OnBlockIntegrityChanged -= OnBlockIntegrityChangedWithErrorHandler;
             BuiltGrid.OnBlockAdded -= OnBlockAddedWithErrorHandler;
             BuiltGrid.OnBlockRemoved -= OnBlockRemovedWithErrorHandler;
-            BuiltGrid.OnGridSplit -= OnGridSplitWithErrorHandler;
+            BuiltGrid.OnGridSplit -= OnGridSplitOrMergeWithErrorHandler;
+            BuiltGrid.OnGridMerge -= OnGridSplitOrMergeWithErrorHandler;
             BuiltGrid.OnClosing -= OnGridClosingWithErrorHandler;
         }
 
@@ -385,11 +387,11 @@ namespace MultigridProjector.Logic
         }
 
         [Everywhere]
-        private void OnGridSplitWithErrorHandler(MyCubeGrid arg1, MyCubeGrid arg2)
+        private void OnGridSplitOrMergeWithErrorHandler(MyCubeGrid arg1, MyCubeGrid arg2)
         {
             try
             {
-                OnGridSplit(arg1, arg2);
+                OnGridSplitOrMerge(arg1, arg2);
             }
             catch (Exception e)
             {
@@ -512,7 +514,7 @@ namespace MultigridProjector.Logic
         }
 
         [Everywhere]
-        private void OnGridSplit(MyCubeGrid grid1, MyCubeGrid grid2)
+        private void OnGridSplitOrMerge(MyCubeGrid grid1, MyCubeGrid grid2)
         {
             var builtGrid = BuiltGrid;
 
