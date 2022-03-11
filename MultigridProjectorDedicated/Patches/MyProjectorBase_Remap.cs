@@ -31,6 +31,7 @@ namespace MultigridProjector.Patches
 
                 projector.RemapObjectBuilders();
                 
+                // Call patched SetNewBlueprint
                 var gridBuilders = projector.GetOriginalGridBuilders();
                 if (gridBuilders != null && gridBuilders.Count > 0)
                 {

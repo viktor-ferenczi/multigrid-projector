@@ -23,7 +23,7 @@ namespace MultigridProjector.Patches
             MySlimBlock projectedBlock,
             bool checkHavokIntersections,
             // ReSharper disable once InconsistentNaming
-            out BuildCheckResult __result)
+            ref BuildCheckResult __result)
         {
             var projector = __instance;
 

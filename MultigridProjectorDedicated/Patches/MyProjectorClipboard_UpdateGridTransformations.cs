@@ -29,7 +29,7 @@ namespace MultigridProjector.Patches
                 if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
                     return true;
 
-                // Preview grid alignment is needed on server side as well, so it was moved into UpdateAfterSimulation
+                // Alignment is needed on server side as well, so it was moved into UpdateAfterSimulation
             }
             catch (Exception e)
             {
