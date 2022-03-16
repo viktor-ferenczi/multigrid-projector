@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
@@ -70,6 +69,7 @@ namespace MultigridProjector.Logic
         // Preview top blocks by their grid index and min position
         internal readonly Dictionary<BlockMinLocation, MyAttachableTopBlockBase> PreviewTopBlocks = new Dictionary<BlockMinLocation, MyAttachableTopBlockBase>();
 
+        // Locking GridBuilders only while remapping Entity IDs or depending on their consistency
         internal int GridCount => GridBuilders.Count;
         internal List<MyCubeGrid> PreviewGrids => clipboard.PreviewGrids;
         internal bool Initialized { get; private set; }
@@ -147,10 +147,14 @@ namespace MultigridProjector.Logic
             if (Projector.Closed)
                 return;
 
-            MapBlueprintBlocks();
-            MapPreviewBlocks();
-            CreateSubgrids();
-            MarkSupportedSubgrids();
+            lock (GridBuilders)
+            {
+                MapBlueprintBlocks();
+                MapPreviewBlocks();
+                CreateSubgrids();
+                MarkSupportedSubgrids();
+            }
+
             CreateUpdateWork();
 
             Projector.PropertiesChanged += OnPropertiesChanged;
@@ -1149,7 +1153,6 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             // Allow welding only on the first subgrid if the client does not have the MGP plugin installed or an MGP unaware mod sends in a request
             var subgridIndex = builtBy >= 0 && builtBy < GridCount ? (int)builtBy : 0;
-            Debug.Assert(subgridIndex >= 0);
 
             // Find the subgrid to build on
             Subgrid subgrid;
@@ -1204,7 +1207,8 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             {
                 requestRemap = false;
                 PluginLog.Debug($"Remapping blueprint loaded into projector {Projector.CustomName} [{Projector.EntityId}] in preparation for building it again");
-                MyEntities.RemapObjectBuilderCollection(GridBuilders);
+                lock (GridBuilders)
+                    MyEntities.RemapObjectBuilderCollection(GridBuilders);
             }
 
             var previewMin = previewFatBlock?.Min ?? previewBlock.Position;
@@ -1682,7 +1686,8 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             // Fix the inconsistent remapping the original implementation has done, this is
             // needed to be able to load back the projection properly from a saved world
             var builderCubeBlock = (MyObjectBuilder_ProjectorBase)blockBuilder;
-            builderCubeBlock.ProjectedGrids = gridBuilders.Clone();
+            lock (gridBuilders)
+                builderCubeBlock.ProjectedGrids = gridBuilders.Clone();
             MyEntities.RemapObjectBuilderCollection(builderCubeBlock.ProjectedGrids);
         }
 

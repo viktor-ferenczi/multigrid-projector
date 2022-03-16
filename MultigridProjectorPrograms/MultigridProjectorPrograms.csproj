@@ -108,7 +108,7 @@
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
     <ItemGroup>
-      <PackageReference Include="Lib.Harmony" Version="2.2.0" />
+      <PackageReference Include="Lib.Harmony" Version="2.2.1" />
       <PackageReference Include="NUnit" Version="3.13.2" />
     </ItemGroup>
     <ItemGroup>

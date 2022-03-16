@@ -297,7 +297,8 @@ namespace MultigridProjector.Extensions
                 return;
 
             // Consistent remapping of all grids to keep sub-grid relations intact
-            MyEntities.RemapObjectBuilderCollection(gridBuilders);
+            lock (gridBuilders)
+                MyEntities.RemapObjectBuilderCollection(gridBuilders);
         }
 
         public static bool AlignToRepairProjector(this MyProjectorBase projector, MyObjectBuilder_CubeGrid gridBuilder)
