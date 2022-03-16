@@ -42,34 +42,34 @@
         <Reference Include="System.Data" />
         <Reference Include="System.Xml" />
         <Reference Include="ProtoBuf.Net.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\GameBin64\ProtoBuf.Net.Core.dll</HintPath>
+          <HintPath>..\Bin64\ProtoBuf.Net.Core.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\GameBin64\Sandbox.Common.dll</HintPath>
+            <HintPath>..\Bin64\Sandbox.Common.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.Game, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
           <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
         </Reference>
         <Reference Include="SpaceEngineers.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\GameBin64\SpaceEngineers.Game.dll</HintPath>
+            <HintPath>..\Bin64\SpaceEngineers.Game.dll</HintPath>
         </Reference>
         <Reference Include="SpaceEngineers.ObjectBuilders, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\GameBin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+            <HintPath>..\Bin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
         </Reference>
         <Reference Include="VRage, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\GameBin64\VRage.dll</HintPath>
+            <HintPath>..\Bin64\VRage.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\GameBin64\VRage.Game.dll</HintPath>
+            <HintPath>..\Bin64\VRage.Game.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Input, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-			<HintPath>..\GameBin64\VRage.Input.dll</HintPath>
+			<HintPath>..\Bin64\VRage.Input.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Library, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\GameBin64\VRage.Library.dll</HintPath>
+            <HintPath>..\Bin64\VRage.Library.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Math, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\GameBin64\VRage.Math.dll</HintPath>
+            <HintPath>..\Bin64\VRage.Math.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>
