@@ -995,7 +995,7 @@ namespace MultigridProjector.Logic
 
 Dirty hack to ignore the exception inside Attach.
 
-It happens only on welding a piston base under an existing piston top. Maybe this is the reason why there is no "Attach Head" on pistons?
+Maybe this is the reason why there is no "Attach Head" on pistons?
 
 System.NullReferenceException: Object reference not set to an instance of an object.
    at Sandbox.Game.Entities.Blocks.MyPistonBase.GetTopMatrixLocal()
@@ -1010,8 +1010,10 @@ System.NullReferenceException: Object reference not set to an instance of an obj
    at MultigridProjector.Extensions.MyMechanicalConnectionBlockBaseExtensions.Attach(MyMechanicalConnectionBlockBase obj, MyAttachableTopBlockBase topBlock, Boolean updateGroup) in C:\Dev\multigrid-projector\MultigridProjector\Extensions\MyMechanicalConnectionBlockBaseExtensions.cs:line 19
    at MultigridProjector.Logic.MultigridProjection.BuildMissingBase(TopConnection topConnection, Subgrid topSubgrid) in C:\Dev\multigrid-projector\MultigridProjector\Logic\MultigridProjection.cs:line 925
                 */
-                if (!e.ToString().Contains("NullReferenceException"))
+                if (!e.ToString().Contains("System.NullReferenceException"))
                     throw;
+
+                PluginLog.Warn($"Ignored System.NullReferenceException in Attach called from BuildMissingBase: projector.DebugName = \"{Projector.DebugName}\", baseSubgrid.Index = {baseSubgrid.Index}, baseBlock.Position = {baseBlock?.Position}, baseBlock.DebugName = \"{baseBlock?.DebugName}\"");
             }
 
             // Sanity check
@@ -1464,12 +1466,39 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             // Create the top part
             var instantBuild = Projector.GetInstantBuildingEnabled();
             var sizeConversion = baseConnection.Preview.CubeGrid.GridSizeEnum != topConnection.Preview.CubeGrid.GridSizeEnum;
-            var topBlock = baseBlock.CreateTopPart(definitionGroup, sizeConversion, instantBuild);
-            if (topBlock == null)
-                return false;
+            try
+            {
+                var topBlock = baseBlock.CreateTopPart(definitionGroup, sizeConversion, instantBuild);
+                if (topBlock == null)
+                    return false;
 
-            // Attach to the base
-            baseBlock.Attach(topBlock);
+                // Attach to the base
+                baseBlock.Attach(topBlock);
+            }
+            catch (TargetInvocationException e)
+            {
+                /* FIXME:
+
+Dirty hack to ignore the exception inside Attach.
+
+Maybe this is the reason why there is no "Attach Head" on pistons?
+
+System.NullReferenceException: Object reference not set to an instance of an object.
+   at Sandbox.Game.Entities.Blocks.MyPistonBase.CanPlaceTop(MyAttachableTopBlockBase topBlock, Int64 builtBy)
+   at Sandbox.Game.Entities.Blocks.MyMechanicalConnectionBlockBase.CreateTopPart_Patch0(MyMechanicalConnectionBlockBase this, MyAttachableTopBlockBase& topBlock, Int64 builtBy, MyCubeBlockDefinitionGroup topGroup, Boolean smallToLarge, Boolean instantBuild)
+   --- End of inner exception stack trace ---
+   at System.RuntimeMethodHandle.InvokeMethod(Object target, Object[] arguments, Signature sig, Boolean constructor)
+   at System.Reflection.RuntimeMethodInfo.UnsafeInvokeInternal(Object obj, Object[] parameters, Object[] arguments)
+   at System.Reflection.RuntimeMethodInfo.Invoke(Object obj, BindingFlags invokeAttr, Binder binder, Object[] parameters, CultureInfo culture)
+   at MultigridProjector.Extensions.MyMechanicalConnectionBlockBaseExtensions.CreateTopPart(MyMechanicalConnectionBlockBase baseBlock, MyCubeBlockDefinitionGroup definitionGroup, Boolean sizeConversion, Boolean instantBuild) in C:\Dev\multigrid-projector\MultigridProjector\Extensions\MyMechanicalConnectionBlockBaseExtensions.cs:line 28
+   at MultigridProjector.Logic.MultigridProjection.CreateTopPartAndAttach(Subgrid subgrid, MyMechanicalConnectionBlockBase baseBlock) in C:\Dev\multigrid-projector\MultigridProjector\Logic\MultigridProjection.cs:line 1466
+   at MultigridProjectorServer.Patches.MyMechanicalConnectionBlockBase_CreateTopPartAndAttach.Prefix(MyMechanicalConnectionBlockBase __instance, Int64 builtBy, Boolean smallToLarge, Boolean instantBuild) in C:\Dev\multigrid-projector\MultigridProjectorServer\Patches\MyMechanicalConnectionBlockBase_CreateTopPartAndAttach.cs:line 34
+                */
+                if (!e.ToString().Contains("System.NullReferenceException"))
+                    throw;
+
+                PluginLog.Warn($"Ignored System.NullReferenceException in CreateTopPart or Attach called from CreateTopPartAndAttach: projector.DebugName = \"{Projector.DebugName}\", subgrid.Index = {subgrid.Index}, baseBlock.Position = {baseBlock.Position}, baseBlock.DebugName = \"{baseBlock.DebugName}\"");
+            }
             return false;
         }
 
