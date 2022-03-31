@@ -864,23 +864,89 @@ namespace MultigridProjector.Logic
 
             FindNewlyBuiltBase(baseConnection);
             FindNewlyAddedHead(baseConnection, topConnection);
-            // BuildMissingHead(baseConnection, baseSubgrid);
+            BuildMissingHead(baseConnection, baseSubgrid);
             RegisterConnectedSubgrid(baseSubgrid, baseConnection, topConnection, topSubgrid);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void BuildMissingHead(BaseConnection baseConnection, Subgrid baseSubgrid)
         {
-            if (!Sync.IsServer || !baseConnection.HasBuilt || baseConnection.Block.TopBlock != null || !baseConnection.Block.IsFunctional)
+            if (!Sync.IsServer || !baseConnection.HasBuilt || baseConnection.Block.TopBlock != null)
                 return;
 
-            // Create head of right size
-            GetCounterparty(baseConnection, out var topSubgrid);
-            if (topSubgrid.HasBuilt) return;
-            var smallToLarge = baseSubgrid.GridSizeEnum != topSubgrid.GridSizeEnum;
-            baseConnection.Block.RecreateTop(baseConnection.Block.BuiltBy, smallToLarge);
+            // Create base of right size
+            var topConnection = GetCounterparty(baseConnection, out var topSubgrid);
+            if (topSubgrid.HasBuilt)
+                return;
 
-            // Need to try again every 2 seconds, because building the top part may fail due to objects in the way 
+            // Create base grid builder
+            var topGridBuilder = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_CubeGrid>();
+            topGridBuilder.GridSizeEnum = topConnection.Preview.CubeGrid.GridSizeEnum;
+            topGridBuilder.IsStatic = topConnection.Preview.CubeGrid.IsStatic;
+            topGridBuilder.PositionAndOrientation = new MyPositionAndOrientation(topConnection.Preview.CubeGrid.WorldMatrix);
+
+            // Optimization: Fast lookup of blueprint block builders at the expense of some additional memory consumption
+            if (!topSubgrid.TryGetBlockBuilder(topConnection.Preview.Position, out var topBlockBuilder))
+                return;
+
+            // Sanity check: The preview block must match the blueprint block builder both by definition and orientation
+            if (!topConnection.Preview.SlimBlock.IsMatchingBuilder(topBlockBuilder))
+                return;
+
+            // Clone the block builder to prevent damaging the original blueprint
+            topBlockBuilder = (MyObjectBuilder_CubeBlock)topBlockBuilder.Clone();
+
+            // FIXME: Top blocks are never terminal blocks, so this is not needed in theory
+            // Make sure no EntityId collision will occur on re-welding a block on a previously disconnected (split)
+            // part of a built subgrid which has not been destroyed (or garbage collected) yet
+            if (topBlockBuilder.EntityId != 0 && MyEntityIdentifier.ExistsById(topBlockBuilder.EntityId))
+            {
+                topBlockBuilder.EntityId = MyEntityIdentifier.AllocateId();
+            }
+
+            // Empty inventory, ammo (including already loaded ammo), also clears battery charge (which is wrong, see below)
+            topBlockBuilder.SetupForProjector();
+            topBlockBuilder.ConstructionInventory = null;
+
+            // Ownership is determined by the projector's grid, not by who is welding the block
+            topBlockBuilder.BuiltBy = Projector.OwnerId;
+
+            // Add top block as the first block of the new grid
+            topGridBuilder.CubeBlocks.Add(topBlockBuilder);
+
+            // Create the actual top grid
+            var topGrid = MyAPIGateway.Entities.CreateFromObjectBuilder(topGridBuilder) as MyCubeGrid;
+            if (topGrid == null)
+                return;
+            MyEntities.Add(topGrid);
+
+            // Attach the newly created top part to the existing base part
+            var topBlock = topGrid.CubeBlocks.First().FatBlock as MyAttachableTopBlockBase;
+            topConnection.Found = topBlock;
+            topConnection.Block = topBlock;
+            try
+            {
+                baseConnection.Block.Attach(topBlock);
+            }
+            catch (TargetInvocationException e)
+            {
+                if (!e.ToString().Contains("System.NullReferenceException"))
+                    throw;
+
+                PluginLog.Warn($"Ignored System.NullReferenceException in Attach called from BuildMissingHead: projector.DebugName = \"{Projector.DebugName}\", baseSubgrid.Index = {baseSubgrid.Index}, baseBlock.Position = {baseConnection.Block?.Position}, baseBlock.DebugName = \"{baseConnection.Block?.DebugName}\"");
+            }
+
+            // Sanity check
+            if (baseConnection.Block?.TopBlock == null)
+            {
+                topGrid.Close();
+                return;
+            }
+
+            // Register top subgrid
+            RegisterConnectedSubgrid(baseSubgrid, baseConnection, topConnection, topSubgrid);
+
+            // Need to try again every 2 seconds, because building the base part may fail due to objects in the way
             ShouldUpdateProjection();
         }
 
@@ -911,7 +977,7 @@ namespace MultigridProjector.Logic
 
             FindNewlyBuiltTop(topConnection);
             FindNewlyAddedBase(topConnection, baseConnection);
-            // BuildMissingBase(topConnection, topSubgrid);
+            BuildMissingBase(topConnection, topSubgrid);
             RegisterConnectedSubgrid(baseSubgrid, baseConnection, topConnection, topSubgrid);
         }
 
@@ -989,6 +1055,8 @@ namespace MultigridProjector.Logic
             // Attach the existing top part to the newly created base
             var baseBlock = baseGrid.CubeBlocks.First().FatBlock as MyMechanicalConnectionBlockBase;
             baseSubgrid.AddBlockToGroups(baseBlock);
+            baseConnection.Found = baseBlock;
+            baseConnection.Block = baseBlock;
             try
             {
                 baseBlock.Attach(topConnection.Block);
@@ -1028,8 +1096,6 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             }
 
             // Register base subgrid
-            baseConnection.Found = baseBlock;
-            baseConnection.Block = baseBlock;
             RegisterConnectedSubgrid(baseSubgrid, baseConnection, topConnection, topSubgrid);
 
             // Need to try again every 2 seconds, because building the base part may fail due to objects in the way
@@ -1061,37 +1127,16 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return;
             }
 
-            // topSubgrid.HasBuilt must be true here
-            if (topSubgrid.HasBuilt)
-                return;
-
-            var loneTopPart = !topConnection.IsWheel && topConnection.Block.CubeGrid.CubeBlocks.Count == 1;
-            if (loneTopPart && (topConnection.Block.CubeGrid.GridSizeEnum != topSubgrid.GridSizeEnum || !baseConnection.Block.IsFunctional))
+            if (!topSubgrid.HasBuilt)
             {
-                if (!Sync.IsServer)
+                var loneTopPart = !topConnection.IsWheel && topConnection.Block.CubeGrid.CubeBlocks.Count == 1;
+                if (loneTopPart)
                 {
-                    ShouldUpdateProjection();
-                    return;
+                    topConnection.Block.AlignGrid(topConnection.Preview);
+                    ConfigureBaseToMatchTop(baseConnection);
                 }
 
-                // Remove head if the grid size is wrong or if the base is not functional yet.
-                // This is an ugly workaround to remove the newly built head of wrong size,
-                // then building a new one of the proper size on the next simulation frame.
-                // It is required, because the patched MyMechanicalConnectionBlockBase.CreateTopPart
-                // wasn't used somehow when the new top part is created, therefore the smallToLarge
-                // condition cannot be fixed there. It may change with new game releases, because
-                // this was most likely due to inlining which this plugin cannot prevent.
-                RemoveHead(topConnection);
-                ForceUpdateProjection();
-                return;
-            }
-
-            topSubgrid.RegisterBuiltGrid(topConnection.Block.CubeGrid);
-
-            if (loneTopPart)
-            {
-                topConnection.Block.AlignGrid(topConnection.Preview);
-                ConfigureBaseToMatchTop(baseConnection);
+                topSubgrid.RegisterBuiltGrid(topConnection.Block.CubeGrid);
             }
         }
 
