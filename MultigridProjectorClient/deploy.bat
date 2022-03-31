@@ -20,14 +20,6 @@ IF %ERRORLEVEL% NEQ 0 GOTO :RETRY
 echo Copying "%SRC%\0Harmony.dll" into "%TARGET%\"
 copy /y "%SRC%\0Harmony.dll" "%TARGET%\"
 
-REM Mod to release on the Steam Workshop in binary form
-mkdir "%AppData%\SpaceEngineers\Mods" 2>&1 >NUL
-del /f /s /q "%AppData%\SpaceEngineers\Mods\Multigrid Projector" 2>&1 >NUL
-rd /s /q "%AppData%\SpaceEngineers\Mods\Multigrid Projector" 2>&1 >NUL
-mkdir "%AppData%\SpaceEngineers\Mods\Multigrid Projector" 2>&1 >NUL
-xcopy /s /e /y %SRC%\..\..\Mod\ "%AppData%\SpaceEngineers\Mods\Multigrid Projector\"
-copy /y %1 "%AppData%\SpaceEngineers\Mods\Multigrid Projector\Multigrid_Projector.plugin"
-
 echo Done
 echo.
 exit 0
