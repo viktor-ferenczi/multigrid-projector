@@ -51,6 +51,10 @@ namespace MultigridProjector.Logic
         private readonly List<Subgrid> subgrids = new List<Subgrid>();
         private readonly RwLock subgridsLock = new RwLock();
 
+        // Marks build calls to prevent building the default top block
+        private static readonly ThreadLocal<bool> IsBuildingProjectedBlock = new ThreadLocal<bool>();
+        public static bool IsBuildingProjection() => IsBuildingProjectedBlock.Value;
+
         public Subgrid[] GetSupportedSubgrids()
         {
             using (subgridsLock.Read())
@@ -860,7 +864,7 @@ namespace MultigridProjector.Logic
 
             FindNewlyBuiltBase(baseConnection);
             FindNewlyAddedHead(baseConnection, topConnection);
-            BuildMissingHead(baseConnection, baseSubgrid);
+            // BuildMissingHead(baseConnection, baseSubgrid);
             RegisterConnectedSubgrid(baseSubgrid, baseConnection, topConnection, topSubgrid);
         }
 
@@ -907,7 +911,7 @@ namespace MultigridProjector.Logic
 
             FindNewlyBuiltTop(topConnection);
             FindNewlyAddedBase(topConnection, baseConnection);
-            BuildMissingBase(topConnection, topSubgrid);
+            // BuildMissingBase(topConnection, topSubgrid);
             RegisterConnectedSubgrid(baseSubgrid, baseConnection, topConnection, topSubgrid);
         }
 
@@ -1239,6 +1243,12 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             // Clone the block builder to prevent damaging the original blueprint
             blockBuilder = (MyObjectBuilder_CubeBlock)blockBuilder.Clone();
 
+            // Do not build the default top block (head) automatically, because it may have the wrong block orientation
+            if (blockBuilder is MyObjectBuilder_MechanicalConnectionBlock mechanicalBase && !(blockBuilder is MyObjectBuilder_MotorSuspension))
+            {
+                mechanicalBase.TopBlockId = null;
+            }
+
             // Make sure no EntityId collision will occur on re-welding a block on a previously disconnected (split)
             // part of a built subgrid which has not been destroyed (or garbage collected) yet
             if (blockBuilder.EntityId != 0 && MyEntityIdentifier.ExistsById(blockBuilder.EntityId))
@@ -1267,7 +1277,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             var visuals = new MyCubeGrid.MyBlockVisuals(previewBlock.ColorMaskHSV.PackHSVToUint(), skinId);
 
             // Actually build the block on both the server and all clients
+            IsBuildingProjectedBlock.Value = true;
             builtGrid.BuildBlockRequestInternal(visuals, location, blockBuilder, builder, instantBuild, owner, MyEventContext.Current.IsLocallyInvoked ? steamId : MyEventContext.Current.Sender.Value, isProjection: true);
+            IsBuildingProjectedBlock.Value = false;
         }
 
         [Everywhere]
