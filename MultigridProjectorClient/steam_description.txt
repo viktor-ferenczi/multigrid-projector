@@ -21,8 +21,8 @@ After enabling the plugin it will be active for all single player worlds you loa
 
 [h2]Server plugins[/h2]
 [list]
-[*] [url=https://torchapi.com/plugins/view/?guid=d9359ba0-9a69-41c3-971d-eb5170adb97e]Torch Server[/url] (updated automatically by Torch)
-[*] [url=https://www.ferenczi.eu/se/multigrid-projector/]Dedicated Server[/url] (requires manual updating)
+[*] [url=https://torchapi.com/plugins/view/?guid=d9359ba0-9a69-41c3-971d-eb5170adb97e]Multigrid Projector Torch Server plugin[/url]
+[*] [url=https://github.com/viktor-ferenczi/multigrid-projector/releases]Multigrid Projector Dedicated Server plugin[/url]
 [/list]
 
 [b]If you play on a multiplayer (Dedicated or Torch) server, then both the server plugin (on server side) and the client plugin (on the player's machine) must be installed! Using only the client plugin will not work properly.[/b]

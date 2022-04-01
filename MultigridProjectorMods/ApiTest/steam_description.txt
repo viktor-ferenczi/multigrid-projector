@@ -4,7 +4,8 @@ This mod is intended as an example for SE modders who want to make their mods co
 
 [list]
 [*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416]Multigrid Projector client plugin[/url]
-[*] [url=https://torchapi.net/plugins/item/d9359ba0-9a69-41c3-971d-eb5170adb97e]Multigrid Projector Torch server plugin[/url]
+[*] [url=https://torchapi.com/plugins/view/?guid=d9359ba0-9a69-41c3-971d-eb5170adb97e]Multigrid Projector Torch Server plugin[/url]
+[*] [url=https://github.com/viktor-ferenczi/multigrid-projector/releases]Multigrid Projector Dedicated Server plugin[/url]
 [/list]
 
 Documentation of the API functions can be found in the [b]IMultigridProjectorApi.cs[/b] file.
