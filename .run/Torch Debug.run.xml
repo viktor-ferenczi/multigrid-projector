@@ -1,5 +1,5 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="Torch Debug" type="RunExe" factoryName=".NET Executable">
+  <configuration default="false" name="Torch" type="RunExe" factoryName=".NET Executable">
     <option name="EXE_PATH" value="$PROJECT_DIR$/../../Torch/Torch.Server.exe" />
     <option name="PROGRAM_PARAMETERS" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../Torch" />
@@ -8,9 +8,7 @@
     <option name="USE_MONO" value="0" />
     <option name="RUNTIME_ARGUMENTS" value="" />
     <method v="2">
-      <option name="Build Solution" enabled="true" />
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Deploy Server Debug" run_configuration_type="BatchConfigurationType" />
-      <option name="RunConfigurationTask" enabled="true" run_configuration_name="Deploy Mods" run_configuration_type="BatchConfigurationType" />
+      <option name="Build" default="false" projectName="MultigridProjectorServer" projectPath="file://$PROJECT_DIR$/MultigridProjectorServer/MultigridProjectorServer.csproj" />
     </method>
   </configuration>
 </component>

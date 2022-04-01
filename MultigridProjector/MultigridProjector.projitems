@@ -24,6 +24,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyCubeGrid_TestPlacementAreaCube.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyGridPhysicalHierarchy_BreakLink.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_OnBuildSuccess.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RecreateTop.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Arithmetic.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\EnsureOriginal.cs" />

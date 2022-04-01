@@ -39,52 +39,52 @@
         <Reference Include="System.Data" />
         <Reference Include="System.Xml" />
         <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\Sandbox.Common.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\Sandbox.Common.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.Game, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\Sandbox.Game.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\Sandbox.Game.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.Graphics, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\Sandbox.Graphics.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\Sandbox.Graphics.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.RenderDirect, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\Sandbox.RenderDirect.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\Sandbox.RenderDirect.dll</HintPath>
         </Reference>
         <Reference Include="SpaceEngineers.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\SpaceEngineers.Game.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\SpaceEngineers.Game.dll</HintPath>
         </Reference>
         <Reference Include="SpaceEngineers.ObjectBuilders, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
         </Reference>
         <Reference Include="VRage, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\VRage.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\VRage.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\VRage.Game.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\VRage.Game.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Game.XmlSerializers, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\VRage.Game.XmlSerializers.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\VRage.Game.XmlSerializers.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Input, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\VRage.Input.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\VRage.Input.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Library, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\VRage.Library.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\VRage.Library.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Math, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\VRage.Math.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\VRage.Math.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Math.XmlSerializers, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\VRage.Math.XmlSerializers.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\VRage.Math.XmlSerializers.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Network, Version=1.0.53.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\VRage.Network.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\VRage.Network.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Render, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\VRage.Render.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\VRage.Render.dll</HintPath>
         </Reference>
         <Reference Include="VRage.UserInterface, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>$(SolutionDir)\GameBin64\VRage.UserInterface.dll</HintPath>
+            <HintPath>$(SolutionDir)\Bin64\VRage.UserInterface.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>

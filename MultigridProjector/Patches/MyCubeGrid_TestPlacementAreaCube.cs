@@ -44,7 +44,7 @@ namespace MultigridProjector.Patches
         })]
     [EnsureOriginal("e93c5c27")]
     // ReSharper disable once InconsistentNaming
-    public class MyCubeGrid_TestPlacementAreaCube
+    public static class MyCubeGrid_TestPlacementAreaCube
     {
         [Everywhere]
         // ReSharper disable once UnusedMember.Global

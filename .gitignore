@@ -1,7 +1,7 @@
 .idea
 multigrid-projector.sln.DotSettings.user
-GameBin64
-TorchDir
+Bin64
+Torch
 Program-for-code-editor.cs
 packages.config
 /packages

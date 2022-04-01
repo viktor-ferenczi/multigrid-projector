@@ -38,8 +38,7 @@ namespace MultigridProjector.Patches
             code[index + 1] = new CodeInstruction(OpCodes.Ldc_I4_1);
             code[index + 2] = new CodeInstruction(OpCodes.Xor);
 
-            foreach (var instruction in code)
-                yield return instruction;
+            return code.AsEnumerable();
         }
     }
 }
