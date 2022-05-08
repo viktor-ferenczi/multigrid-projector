@@ -17,14 +17,33 @@ Multigrid Projector for the Space Engineers game.
 
 After enabling the plugin it will be active for all single player worlds you load and in case of multiplayer if the server or the other client you connect to also has the plugin loaded. Do not add the plugin as a mod to the worlds themselves, it is not required and will not load anyway.
 
+**If you play on a multiplayer (Dedicated or Torch) server**, then both the server plugin (on server side) and the client plugin (on the player's machine) must be installed! Using only the client plugin will not work properly.
+
 *Enjoy!*
 
 ## Server plugins
 
-- [Torch Server](https://torchapi.com/plugins/view/?guid=d9359ba0-9a69-41c3-971d-eb5170adb97e) (updated automatically by Torch)
-- [Dedicated Server](https://github.com/viktor-ferenczi/multigrid-projector/releases/) (requires manual updating)
+**If you are using a 3rd party game server hosting provider**, then please follow their documentation on how to install the server plugin or contanct their support with your questions.
 
-**If you play on a multiplayer (Dedicated or Torch) server, then both the server plugin (on server side) and the client plugin (on the player's machine) must be installed! Using only the client plugin will not work properly.**
+In case of problems join the [SE Mods Discord](https://discord.gg/PYPFPGf3Ca) to get help.
+
+### Torch server plugin installation
+
+[Torch plugin](https://torchapi.com/plugins/view/?guid=d9359ba0-9a69-41c3-971d-eb5170adb97e) (updated automatically by Torch)
+
+Add the plugin on Torch's UI, then restart the server. Make sure your players are aware of the Plugin Loader, so they can install the client plugin.
+
+### Dedicated Server plugin installation
+
+[Plugin download](https://github.com/viktor-ferenczi/multigrid-projector/releases/) (requires manual updating)
+
+- Open: https://github.com/viktor-ferenczi/multigrid-projector/releases/
+- Download and extract the latest release: `MultigridProjectorDedicated-*.zip` 
+- Keep `0Harmony.dll` and `MultigridProjectorDedicated.dll` in the same folder.
+- Right click on each of the DLLs, select **Unblock** in the **Properties** dialog if you have such a button (Windows protection). 
+- Start the Dedicated Server and continue to the configuration.
+- Under the Plugins tab add the `MultigridProjectorDedicated.dll` file as a plugin.
+- Start your server.
 
 ## Want to know more?
 - [SE Mods Discord](https://discord.gg/PYPFPGf3Ca)
