@@ -7,7 +7,7 @@ set SRC=%~p1
 set NAME=%~2
 
 set TARGET=..\..\..\Torch\Plugins\%NAME%
-mkdir %TARGET% >NUL 2>&1
+mkdir "%TARGET%" >NUL 2>&1
 
 echo.
 echo Deploying TORCH SERVER plugin binary:
