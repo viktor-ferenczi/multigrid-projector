@@ -7,7 +7,7 @@ set SRC=%~p1
 set NAME=%~2
 
 set TARGET=..\..\..\Bin64\Plugins\Local
-mkdir %TARGET% >NUL 2>&1
+mkdir "%TARGET%" >NUL 2>&1
 
 echo.
 echo Deploying CLIENT plugin binary:

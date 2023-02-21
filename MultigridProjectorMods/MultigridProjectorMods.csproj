@@ -33,10 +33,6 @@
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
     <ItemGroup>
-        <Reference Include="0Harmony, Version=2.2.1.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\packages\Lib.Harmony.2.2.1\lib\net48\0Harmony.dll</HintPath>
-          <Private>True</Private>
-        </Reference>
         <Reference Include="System" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
@@ -73,37 +69,29 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
+        <Compile Include="..\MultigridProjector\Api\BlockLocation.cs">
+          <Link>ApiTest\Data\Scripts\MultigridProjector\Api\BlockLocation.cs</Link>
+        </Compile>
+        <Compile Include="..\MultigridProjector\Api\BlockState.cs">
+          <Link>ApiTest\Data\Scripts\MultigridProjector\Api\BlockState.cs</Link>
+        </Compile>
+        <Compile Include="..\MultigridProjector\Api\IMultigridProjectorApi.cs">
+          <Link>ApiTest\Data\Scripts\MultigridProjector\Api\IMultigridProjectorApi.cs</Link>
+        </Compile>
+        <Compile Include="..\MultigridProjector\Api\MultigridProjectorModAgent.cs">
+          <Link>ApiTest\Data\Scripts\MultigridProjector\Api\MultigridProjectorModAgent.cs</Link>
+        </Compile>
         <Compile Include="ApiTest\Data\Scripts\MultigridProjector\ModApiTest\MultigridProjectorModApiTest.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Common\ActionIcons.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Common\OrientationAlgebra.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Common\ProjectionAlignment.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Components\Projector.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Components\Session.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Logic\Aligner.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Logic\Repair.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Multiplayer\Comms.cs" />
-        <Compile Include="Extra\Data\Scripts\MultigridProjector\Extra\Multiplayer\Role.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
     </ItemGroup>
     <ItemGroup>
       <Content Include="ApiTest\modinfo.sbmi" />
       <Content Include="ApiTest\steam_description.txt" />
-      <Content Include="deploy_mods.bat" />
+      <Content Include="deploy.bat" />
       <Content Include="ApiTest\metadata.mod" />
       <Content Include="ApiTest\thumb.jpg" />
-      <Content Include="Extra\metadata.mod">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="Extra\steam_description.txt" />
-      <Content Include="Extra\thumb.jpg">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-    </ItemGroup>
-    <ItemGroup>
-      <None Include="packages.config" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-    <Import Project="..\MultigridProjector\MultigridProjector.projitems" Label="Shared" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
          Other similar extension points exist, see Microsoft.Common.targets.
     <Target Name="BeforeBuild">
@@ -111,5 +99,7 @@
     <Target Name="AfterBuild">
     </Target>
     -->
-
+    <PropertyGroup>
+        <PostBuildEvent>call "$(ProjectDir)\deploy.bat" "$(ProjectDir)" "$(ProjectName)"</PostBuildEvent>
+    </PropertyGroup>
 </Project>
