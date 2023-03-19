@@ -4,6 +4,9 @@
     <option name="PROGRAM_PARAMETERS" value="-skipintro -plugin &quot;C:\Users\fviktor\AppData\Roaming\SpaceEngineers\Mods\Plugin Loader\RunPluginLoader&quot;" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../Program Files (x86)/Steam/steamapps/common/SpaceEngineers/Bin64" />
     <option name="PASS_PARENT_ENVS" value="1" />
+    <envs>
+      <env name="SE_PLUGIN_DISABLE_METHOD_VERIFICATION" value="1" />
+    </envs>
     <option name="USE_EXTERNAL_CONSOLE" value="0" />
     <option name="USE_MONO" value="0" />
     <option name="RUNTIME_ARGUMENTS" value="" />

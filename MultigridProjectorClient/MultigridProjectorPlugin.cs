@@ -21,7 +21,10 @@ namespace MultigridProjectorClient
             {
                 try
                 {
-                    EnsureOriginal.VerifyAll();
+                    if (Environment.GetEnvironmentVariable("SE_PLUGIN_DISABLE_METHOD_VERIFICATION") == null)
+                    {
+                        EnsureOriginal.VerifyAll();
+                    }
                 }
                 catch (NotSupportedException e)
                 {
