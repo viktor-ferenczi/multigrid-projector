@@ -8,7 +8,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyGridPhysicalHierarchy))]
     [HarmonyPatch("BreakLink")]
-    [EnsureOriginal("72e7d0ea", "dc95de5b")]
+    [EnsureOriginal("dc95de5b")]
     // ReSharper disable once InconsistentNaming
     public static class MyGridPhysicalHierarchy_BreakLink
     {
