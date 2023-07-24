@@ -45,6 +45,17 @@ Add the plugin on Torch's UI, then restart the server. Make sure your players ar
 - Under the Plugins tab add the `MultigridProjectorDedicated.dll` file as a plugin.
 - Start your server.
 
+### Special case on Linux (Proton)
+
+Please define the `SE_PLUGIN_DISABLE_METHOD_VERIFICATION` environment variable
+to disable IL code verification.
+
+Reason for the IL code verification is to detect potentially breaking code changes 
+introduced over game updates. In such a cases the verification blocks the plugin
+from loading instead of crashing later.
+
+You can detect this case by looking in the game's log file for this text: `Refusing to load the plugin due to potentially incompatible code changes`
+
 ## Want to know more?
 - [SE Mods Discord](https://discord.gg/PYPFPGf3Ca)
 - [YouTube Channel](https://www.youtube.com/channel/UCc5ar3cW9qoOgdBb1FM_rxQ)
