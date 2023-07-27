@@ -17,8 +17,6 @@ Multigrid Projector for the Space Engineers game.
 
 After enabling the plugin it will be active for all single player worlds you load and in case of multiplayer if the server or the other client you connect to also has the plugin loaded. Do not add the plugin as a mod to the worlds themselves, it is not required and will not load anyway.
 
-**If you play on a multiplayer (Dedicated or Torch) server**, then both the server plugin (on server side) and the client plugin (on the player's machine) must be installed! Using only the client plugin will not work properly.
-
 *Enjoy!*
 
 ## Server plugins

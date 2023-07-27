@@ -53,11 +53,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logic\Connection.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Sandbox.Game, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)..\.gitignore">
       <Link>.gitignore</Link>
     </Content>

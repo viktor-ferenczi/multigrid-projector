@@ -1,4 +1,5 @@
 .idea
+.vs
 multigrid-projector.sln.DotSettings.user
 Bin64
 Torch

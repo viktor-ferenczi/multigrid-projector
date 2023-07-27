@@ -1,5 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.6.33829.357
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MultigridProjector", "MultigridProjector\MultigridProjector.shproj", "{EB280DCD-171D-4764-912F-AF7C99153BB4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorServer", "MultigridProjectorServer\MultigridProjectorServer.csproj", "{D9359BA0-9A69-41C3-971D-EB5170ADB97E}"
@@ -18,32 +21,38 @@ Global
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{D9359BA0-9A69-41C3-971D-EB5170ADB97E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D9359BA0-9A69-41C3-971D-EB5170ADB97E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D9359BA0-9A69-41C3-971D-EB5170ADB97E}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{D9359BA0-9A69-41C3-971D-EB5170ADB97E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D9359BA0-9A69-41C3-971D-EB5170ADB97E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D9359BA0-9A69-41C3-971D-EB5170ADB97E}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{89F02986-D019-4044-BC94-5AF26B1B4365}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{89F02986-D019-4044-BC94-5AF26B1B4365}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89F02986-D019-4044-BC94-5AF26B1B4365}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{89F02986-D019-4044-BC94-5AF26B1B4365}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{89F02986-D019-4044-BC94-5AF26B1B4365}.Release|Any CPU.Build.0 = Release|Any CPU
-		{89F02986-D019-4044-BC94-5AF26B1B4365}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{D4F47DCB-9C07-4C1A-BC8C-CE42E87683EE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{D4F47DCB-9C07-4C1A-BC8C-CE42E87683EE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D4F47DCB-9C07-4C1A-BC8C-CE42E87683EE}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{D4F47DCB-9C07-4C1A-BC8C-CE42E87683EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4F47DCB-9C07-4C1A-BC8C-CE42E87683EE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D4F47DCB-9C07-4C1A-BC8C-CE42E87683EE}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {02222302-3817-4415-A8C5-286F35442D0A}
+	EndGlobalSection
+	GlobalSection(SharedMSBuildProjectFiles) = preSolution
+		MultigridProjector\MultigridProjector.projitems*{89f02986-d019-4044-bc94-5af26b1b4365}*SharedItemsImports = 4
+		MultigridProjector\MultigridProjector.projitems*{d4f47dcb-9c07-4c1a-bc8c-ce42e87683ee}*SharedItemsImports = 4
+		MultigridProjector\MultigridProjector.projitems*{d9359ba0-9a69-41c3-971d-eb5170adb97e}*SharedItemsImports = 4
+		MultigridProjector\MultigridProjector.projitems*{eb280dcd-171d-4764-912f-af7c99153bb4}*SharedItemsImports = 13
 	EndGlobalSection
 	GlobalSection(RiderSharedRunConfigurations) = postSolution
-		File = .run\Torch Debug.run.xml
-		File = .run\Deploy Client Debug.run.xml
-		File = .run\Deploy Client Release.run.xml
-		File = .run\Deploy Server Debug.run.xml
-		File = .run\Deploy Server Release.run.xml
-		File = .run\Publish Client Release.run.xml
 		File = .run\Torch Release.run.xml
 	EndGlobalSection
 EndGlobal
