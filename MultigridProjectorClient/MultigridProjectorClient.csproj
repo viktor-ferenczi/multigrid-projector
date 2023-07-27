@@ -90,7 +90,6 @@
         </Reference>
     </ItemGroup>
     <ItemGroup>
-        <Compile Include="Mod\Data\Scripts\MultigridProjectorClient\EmptyMod.cs" />
         <Compile Include="MultigridProjectorPlugin.cs" />
         <Compile Include="PluginSession.cs" />
         <Compile Include="Patches\MyMechanicalConnectionBlockBase_CreateTopPartAndAttach.cs" />
@@ -118,16 +117,6 @@
         <Content Include="steam_description.txt" />
     </ItemGroup>
     <ItemGroup>
-      <Content Include="Mod\manual-installation.txt" />
-      <Content Include="Mod\metadata.mod">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="Mod\modinfo.sbmi">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
-      <Content Include="Mod\thumb.jpg">
-        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-      </Content>
       <Content Include="README.md" />
     </ItemGroup>
     <ItemGroup>
