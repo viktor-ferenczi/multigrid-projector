@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Entities.Blocks;
 using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
@@ -33,7 +34,10 @@ namespace MultigridProjector.Patches
                 if (MultigridProjection.InitFromObjectBuilder(__instance, gridsObs))
                     return true;
 
-                if (!Comms.ServerPlugin && gridsObs.Count > 1 && Config.CurrentConfig.ShowDialogs)
+                if (!__instance.AllowScaling && 
+                    !Comms.ServerPlugin && 
+                    gridsObs.Count > 1 && 
+                    Config.CurrentConfig.ShowDialogs)
                 {
                     if (Config.CurrentConfig.ClientWelding)
                         MyGuiSandbox.AddScreen(ProjectionDialog.CreateDialog());
