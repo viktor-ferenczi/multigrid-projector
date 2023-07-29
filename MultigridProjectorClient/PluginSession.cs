@@ -29,7 +29,7 @@ namespace MultigridProjectorClient
 
                 if (Config.CurrentConfig.BlockHighlight)
                     BlockHighlight.Initialize();
-            });
+            }, frames: 60);
         }
 
         protected override void UnloadData()
