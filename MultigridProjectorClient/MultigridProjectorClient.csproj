@@ -125,8 +125,6 @@
         <Compile Include="Utilities\UpdateBlock.cs" />
         <Compile Include="Utilities\Construction.cs" />
         <Compile Include="Utilities\Config.cs" />
-        <Compile Include="Utilities\Comms.cs" />
-        <Compile Include="Utilities\Events.cs" />
         <Compile Include="Utilities\Reflection.cs" />
         <Content Include="deploy.bat" />
         <Content Include="steam_description.txt" />

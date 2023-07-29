@@ -8,7 +8,7 @@ using System;
 using System.Linq;
 using VRage.Game.Entity;
 
-namespace MultigridProjectorClient.Utilities
+namespace MultigridProjector.Utilities
 {
     internal class Events
     {

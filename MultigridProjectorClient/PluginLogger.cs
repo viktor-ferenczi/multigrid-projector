@@ -1,3 +1,5 @@
+//#define USE_SHOW_MESSAGE_FOR_DEBUGGING
+
 using System.Runtime.CompilerServices;
 using MultigridProjector.Utilities;
 using Sandbox.ModAPI;
@@ -17,11 +19,11 @@ namespace MultigridProjectorClient
         public void Debug(string msg)
         {
             MyLog.Default.Debug(msg);
-            return;
 
-            // Good for debugging
+#if USE_SHOW_MESSAGE_FOR_DEBUGGING
             if (MyAPIGateway.Session != null)
                 MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", $"{msg}");
+#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

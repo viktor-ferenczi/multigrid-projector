@@ -1,4 +1,5 @@
 using MultigridProjector.Logic;
+using MultigridProjector.Utilities;
 using MultigridProjectorClient.Utilities;
 using MultigridProjectorClient.Extra;
 using VRage.Game;

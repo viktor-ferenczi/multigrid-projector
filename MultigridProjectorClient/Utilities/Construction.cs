@@ -13,6 +13,7 @@ using VRage.Game;
 using VRage.Network;
 using VRage;
 using MultigridProjector.Logic;
+using MultigridProjector.Utilities;
 using VRage.Game.ObjectBuilders.Definitions.SessionComponents;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.SessionComponents;
