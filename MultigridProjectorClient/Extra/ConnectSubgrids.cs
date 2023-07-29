@@ -241,6 +241,12 @@ namespace MultigridProjectorClient.Extra
 
             if (TryPlaceBlock(sourceBase.BlockDefinition, sourceBase.WorldMatrix, visuals))
             {
+                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector",
+                    "Base block has been placed offset due to its large hit box. " +
+                    "Please move it to the head (top part) and attach it. " +
+                    "Alternatively remove this base, the head part and weld from the base's direction (if applicable). " +
+                    $"Base block: {sourceBase.BlockDefinition.DisplayNameText}");
+                
                 void OnNewBaseBuild(MyMechanicalConnectionBlockBase newBase)
                 {
                     Events.OnNextAttachedChanged(
@@ -354,7 +360,7 @@ namespace MultigridProjectorClient.Extra
         {
             string blockSubType = blockDefinition.Id.SubtypeName;
 
-            // This is essensially a binary search which finds the offset where a block can be placed within `epsilon` accuracy
+            // This is essentially a binary search which finds the offset where a block can be placed within `epsilon` accuracy
             double min = 0;
             double mid = 0;
             double max = maxOffset;

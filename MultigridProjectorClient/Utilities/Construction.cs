@@ -251,7 +251,8 @@ namespace MultigridProjectorClient.Utilities
 
                 return true;
             }
-            else if (!Config.CurrentConfig.ClientWelding)
+            
+            if (!Config.CurrentConfig.ClientWelding)
             {
                 return false;
             }
