@@ -24,7 +24,7 @@ namespace MultigridProjectorClient.Extra
         public static void WeldLoop()
         {
             // Get the currently piloted grid
-            if (!(MyAPIGateway.Session?.Player.Controller?.ControlledEntity?.Entity is MyShipController shipController))
+            if (!(MyAPIGateway.Session?.Player?.Controller?.ControlledEntity?.Entity is MyShipController shipController))
                 return;
 
             foreach (MyShipWelder welder in GetWelders(shipController.CubeGrid, true))
@@ -54,13 +54,16 @@ namespace MultigridProjectorClient.Extra
             MyDefinitionId firstComponent = block.BlockDefinition.Components[0].Definition.Id;
             MyGridConveyorSystem welderConveyor = welder.CubeGrid.GridSystems.ConveyorSystem;
 
-            // This returns the amount of items pulled. If it is greater then zero it was a success and we have pulled the resource.
-            // We can kill two birds with one stone by destroying the item as it is pulled to the welder. Not only do we know if the welder would have had access to the item, but it is now 'used up'.
-            // ClientLogic.PlacePreviewBlocks will work without any materials and will default to one of the 'bottom' materials when the block is placed. As a result there is no need to move the resource back to the player so that it can be placed.
-            bool itemPulled = welderConveyor.PullItem(firstComponent, (MyFixedPoint)1, welder, MyEntityExtensions.GetInventory(welder), true, true) > 0;
+            if (!MySession.Static.CreativeMode)
+            {
+                // This returns the amount of items pulled. If it is greater then zero it was a success and we have pulled the resource.
+                // We can kill two birds with one stone by destroying the item as it is pulled to the welder. Not only do we know if the welder would have had access to the item, but it is now 'used up'.
+                // ClientLogic.PlacePreviewBlocks will work without any materials and will default to one of the 'bottom' materials when the block is placed. As a result there is no need to move the resource back to the player so that it can be placed.
+                bool itemPulled = welderConveyor.PullItem(firstComponent, (MyFixedPoint)1, welder, MyEntityExtensions.GetInventory(welder), true, true) > 0;
 
-            if (!itemPulled)
-                return false;
+                if (!itemPulled)
+                    return false;
+            }
 
             // Sanity checks are done by the game for normal welding, but for ship welders we need to do our own sanity checks
             ulong steamId = MyAPIGateway.Session.Player.SteamUserId;
