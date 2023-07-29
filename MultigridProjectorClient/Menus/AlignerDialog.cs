@@ -97,7 +97,7 @@ namespace MultigridProjectorClient.Menus
             messageBox.DataUnloading += (_) => onClosing();
 
             // Make the background color less transparent, as the default is very faint and this is an important message
-            messageBox.BackgroundColor = new Vector4(1f, 1f, 1f, 1.5f);
+            messageBox.BackgroundColor = new Vector4(1f, 1f, 1f, 10.0f);
 
             // Get the (private) multiline text control so that we can change the text alignment
             MyGuiControlMultilineText messageBoxText = (MyGuiControlMultilineText)Reflection.GetValue(messageBox, "m_messageBoxText");
