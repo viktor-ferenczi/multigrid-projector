@@ -208,11 +208,11 @@ namespace MultigridProjectorClient.Utilities
                 CopyBlueprints(sourceProjectorBase, destinationProjectorBase);
             }
 
-            else if (sourceBlock is IMyProgrammableBlock souceProgrammableBlock &&
+            else if (sourceBlock is IMyProgrammableBlock sourceProgrammableBlock &&
                 destinationBlock is IMyProgrammableBlock destinationProgrammableBlock &&
                 MySession.Static.IsSettingsExperimental())
             {
-                CopyScripts(souceProgrammableBlock, destinationProgrammableBlock);
+                CopyScripts(sourceProgrammableBlock, destinationProgrammableBlock);
             }
 
             // Copying power must be done in the next frame as disabling a block will prevent properties being modified
@@ -222,6 +222,9 @@ namespace MultigridProjectorClient.Utilities
 
         private static void CopyPowerState(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
         {
+            if (destinationBlock.GetProperty("OnOff") == null)
+                return;
+            
             destinationBlock.SetValue("OnOff", sourceBlock.GetValue<bool>("OnOff"));
         }
 
