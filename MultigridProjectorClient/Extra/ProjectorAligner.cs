@@ -188,8 +188,9 @@ namespace MultigridProjectorClient.Extra
                 projector.ProjectionRotation == rotation)
                 return;
 
+            var isConsoleBlock = ((MyProjectorBase)projector).AllowScaling;
             projector.ProjectionOffset = offset;
-            projector.ProjectionRotation = rotation;
+            projector.ProjectionRotation = isConsoleBlock ? 90 * rotation : rotation;
             projector.UpdateOffsetAndRotation();
         }
 
