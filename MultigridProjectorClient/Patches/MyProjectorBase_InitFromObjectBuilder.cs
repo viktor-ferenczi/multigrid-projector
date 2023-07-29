@@ -35,7 +35,7 @@ namespace MultigridProjector.Patches
                     return true;
 
                 if (!__instance.AllowScaling && 
-                    !Comms.ServerPlugin && 
+                    !Comms.ServerHasPlugin && 
                     gridsObs.Count > 1 && 
                     Config.CurrentConfig.ShowDialogs)
                 {

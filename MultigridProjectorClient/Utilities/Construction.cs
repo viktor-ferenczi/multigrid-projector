@@ -244,9 +244,9 @@ namespace MultigridProjectorClient.Utilities
             // Blocks with subparts will not weld correctly on vanilla servers without the plugin (the subparts vanish)
             bool hasSubpart = previewBlock is IMyMechanicalConnectionBlock || previewBlock is IMyAttachableTopBlock;
 
-            if (Comms.ServerPlugin || gridIndex == 0 && (!hasSubpart || !Config.CurrentConfig.ClientWelding))
+            if (Comms.ServerHasPlugin || gridIndex == 0 && (!hasSubpart || !Config.CurrentConfig.ClientWelding))
             {
-                if (Comms.ServerPlugin)
+                if (Comms.ServerHasPlugin)
                     builtBy = gridIndex; // Deliver the subgrid index via the builtBy field, the owner will be used instead in BuildInternal
 
                 return true;

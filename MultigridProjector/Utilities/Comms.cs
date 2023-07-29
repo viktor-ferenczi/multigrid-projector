@@ -2,6 +2,7 @@ using Sandbox.Game;
 using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using System;
+using System.Linq;
 
 // ReSharper disable once CheckNamespace
 namespace MultigridProjector.Utilities
@@ -17,10 +18,11 @@ namespace MultigridProjector.Utilities
     public class Comms : IDisposable
     {
         public static Role Role;
-        public static bool ServerPlugin;
-        private const ushort Channel = 0x7b94;
+        public static bool ServerHasPlugin;
+        private const ushort HandlerId = 0x7b94;
+        private static readonly byte[] Signature = new byte[] { 2, 3, 5, 7, 11, 13, 17, 19 };
 
-        public delegate void OnPacketReceived(ushort handlerId, byte[] data, ulong fromSteamId, bool fromServer);
+        public delegate void OnPacketReceived(byte[] data, ulong fromSteamId, bool fromServer);
         public static event OnPacketReceived PacketReceived;
 
         public Comms()
@@ -30,11 +32,11 @@ namespace MultigridProjector.Utilities
             // If we're in singleplayer we already know we have MGP
             if (Role == Role.SinglePlayer)
             {
-                ServerPlugin = true;
+                ServerHasPlugin = true;
                 return;
             }
 
-            MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(Channel, DoPacketReceived);
+            MyAPIGateway.Multiplayer.RegisterSecureMessageHandler(HandlerId, DoPacketReceived);
 
             // Wait until the message handler is registered
             Events.InvokeOnGameThread(() =>
@@ -42,15 +44,15 @@ namespace MultigridProjector.Utilities
                 // If connnecting to a server listen if it has MGP
                 if (Role == Role.MultiplayerClient)
                 {
-                    ServerPlugin = false;
+                    ServerHasPlugin = false;
 
-                    PacketReceived += ListenServerHasPlugin;
+                    PacketReceived += OnServerPluginMessage;
                 }
 
                 // If hosting a game let players know we have MGP
                 else if (Role == Role.MultiplayerServer || Role == Role.DedicatedServer)
                 {
-                    ServerPlugin = true;
+                    ServerHasPlugin = true;
 
                     // This will not fire as we connect to our own game due to the delay with InvokeOnGameThread
                     MyVisualScriptLogicProvider.PlayerConnected += SendServerHasPlugin;
@@ -61,19 +63,19 @@ namespace MultigridProjector.Utilities
         private static void SendServerHasPlugin(long playerId)
         {
             ulong steamId = MySession.Static.Players.TryGetSteamId(playerId);
-            SendToClient(0x01, true, steamId);
+            SendToClient(HandlerId, Signature, steamId);
             PluginLog.Debug($"Sent Message to {steamId} (check if this is garage collected)");
         }
 
-        private static void ListenServerHasPlugin(ushort handlerId, byte[] data, ulong fromSteamId, bool fromServer)
+        private static void OnServerPluginMessage(byte[] data, ulong fromSteamId, bool fromServer)
         {
-            if (!fromServer || handlerId != 0x01)
+            if (!fromServer || data.SequenceEqual(Signature))
                 return;
 
-            ServerPlugin = true;
-            PacketReceived -= ListenServerHasPlugin;
+            ServerHasPlugin = true;
+            PacketReceived -= OnServerPluginMessage;
 
-            PluginLog.Debug("Server has MGP");
+            PluginLog.Debug("Server plugin is present");
         }
 
         public void Dispose()
@@ -81,13 +83,13 @@ namespace MultigridProjector.Utilities
             if (Role == Role.SinglePlayer)
                 return;
 
-            MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(Channel, DoPacketReceived);
+            MyAPIGateway.Multiplayer.UnregisterSecureMessageHandler(HandlerId, DoPacketReceived);
 
             if (Role == Role.MultiplayerServer)
                 MyVisualScriptLogicProvider.PlayerConnected -= SendServerHasPlugin;
 
             if (Role == Role.MultiplayerClient)
-                PacketReceived -= ListenServerHasPlugin;
+                PacketReceived -= OnServerPluginMessage;
         }
 
         private static Role DetectRole()
@@ -103,19 +105,19 @@ namespace MultigridProjector.Utilities
 
         private static void DoPacketReceived(ushort handlerId, byte[] data, ulong fromSteamId, bool fromServer)
         {
-            PacketReceived?.Invoke(handlerId, data, fromSteamId, fromServer);
+            PacketReceived?.Invoke(data, fromSteamId, fromServer);
         }
 
         public static void SendToServer<T>(ushort handlerId, T packet, bool reliable = true)
         {
             byte[] data = MyAPIGateway.Utilities.SerializeToBinary(packet);
-            MyAPIGateway.Multiplayer.SendMessageToServer(Channel, data, reliable);
+            MyAPIGateway.Multiplayer.SendMessageToServer(HandlerId, data, reliable);
         }
 
         public static void SendToClient<T>(ushort handlerId, T packet, ulong steamId, bool reliable = true)
         {
             byte[] data = MyAPIGateway.Utilities.SerializeToBinary(packet);
-            MyAPIGateway.Multiplayer.SendMessageTo(Channel, data, steamId, reliable);
+            MyAPIGateway.Multiplayer.SendMessageTo(HandlerId, data, steamId, reliable);
         }
     }
 }
