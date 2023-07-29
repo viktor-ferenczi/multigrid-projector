@@ -1,7 +1,9 @@
+using Entities.Blocks;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using MultigridProjectorClient.Utilities;
 using MultigridProjectorClient.Extra;
+using Sandbox.Game.Gui;
 using VRage.Game;
 using VRage.Game.Components;
 
@@ -19,17 +21,25 @@ namespace MultigridProjectorClient
 
             mgpSession = new MultigridProjectorSession();
 
-            Events.InvokeOnGameThread(() =>
+            Events.InvokeOnGameThread(InitializeDialogs, frames: 1);
+        }
+
+        private static void InitializeDialogs()
+        {
+            if (!MyTerminalControlFactory.AreControlsCreated<MySpaceProjector>())
             {
-                if (Config.CurrentConfig.AlignProjection)
-                    ProjectorAligner.Initialize();
+                Events.InvokeOnGameThread(InitializeDialogs, frames: 1);
+                return;
+            }
+            
+            if (Config.CurrentConfig.AlignProjection)
+                ProjectorAligner.Initialize();
 
-                if (Config.CurrentConfig.RepairProjection)
-                    RepairProjection.Initialize();
+            if (Config.CurrentConfig.RepairProjection)
+                RepairProjection.Initialize();
 
-                if (Config.CurrentConfig.BlockHighlight)
-                    BlockHighlight.Initialize();
-            }, frames: 60);
+            if (Config.CurrentConfig.BlockHighlight)
+                BlockHighlight.Initialize();
         }
 
         protected override void UnloadData()
