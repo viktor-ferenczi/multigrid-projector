@@ -12,14 +12,12 @@ namespace MultigridProjectorClient
     public class PluginSession : MySessionComponentBase
     {
         private MultigridProjectorSession mgpSession;
-        private Comms comms;
 
         public override void Init(MyObjectBuilder_SessionComponent sessionComponent)
         {
             MultigridProjection.EnsureNoProjections();
 
             mgpSession = new MultigridProjectorSession();
-            comms = new Comms();
 
             Events.InvokeOnGameThread(() =>
             {
@@ -43,9 +41,6 @@ namespace MultigridProjectorClient
             }
 
             MultigridProjection.EnsureNoProjections();
-
-            comms?.Dispose();
-            comms = null;
 
             if (Config.CurrentConfig.AlignProjection)
             {
