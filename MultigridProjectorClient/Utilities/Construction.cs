@@ -312,6 +312,7 @@ namespace MultigridProjectorClient.Utilities
                     UpdateBaseParts((MyAttachableTopBlockBase)previewBlock, (MyAttachableTopBlockBase)builtBlock);
             }
 
+            // FIXME: Use previewBlock.IsBuilt
             Events.OnNextFatBlockAdded(subgrid.BuiltGrid, OnPreviewPlace, (builtBlock) => VerifyBuiltBlock(cubeBlock, builtBlock.SlimBlock));
 
             return false;

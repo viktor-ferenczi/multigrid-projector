@@ -5,7 +5,9 @@ using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.World;
 using Sandbox.ModAPI;
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using Sandbox.ModAPI.Interfaces;
 using VRage.Game.Entity;
 
 namespace MultigridProjector.Utilities
@@ -43,16 +45,30 @@ namespace MultigridProjector.Utilities
             Action<MyCubeBlock> action,
             Func<MyCubeBlock, bool> predicate = null)
         {
-            // We need to wait a bit for the terminal properties to initialize
-            int delay = 10;
+            void verifyReplicated(MyCubeBlock loadedBlock)
+            {
+                if (loadedBlock is IMyTerminalBlock terminalBlock)
+                {
+                    var properties = new List<ITerminalProperty>();
+                    terminalBlock.GetProperties(properties);
+
+                    if (properties.Count == 0)
+                    {
+                        // Not fully replicated yet, come back later
+                        InvokeOnGameThread(() => verifyReplicated(loadedBlock), frames: 2);
+                        return;
+                    }
+                }
+
+                action(loadedBlock);
+            }
 
             InvokeOnEvent(
                 grid,
                 (gridInstance, handler) => gridInstance.OnFatBlockAdded += handler,
                 (gridInstance, handler) => gridInstance.OnFatBlockAdded -= handler,
-                action,
-                predicate,
-                delay);
+                (loadedBlock) => verifyReplicated(loadedBlock),
+                predicate);
         }
 
         public static void OnNextAttachedChanged(
@@ -76,7 +92,8 @@ namespace MultigridProjector.Utilities
                 null,
                 (_, handler) => MyEntities.OnEntityAdd += handler,
                 (_, handler) => MyEntities.OnEntityAdd -= handler,
-                (entity) => {
+                (entity) =>
+                {
                     MySlimBlock block = ((MyCubeGrid)entity).GetBlocks().First();
                     action(block);
                     return;
@@ -96,7 +113,7 @@ namespace MultigridProjector.Utilities
             Action<TObject, Action<TEvent1>> detachHandler,
             Action<TEvent1> actionToExecute,
             Func<TEvent1, bool> predicate = null,
-            int delay = -1)
+            int delay = 1)
         {
             void onEvent(TEvent1 arg1)
             {
