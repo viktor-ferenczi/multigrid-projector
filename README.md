@@ -77,6 +77,10 @@ Thank you and enjoy!
 
 ### Patreon Supporters
 
+#### Contributors
+
+- Space: Client side welding without server plugin
+
 #### Admiral level
 - BetaMark
 - Mordith - Guardians SE

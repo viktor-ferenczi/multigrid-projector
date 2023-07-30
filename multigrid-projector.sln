@@ -13,6 +13,15 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorDedicated
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorMods", "MultigridProjectorMods\MultigridProjectorMods.csproj", "{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution items", "{A91A9B2E-2D0D-454E-8C46-94812DE0587C}"
+	ProjectSection(SolutionItems) = preProject
+		.gitignore = .gitignore
+		LICENSE = LICENSE
+		README.md = README.md
+		pluginhub.xml = pluginhub.xml
+		Edit-and-run-before-opening-solution.bat = Edit-and-run-before-opening-solution.bat
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
