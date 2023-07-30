@@ -75,11 +75,11 @@ Thank you and enjoy!
 
 ## Credits
 
-### Patreon Supporters
-
-#### Contributors
+### Contributors
 
 - Space: Client side welding without server plugin
+
+### Patreon Supporters
 
 #### Admiral level
 - BetaMark
