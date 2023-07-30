@@ -4,6 +4,7 @@ using MultigridProjector.Utilities;
 using MultigridProjectorClient.Utilities;
 using MultigridProjectorClient.Extra;
 using Sandbox.Game.Gui;
+using Sandbox.Game.World;
 using VRage.Game;
 using VRage.Game.Components;
 
@@ -28,6 +29,8 @@ namespace MultigridProjectorClient
         {
             if (!MyTerminalControlFactory.AreControlsCreated<MySpaceProjector>())
             {
+                if (MySession.Static.IsUnloading) return; //prevent infinite loop since controls will not be created if they haven't been yet
+               
                 Events.InvokeOnGameThread(InitializeDialogs, frames: 1);
                 return;
             }
