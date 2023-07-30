@@ -11,8 +11,8 @@ namespace MultigridProjectorClient.Utilities
         public bool ShowDialogs = true;
 
         public bool ClientWelding = true;
-        public bool ShipWelding = false;
-        public bool ConnectSubgrids = false;
+        public bool ShipWelding = true;
+        public bool ConnectSubgrids = true;
 
         public bool RepairProjection = true;
         public bool AlignProjection = true;
