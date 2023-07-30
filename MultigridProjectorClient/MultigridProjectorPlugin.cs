@@ -2,6 +2,9 @@
 using System.Reflection;
 using HarmonyLib;
 using MultigridProjector.Utilities;
+using MultigridProjectorClient.Utilities;
+using Sandbox.Graphics.GUI;
+using Sandbox.ModAPI;
 using VRage.Plugins;
 
 namespace MultigridProjectorClient
@@ -32,9 +35,9 @@ namespace MultigridProjectorClient
                     return;
                 }
 
-#if DEBUG
-                Harmony.DEBUG = true;
-#endif
+                #if DEBUG
+                    Harmony.DEBUG = true;
+                #endif
 
                 Harmony.PatchAll(Assembly.GetExecutingAssembly());
             }
@@ -43,7 +46,17 @@ namespace MultigridProjectorClient
                 PluginLog.Error(e, "Plugin initialization failed");
                 throw;
             }
+
+            PluginLog.Info("Loading config");
+            Config.LoadConfig();
+
             PluginLog.Info("Client plugin loaded");
+        }
+
+        public void OpenConfigDialog()
+        {
+            bool allowEdit = MyAPIGateway.Session == null;
+            MyGuiSandbox.AddScreen(Menus.ConfigMenu.CreateDialog(allowEdit));
         }
 
         public void Dispose()

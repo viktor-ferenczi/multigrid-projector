@@ -27,7 +27,9 @@
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_OnBuildSuccess.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RecreateTop.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Arithmetic.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\Comms.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\EnsureOriginal.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\Events.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\ExecLocation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\IPluginLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\MultigridProjectorConfig.cs" />
@@ -51,11 +53,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logic\ProjectorSubgrid.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\Subgrid.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\Connection.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <Reference Include="Sandbox.Game, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
-      <HintPath>..\..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
-    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)..\.gitignore">

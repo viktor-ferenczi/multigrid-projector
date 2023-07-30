@@ -6,13 +6,16 @@ using VRage.Game.Entity;
 
 namespace MultigridProjector.Logic
 {
-    public class MultigridProjectorSession: IDisposable
+    public class MultigridProjectorSession : IDisposable
     {
         private bool pbPresent;
         private bool pbPrepared;
+        private readonly Comms comms;
 
         public MultigridProjectorSession()
         {
+            comms = new Comms();
+
             MyEntities.OnEntityCreate += OnEntityCreate;
             MyAPIGateway.Utilities.RegisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
         }
@@ -21,6 +24,8 @@ namespace MultigridProjector.Logic
         {
             MyAPIGateway.Utilities.UnregisterMessageHandler(MultigridProjectorApiProvider.ModApiRequestId, HandleModApiRequest);
             MyEntities.OnEntityCreate -= OnEntityCreate;
+
+            comms.Dispose();
         }
 
         private void OnEntityCreate(MyEntity myEntity)

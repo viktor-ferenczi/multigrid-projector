@@ -1,7 +1,7 @@
 <component name="ProjectRunConfigurationManager">
   <configuration default="false" name="Space Engineers" type="RunExe" factoryName=".NET Executable">
-    <option name="EXE_PATH" value="$PROJECT_DIR$/../../Program Files (x86)/Steam/steamapps/common/SpaceEngineers/Bin64/SpaceEngineers.exe" />
-    <option name="PROGRAM_PARAMETERS" value="-skipintro -plugin &quot;C:\Users\fviktor\AppData\Roaming\SpaceEngineers\Mods\Plugin Loader\RunPluginLoader&quot;" />
+    <option name="EXE_PATH" value="$PROJECT_DIR$/../../Program Files (x86)/Steam/steamapps/common/SpaceEngineers/Bin64/SpaceEngineersLauncher.exe" />
+    <option name="PROGRAM_PARAMETERS" value="-skipintro" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../Program Files (x86)/Steam/steamapps/common/SpaceEngineers/Bin64" />
     <option name="PASS_PARENT_ENVS" value="1" />
     <option name="USE_EXTERNAL_CONSOLE" value="0" />

@@ -1,7 +1,7 @@
 using System;
 using HarmonyLib;
-using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
+using MultigridProjectorClient.Utilities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
 
@@ -28,16 +28,7 @@ namespace MultigridProjector.Patches
 
             try
             {
-                // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
-                if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
-                    return true;
-
-                if (!projection.TryFindPreviewGrid(cubeBlock.CubeGrid, out var gridIndex))
-                    return false;
-
-                // Deliver the subgrid index via the builtBy field, the owner will be used instead in BuildInternal
-                builtBy = gridIndex;
-                return true;
+                return Construction.WeldBlock(projector, cubeBlock, owner, ref builtBy);
             }
             catch (Exception e)
             {
