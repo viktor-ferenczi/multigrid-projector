@@ -38,9 +38,9 @@ namespace MultigridProjectorClient.Extra
                 Setter = (projector, value) =>
                 {
                     if (value)
-                        TargetProjectors.Add(projector);
+                        EnableHighlightBlocks(projector);
                     else
-                        TargetProjectors.Remove(projector);
+                        DisableHighlightBlocks(projector);
                 },
 
                 Visible = (_) => true,
@@ -49,6 +49,45 @@ namespace MultigridProjectorClient.Extra
             };
 
             AddControl.AddControlAfter("ShowOnlyBuildable", highlightBlocks);
+        }
+
+        public static bool IsHighlightBlocksEnabled(IMyProjector projector)
+        {
+            if (projector is null)
+                return false;
+            
+            return TargetProjectors.Contains((MyProjectorBase)projector);
+        }
+
+        public static void EnableHighlightBlocks(IMyProjector projector)
+        {
+            if (projector is null)
+                return;
+            
+            TargetProjectors.Add((MyProjectorBase)projector);
+        }
+
+        public static void DisableHighlightBlocks(IMyProjector projector)
+        {
+            if (projector is null)
+                return;
+            
+            TargetProjectors.Remove((MyProjectorBase)projector);
+        }
+
+        public static void ToggleHighlightBlocks(IMyProjector projector)
+        {
+            if (projector is null)
+                return;
+            
+            if (IsHighlightBlocksEnabled(projector))
+            {
+                DisableHighlightBlocks(projector);
+            }
+            else
+            {
+                EnableHighlightBlocks(projector);
+            }
         }
 
         public static void HighlightLoop()
