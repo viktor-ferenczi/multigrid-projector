@@ -12,7 +12,6 @@ using Sandbox.Graphics.GUI;
 using Sandbox.ModAPI;
 using System;
 using System.Diagnostics;
-using System.Security;
 using VRage.Input;
 using VRage.Utils;
 using VRageMath;
@@ -187,7 +186,7 @@ namespace MultigridProjectorClient.Extra
         {
             // Caller guarantees that the projector is working and projecting
             Debug.Assert(IsProjecting(this.projector));
-            
+
             if (projector.ProjectionOffset == offset &&
                 projector.ProjectionRotation == rotation)
                 return;
@@ -202,7 +201,7 @@ namespace MultigridProjectorClient.Extra
         {
             // Caller guarantees that the projector is working and projecting
             Debug.Assert(IsProjecting(this.projector));
-            
+
             Base6Directions.Direction direction = (Base6Directions.Direction)directionIndex;
             Vector3D directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
             Base6Directions.Direction closestDirectionOnProjector = projector.WorldMatrix.GetClosestDirection(directionVector);
@@ -217,7 +216,7 @@ namespace MultigridProjectorClient.Extra
         {
             // Caller guarantees that the projector is working and projecting
             Debug.Assert(IsProjecting(this.projector));
-            
+
             Base6Directions.Direction direction = (Base6Directions.Direction)directionIndex;
             Vector3D directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
             Base6Directions.Direction closestProjectorDirection = projector.WorldMatrix.GetClosestDirection(directionVector);
@@ -239,18 +238,22 @@ namespace MultigridProjectorClient.Extra
             // Make sure the action passed an active projector  
             if (IsProjecting(this.projector))
                 return;
-            
+
             this.projector = projector;
             offset = projector.ProjectionOffset;
             rotation = projector.ProjectionRotation;
-            
+
             MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", "Manual projection alignment started, press ESC to cancel it");
         }
 
         private void Release()
         {
             projector = null;
-            if (MyHud.Static == null) return;
+            
+            // Prevented NRE while unloading Session
+            if (MyHud.Static == null) 
+                return;
+            
             MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", "Manual projection alignment cancelled");
         }
 

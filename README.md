@@ -7,7 +7,6 @@ Multigrid Projector for the Space Engineers game.
 - Works both in single player and multiplayer
 
 ## Install the client plugin
-
 1. Subscribe to this mod
 2. Install the [Plugin Loader](https://steamcommunity.com/sharedfiles/filedetails/?id=2407984968)
 3. Start the game
@@ -76,8 +75,8 @@ Thank you and enjoy!
 ## Credits
 
 ### Contributors
-
 - Space: Client side welding without server plugin
+- Pas2704: Bug fixes
 
 ### Patreon Supporters
 
@@ -96,6 +95,8 @@ Thank you and enjoy!
 - NeonDrip
 - NeVaR
 - opesoorry
+- jiringgot
+- N CG
 - NeVaR
 - Jimbo
 
@@ -111,6 +112,8 @@ Thank you and enjoy!
 - Spitfyre.pjs
 - Random000
 - gamemasterellison
+- Babyboarder
+- LordJ
 
 ### Creators
 - avaness - Plugin Loader, Racing Display
@@ -118,6 +121,7 @@ Thank you and enjoy!
 - Mike Dude - Guardians SE
 - Fred XVI - Racing maps
 - Kamikaze - M&M mod
+- Keleios
 - LTP
 
 **Thank you very much for all your support and hard work on testing!**

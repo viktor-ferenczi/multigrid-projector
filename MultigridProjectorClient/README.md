@@ -42,6 +42,10 @@ Thank you and enjoy!
 
 ## Credits
 
+### Contributors
+- Space: Client side welding without server plugin
+- Pas2704: Bug fixes
+
 ### Patreon Supporters
 
 #### Admiral level
@@ -57,6 +61,7 @@ Thank you and enjoy!
 - jiringgot
 - Kam Solastor
 - NeonDrip
+- NeVaR
 - opesoorry
 - jiringgot
 - N CG
