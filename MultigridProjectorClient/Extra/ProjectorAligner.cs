@@ -250,6 +250,7 @@ namespace MultigridProjectorClient.Extra
         private void Release()
         {
             projector = null;
+            if (MyHud.Static == null) return;
             MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", "Manual projection alignment cancelled");
         }
 
