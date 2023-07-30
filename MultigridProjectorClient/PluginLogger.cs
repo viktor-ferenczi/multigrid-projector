@@ -1,4 +1,6 @@
+#if DEBUG
 //#define USE_SHOW_MESSAGE_FOR_DEBUGGING
+#endif
 
 using System.Runtime.CompilerServices;
 using MultigridProjector.Utilities;
