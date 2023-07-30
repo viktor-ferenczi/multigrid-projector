@@ -29,12 +29,14 @@ namespace MultigridProjectorClient
         {
             if (!MyTerminalControlFactory.AreControlsCreated<MySpaceProjector>())
             {
-                if (MySession.Static.IsUnloading) return; //prevent infinite loop since controls will not be created if they haven't been yet
-               
+                // Prevent infinite loop since controls will not be created if they haven't been yet
+                if (MySession.Static.IsUnloading) 
+                    return; 
+
                 Events.InvokeOnGameThread(InitializeDialogs, frames: 1);
                 return;
             }
-            
+
             if (Config.CurrentConfig.AlignProjection)
                 ProjectorAligner.Initialize();
 
@@ -47,7 +49,7 @@ namespace MultigridProjectorClient
 
         protected override void UnloadData()
         {
-            if(mgpSession != null)
+            if (mgpSession != null)
             {
                 mgpSession.Dispose();
                 mgpSession = null;
