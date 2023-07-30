@@ -11,11 +11,6 @@ namespace MultigridProjectorClient.Extra
     [MySessionComponentDescriptor(MyUpdateOrder.BeforeSimulation)]
     public class ProjectorSessionComponent : MySessionComponentBase
     {
-        private static bool IsWorkingButNotProjecting(IMyTerminalBlock block) => IsValid(block) && block.IsWorking && (block as IMyProjector)?.IsProjecting == false;
-        private static bool IsProjecting(IMyTerminalBlock block) => IsWorking(block) && (block as IMyProjector)?.IsProjecting == true;
-        private static bool IsWorking(IMyTerminalBlock block) => IsValid(block) && block.IsWorking;
-        private static bool IsValid(IMyTerminalBlock block) => block.CubeGrid?.Physics != null;
-
         private readonly List<IMyTerminalAction> customActions = new List<IMyTerminalAction>();
 
         private bool initialized;
@@ -43,8 +38,8 @@ namespace MultigridProjectorClient.Extra
 
         private void CreateCustomControls()
         {
-            var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("AlignProjection");
-            action.Enabled = (terminalBlock) => IsProjecting(terminalBlock as IMyProjector);
+            var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("AlignProjectionAction");
+            action.Enabled = (terminalBlock) => terminalBlock is IMyProjector;
             action.Action = (terminalBlock) => ProjectorAligner.Instance?.Assign(terminalBlock as IMyProjector);
             action.ValidForGroups = false;
             action.Icon = ActionIcons.MOVING_OBJECT_TOGGLE;
