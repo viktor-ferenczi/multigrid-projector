@@ -11,6 +11,8 @@ using Sandbox.Game.SessionComponents.Clipboard;
 using Sandbox.Graphics.GUI;
 using Sandbox.ModAPI;
 using System;
+using System.Diagnostics;
+using System.Security;
 using VRage.Input;
 using VRage.Utils;
 using VRageMath;
@@ -19,7 +21,7 @@ namespace MultigridProjectorClient.Extra
 {
     [HarmonyPatch(typeof(MyGuiScreenGamePlay))]
     [HarmonyPatch("HandleUnhandledInput")]
-    //[EnsureOriginal("")] <-- TODO: Figure out what to put here
+    [EnsureOriginal("79876661")]
     public static class MyGuiScreenGamePlay_HandleUnhandledInput
     {
         [ClientOnly]
@@ -38,7 +40,7 @@ namespace MultigridProjectorClient.Extra
 
     [HarmonyPatch(typeof(MyCubeBuilder))]
     [HarmonyPatch("HandleGameInput")]
-    //[EnsureOriginal("")] <-- TODO: Figure out what to put here
+    [EnsureOriginal("9b537014")]
     public static class MyCubeBuilder_HandleGameInput
     {
         [ClientOnly]
@@ -55,7 +57,7 @@ namespace MultigridProjectorClient.Extra
 
     [HarmonyPatch(typeof(MyClipboardComponent))]
     [HarmonyPatch("HandleGameInput")]
-    //[EnsureOriginal("")] <-- TODO: Figure out what to put here
+    [EnsureOriginal("4ef70c94")]
     public static class MyClipboardComponent_HandleGameInput
     {
         [ClientOnly]
@@ -104,11 +106,11 @@ namespace MultigridProjectorClient.Extra
         private Vector3I offset;
         private Vector3I rotation;
 
+        private static bool IsWorking(IMyProjector block) => block?.CubeGrid?.Physics != null && block.IsWorking;
+        private static bool IsProjecting(IMyProjector block) => IsWorking(block) && block.ProjectedGrid != null;
+
         public static void Initialize()
         {
-            bool IsProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid != null;
-            bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
-
             MyTerminalControlButton<MySpaceProjector> alignProjection = new MyTerminalControlButton<MySpaceProjector>(
                 "AlignProjection",
                 MyStringId.GetOrCompute("Align Projection"),
@@ -131,7 +133,7 @@ namespace MultigridProjectorClient.Extra
             {
                 MyGuiScreenMessageBox alignerDialog = AlignerDialog.CreateDialog(() =>
                 {
-                    Setter(projector, true);
+                    Instance?.Assign(projector);
                 });
 
                 MyGuiSandbox.AddScreen(alignerDialog);
@@ -139,7 +141,7 @@ namespace MultigridProjectorClient.Extra
             else
             {
                 MyGuiScreenTerminal instance = (MyGuiScreenTerminal)Reflection.GetValue(typeof(MyGuiScreenTerminal), "m_instance");
-                instance.DataUnloading += (_) => Setter(projector, true);
+                instance.DataUnloading += (_) => Instance?.Assign(projector);
             }
 
             MyGuiScreenTerminal.Hide();
@@ -152,10 +154,9 @@ namespace MultigridProjectorClient.Extra
 
             if (MyAPIGateway.Gui.ChatEntryVisible ||
                 MyAPIGateway.Gui.IsCursorVisible ||
-                !projector.IsProjecting ||
+                !IsProjecting(projector) ||
                 MyInput.Static.IsKeyPress(MyKeys.Escape))
             {
-                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", "Alignment cancelled");
                 Release();
                 return;
             }
@@ -184,6 +185,9 @@ namespace MultigridProjectorClient.Extra
 
         private void UpdateOffsetAndRotation()
         {
+            // Caller guarantees that the projector is working and projecting
+            Debug.Assert(IsProjecting(this.projector));
+            
             if (projector.ProjectionOffset == offset &&
                 projector.ProjectionRotation == rotation)
                 return;
@@ -196,6 +200,9 @@ namespace MultigridProjectorClient.Extra
 
         private void Move(int directionIndex)
         {
+            // Caller guarantees that the projector is working and projecting
+            Debug.Assert(IsProjecting(this.projector));
+            
             Base6Directions.Direction direction = (Base6Directions.Direction)directionIndex;
             Vector3D directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
             Base6Directions.Direction closestDirectionOnProjector = projector.WorldMatrix.GetClosestDirection(directionVector);
@@ -208,6 +215,9 @@ namespace MultigridProjectorClient.Extra
 
         private void Rotate(int directionIndex)
         {
+            // Caller guarantees that the projector is working and projecting
+            Debug.Assert(IsProjecting(this.projector));
+            
             Base6Directions.Direction direction = (Base6Directions.Direction)directionIndex;
             Vector3D directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
             Base6Directions.Direction closestProjectorDirection = projector.WorldMatrix.GetClosestDirection(directionVector);
@@ -224,27 +234,23 @@ namespace MultigridProjectorClient.Extra
             OrientationAlgebra.ProjectionRotationFromForwardAndUp(forward, up, out rotation);
         }
 
-        public static void Setter(IMyTerminalBlock block, bool enabled)
+        public void Assign(IMyProjector projector)
         {
-            if (!(block is IMyProjector projector))
+            // Make sure the action passed an active projector  
+            if (IsProjecting(this.projector))
                 return;
-
-            if (enabled && projector.IsProjecting)
-                Instance?.Assign(projector);
-            else
-                Instance?.Release();
-        }
-
-        private void Assign(IMyProjector projector)
-        {
+            
             this.projector = projector;
             offset = projector.ProjectionOffset;
             rotation = projector.ProjectionRotation;
+            
+            MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", "Manual projection alignment started, press ESC to cancel it");
         }
 
         private void Release()
         {
             projector = null;
+            MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", "Manual projection alignment cancelled");
         }
 
         public void Dispose()
