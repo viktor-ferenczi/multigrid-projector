@@ -23,8 +23,8 @@ namespace MultigridProjectorClient.Utilities
     {
         public static ConfigObject CurrentConfig { get; private set; } = new ConfigObject();
 
-        // This is stored under %AppData%/SpaceEngineers/Storage/MultigridProjector.xml
-        private static readonly string configPath = Path.Combine(MyFileSystem.UserDataPath, "Storage", "MultigridProjector.xml");
+        // Config file location: %AppData%/SpaceEngineers/Storage/MultigridProjector.cfg
+        private static readonly string configPath = Path.Combine(MyFileSystem.UserDataPath, "Storage", "MultigridProjector.cfg");
 
         private static readonly XmlSerializer configSerializer = new XmlSerializer(typeof(ConfigObject));
 
