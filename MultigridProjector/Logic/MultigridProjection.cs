@@ -55,6 +55,24 @@ namespace MultigridProjector.Logic
         private static readonly ThreadLocal<bool> IsBuildingProjectedBlock = new ThreadLocal<bool>();
         public static bool IsBuildingProjection() => IsBuildingProjectedBlock.Value;
 
+        public bool TryGetSupportedSubgrid(int gridIndex, out Subgrid subgrid)
+        {
+            using (subgridsLock.Read())
+            {
+                if (gridIndex >= 0 && gridIndex < subgrids.Count)
+                {
+                    subgrid = subgrids[gridIndex];
+                    if (subgrid.Supported)
+                    {
+                        return true;
+                    }
+                }
+            }
+
+            subgrid = null;
+            return false;
+        }
+
         public Subgrid[] GetSupportedSubgrids()
         {
             using (subgridsLock.Read())

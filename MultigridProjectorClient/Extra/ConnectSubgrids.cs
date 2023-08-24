@@ -52,17 +52,14 @@ namespace MultigridProjectorClient.Extra
             {
                 return MultigridProjection.TryFindProjectionByBuiltGrid(blockGrid, out projection, out subgrid);
             }
-            else
-            {
-                if (!MultigridProjection.TryFindProjectionByProjector(projector, out projection))
-                    return false;
+            
+            if (!MultigridProjection.TryFindProjectionByProjector(projector, out projection))
+                return false;
 
-                if (!projection.TryFindPreviewGrid(blockGrid, out int gridIndex))
-                    return false;
+            if (!projection.TryFindPreviewGrid(blockGrid, out int gridIndex))
+                return false;
 
-                subgrid = projection.GetSupportedSubgrids()[gridIndex];
-                return true;
-            }
+            return projection.TryGetSupportedSubgrid(gridIndex, out subgrid);
         }
 
         public static void SkinTopParts(MyAttachableTopBlockBase sourceTop, MyAttachableTopBlockBase destinationTop)
@@ -96,7 +93,10 @@ namespace MultigridProjectorClient.Extra
 
             // Get the subgrid that the top connection is on
             BlockLocation topLocation = baseConnection.TopLocation;
-            Subgrid topSubgrid = projection.GetSupportedSubgrids()[topLocation.GridIndex];
+            if (!projection.TryGetSupportedSubgrid(topLocation.GridIndex, out var topSubgrid))
+            {
+                return null;
+            }
 
             // Get and return the subpart
             MySlimBlock topSlimBlock = topSubgrid.PreviewGrid.GetCubeBlock(topLocation.Position);
@@ -126,7 +126,10 @@ namespace MultigridProjectorClient.Extra
 
             // Get the subgrid that the base connection is on
             BlockLocation baseLocation = topConnection.BaseLocation;
-            Subgrid baseSubgrid = projection.GetSupportedSubgrids()[baseLocation.GridIndex];
+            if (!projection.TryGetSupportedSubgrid(baseLocation.GridIndex, out var baseSubgrid))
+            {
+                return null;
+            }
 
             // Get and return the subpart
             MySlimBlock baseSlimBlock = baseSubgrid.PreviewGrid.GetCubeBlock(baseLocation.Position);
