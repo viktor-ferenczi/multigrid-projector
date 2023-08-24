@@ -235,7 +235,7 @@ namespace MultigridProjectorClient.Utilities
             if (!TryGetSubgrid(cubeBlock, out Subgrid subgrid, out MultigridProjection projection))
                 return true;
 
-            int gridIndex = Array.IndexOf(projection.GetSupportedSubgrids(), subgrid);
+            int gridIndex = subgrid.Index;
 
             MyCubeBlock previewBlock = cubeBlock.FatBlock;
 
@@ -244,6 +244,7 @@ namespace MultigridProjectorClient.Utilities
             // Blocks with subparts will not weld correctly on vanilla servers without the plugin (the subparts vanish)
             bool hasSubpart = previewBlock is IMyMechanicalConnectionBlock || previewBlock is IMyAttachableTopBlock;
 
+            // The first subgrid with index 0 is the main grid with the projector on it, therefore it is always Supported
             if (Comms.ServerHasPlugin || gridIndex == 0 && (!hasSubpart || !Config.CurrentConfig.ClientWelding))
             {
                 if (Comms.ServerHasPlugin)
