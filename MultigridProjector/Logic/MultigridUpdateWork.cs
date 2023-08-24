@@ -68,16 +68,16 @@ namespace MultigridProjector.Logic
 
         public void DoWork(WorkData workData = null)
         {
+            if (projection == null)
+                return;
+            
             isRunning = true;
             try
             {
-                var supportedSubgrids = projection?.GetSupportedSubgrids();
-                if (supportedSubgrids != null)
-                {
-                    UpdateBlockStatesAndCollectStatistics(supportedSubgrids);
-                    FindBuiltMechanicalConnections(supportedSubgrids);
-                    gridScanSucceeded = !ShouldStop;
-                }
+                var supportedSubgrids = projection.GetSupportedSubgrids();
+                UpdateBlockStatesAndCollectStatistics(supportedSubgrids);
+                FindBuiltMechanicalConnections(supportedSubgrids);
+                gridScanSucceeded = !ShouldStop;
             }
             catch (Exception e)
             {
