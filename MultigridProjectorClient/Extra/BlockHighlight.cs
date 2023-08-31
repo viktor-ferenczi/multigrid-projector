@@ -162,7 +162,8 @@ namespace MultigridProjectorClient.Extra
                 1,
                 0.01f,
                 lineMaterial: material ?? MyStringId.GetOrCompute("ContainerBorder"),
-                blendType: MyBillboard.BlendTypeEnum.AdditiveTop);
+                blendType: MyBillboard.BlendTypeEnum.AdditiveTop,
+                intensity: 100);
         }
     }
 }
