@@ -19,7 +19,6 @@ copy /y %1 "%TARGET%\"
 IF %ERRORLEVEL% NEQ 0 GOTO :RETRY
 echo Copying "%SRC%\0Harmony.dll" into "%TARGET%\"
 copy /y "%SRC%\0Harmony.dll" "%TARGET%\"
-copy /y "%SRC%\manifest.xml" "%TARGET%\"
 echo Done
 echo.
 exit 0
