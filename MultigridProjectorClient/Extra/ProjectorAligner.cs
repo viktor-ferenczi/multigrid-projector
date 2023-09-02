@@ -20,7 +20,7 @@ namespace MultigridProjectorClient.Extra
 {
     [HarmonyPatch(typeof(MyGuiScreenGamePlay))]
     [HarmonyPatch("HandleUnhandledInput")]
-    [EnsureOriginal("79876661")]
+    [EnsureOriginal("5bf3b399")]
     public static class MyGuiScreenGamePlay_HandleUnhandledInput
     {
         [ClientOnly]
