@@ -8,7 +8,7 @@ Multigrid Projector for the Space Engineers game.
 
 ## Install the client plugin
 1. Subscribe to this mod
-2. Install the [Plugin Loader](https://steamcommunity.com/sharedfiles/filedetails/?id=2407984968)
+2. Install the [Plugin Loader](https://github.com/sepluginloader/SpaceEngineersLauncher)
 3. Start the game
 4. Open the Plugins menu (should be in the Main Menu)
 5. Enable the Multigrid Projector plugin
@@ -141,7 +141,7 @@ Thank you and enjoy!
 - [Space Engineers](https://spaceengineersgame.com)
 - [Torch](https://torchapi.com) extracted and executed once
 - [JetBrains Rider](https://jetbrains.com) or Visual Studio
-- [Plugin Loader](https://steamcommunity.com/sharedfiles/filedetails/?id=2407984968)
+- [Plugin Loader](https://github.com/sepluginloader/SpaceEngineersLauncher)
 
 ### Steps
 
