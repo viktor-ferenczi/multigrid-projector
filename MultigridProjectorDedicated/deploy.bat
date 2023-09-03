@@ -1,26 +1,78 @@
 @echo off
-if [%2] == [] goto EOF
+setlocal enabledelayedexpansion
 
-echo Parameters: %*
+:: Check if the required parameters are passed
+:: (3rd param will be blank if there are not enough)
+if "%~3" == "" (
+    echo ERROR: Missing required parameters
+        endlocal
+    exit /b 1
+)
 
-set SRC=%~p1
-set NAME=%~2
+:: Extract parameters and remove quotes
+set NAME=%~1
+set SOURCE=%~2
+set DEDICATED64=%~3
 
-set TARGET=..\..\..\Torch\DedicatedServer64\Plugins
-mkdir "%TARGET%" >NUL 2>&1
+:: Remove trailing backslash if applicable
+if "%NAME:~-1%"=="\" set NAME=%NAME:~0,-1%
+if "%SOURCE:~-1%"=="\" set SOURCE=%SOURCE:~0,-1%
+if "%DEDICATED64:~-1%"=="\" set DEDICATED64=%DEDICATED64:~0,-1%
 
-echo.
-echo Deploying DEDICATED SERVER plugin binary:
-echo.
-:RETRY
-ping -n 2 127.0.0.1 >NUL 2>&1
-echo From %1 to "%TARGET%\"
-copy /y %1 "%TARGET%\"
-IF %ERRORLEVEL% NEQ 0 GOTO :RETRY
-echo Copying "%SRC%\0Harmony.dll" into "%TARGET%\"
-copy /y "%SRC%\0Harmony.dll" "%TARGET%\"
-echo Done
-echo.
-exit 0
+:: Get the plugin directory
+set PLUGIN_DIR=%DEDICATED64%\Plugins
 
-:EOF
+:: Create this directory if it does not exist
+if not exist "%PLUGIN_DIR%" (
+    echo Creating "Plugins\" folder in "%DEDICATED64%\"
+    mkdir "%PLUGIN_DIR%" >NUL 2>&1
+)
+
+:: Copy the plugin into the plugin directory
+echo Copying "%NAME%" to "%PLUGIN_DIR%\"
+
+for /l %%i in (1, 1, 10) do (
+    copy /y "%SOURCE%\%NAME%" "%PLUGIN_DIR%\"
+
+    if !ERRORLEVEL! NEQ 0 (
+        :: "timeout" requires input redirection which is not supported,
+        :: so we use ping as a way to delay the script between retries.
+        ping -n 2 127.0.0.1 >NUL 2>&1
+    ) else (
+        goto BREAK_LOOP_PLUGIN
+    )
+)
+
+:: This part will only be reached if the loop has been exhausted
+:: Any success would skip to the BREAK_LOOP_PLUGIN label below
+echo ERROR: Could not copy "%NAME%".
+endlocal
+exit /b 1
+
+:BREAK_LOOP_PLUGIN
+
+:: Copy Harmony into the plugin directory
+echo Copying "0Harmony.dll" to "%PLUGIN_DIR%\"
+
+for /l %%i in (1, 1, 10) do (
+    copy /y "%SOURCE%\0Harmony.dll" "%PLUGIN_DIR%\"
+
+    if !ERRORLEVEL! NEQ 0 (
+        :: "timeout" requires input redirection which is not supported,
+        :: so we use ping as a way to delay the script between retries.
+        ping -n 2 127.0.0.1 >NUL 2>&1
+    ) else (
+        goto BREAK_LOOP_HARMONY
+    )
+)
+
+:: This part will only be reached if the loop has been exhausted
+:: Any success would skip to the BREAK_LOOP_HARMONY label below
+echo ERROR: Could not copy "0Harmony.dll".
+endlocal
+exit /b 1
+
+:BREAK_LOOP_HARMONY
+
+endlocal
+exit /b 0

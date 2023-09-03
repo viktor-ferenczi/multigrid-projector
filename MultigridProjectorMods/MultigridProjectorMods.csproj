@@ -32,40 +32,43 @@
         <ErrorReport>prompt</ErrorReport>
         <WarningLevel>4</WarningLevel>
     </PropertyGroup>
+    <PropertyGroup>
+        <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
+    </PropertyGroup>
     <ItemGroup>
         <Reference Include="System" />
         <Reference Include="System.Core" />
         <Reference Include="System.Data" />
         <Reference Include="System.Xml" />
         <Reference Include="ProtoBuf.Net.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\Bin64\ProtoBuf.Net.Core.dll</HintPath>
+          <HintPath>$(Bin64)\ProtoBuf.Net.Core.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\Bin64\Sandbox.Common.dll</HintPath>
+            <HintPath>$(Bin64)\Sandbox.Common.dll</HintPath>
         </Reference>
         <Reference Include="Sandbox.Game, Version=0.1.1.0, Culture=neutral, PublicKeyToken=null">
-          <HintPath>..\..\..\Program Files (x86)\Steam\steamapps\common\SpaceEngineers\Bin64\Sandbox.Game.dll</HintPath>
+          <HintPath>$(Bin64)\Sandbox.Game.dll</HintPath>
         </Reference>
         <Reference Include="SpaceEngineers.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\Bin64\SpaceEngineers.Game.dll</HintPath>
+            <HintPath>$(Bin64)\SpaceEngineers.Game.dll</HintPath>
         </Reference>
         <Reference Include="SpaceEngineers.ObjectBuilders, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\Bin64\SpaceEngineers.ObjectBuilders.dll</HintPath>
+            <HintPath>$(Bin64)\SpaceEngineers.ObjectBuilders.dll</HintPath>
         </Reference>
         <Reference Include="VRage, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\Bin64\VRage.dll</HintPath>
+            <HintPath>$(Bin64)\VRage.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Game, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\Bin64\VRage.Game.dll</HintPath>
+            <HintPath>$(Bin64)\VRage.Game.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Input, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-			<HintPath>..\Bin64\VRage.Input.dll</HintPath>
+			<HintPath>$(Bin64)\VRage.Input.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Library, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\Bin64\VRage.Library.dll</HintPath>
+            <HintPath>$(Bin64)\VRage.Library.dll</HintPath>
         </Reference>
         <Reference Include="VRage.Math, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
-            <HintPath>..\Bin64\VRage.Math.dll</HintPath>
+            <HintPath>$(Bin64)\VRage.Math.dll</HintPath>
         </Reference>
     </ItemGroup>
     <ItemGroup>
@@ -92,13 +95,6 @@
       <Content Include="ApiTest\thumb.jpg" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-    <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-         Other similar extension points exist, see Microsoft.Common.targets.
-    <Target Name="BeforeBuild">
-    </Target>
-    <Target Name="AfterBuild">
-    </Target>
-    -->
     <PropertyGroup>
         <PostBuildEvent>call "$(ProjectDir)\deploy.bat" "$(ProjectDir)" "$(ProjectName)"</PostBuildEvent>
     </PropertyGroup>

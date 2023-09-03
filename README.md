@@ -53,6 +53,14 @@ from loading instead of crashing later.
 
 You can detect this case by looking in the game's log file for this text: `Refusing to load the plugin due to potentially incompatible code changes`
 
+## Building from source
+Some projects have external references which need to be resolved - you must include a path to them in `Directory.Build.props`
+
+Each project requires the following paths:
+- MultigridProjectorClient - `C:\Path\To\SpaceEngineers\Bin64`
+- MultigridProjectorDedicated - `C:\Path\To\SpaceEngineersDedicatedServer\DedicatedServer64`
+- MultigridProjectorServer - `C:\Path\To\Torch`
+
 ## Want to know more?
 - [SE Mods Discord](https://discord.gg/PYPFPGf3Ca)
 - [YouTube Channel](https://www.youtube.com/channel/UCc5ar3cW9qoOgdBb1FM_rxQ)
