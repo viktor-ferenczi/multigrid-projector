@@ -17,5 +17,4 @@ for %%a in (%*) do (
     )
 )
 
-endlocal
 exit /b 0

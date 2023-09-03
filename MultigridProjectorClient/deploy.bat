@@ -5,7 +5,6 @@ setlocal enabledelayedexpansion
 :: (3rd param will be blank if there are not enough)
 if "%~3" == "" (
     echo ERROR: Missing required parameters
-        endlocal
     exit /b 1
 )
 
@@ -46,7 +45,6 @@ for /l %%i in (1, 1, 10) do (
 :: This part will only be reached if the loop has been exhausted
 :: Any success would skip to the BREAK_LOOP_PLUGIN label below
 echo ERROR: Could not copy "%NAME%".
-endlocal
 exit /b 1
 
 :BREAK_LOOP_PLUGIN
@@ -69,10 +67,7 @@ for /l %%i in (1, 1, 10) do (
 :: This part will only be reached if the loop has been exhausted
 :: Any success would skip to the BREAK_LOOP_HARMONY label below
 echo ERROR: Could not copy "0Harmony.dll".
-endlocal
 exit /b 1
 
 :BREAK_LOOP_HARMONY
-
-endlocal
 exit /b 0
