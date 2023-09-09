@@ -55,8 +55,7 @@ namespace MultigridProjectorClient
 
         public void OpenConfigDialog()
         {
-            bool allowEdit = MyAPIGateway.Session == null;
-            MyGuiSandbox.AddScreen(Menus.ConfigMenu.CreateDialog(allowEdit));
+            MyGuiSandbox.AddScreen(Menus.ConfigMenu.CreateDialog());
         }
 
         public void Dispose()

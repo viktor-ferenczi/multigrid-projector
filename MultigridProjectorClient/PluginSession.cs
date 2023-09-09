@@ -37,14 +37,9 @@ namespace MultigridProjectorClient
                 return;
             }
 
-            if (Config.CurrentConfig.AlignProjection)
-                ProjectorAligner.Initialize();
-
-            if (Config.CurrentConfig.RepairProjection)
-                RepairProjection.Initialize();
-
-            if (Config.CurrentConfig.BlockHighlight)
-                BlockHighlight.Initialize();
+            ProjectorAligner.Initialize();
+            RepairProjection.Initialize();
+            BlockHighlight.Initialize();
         }
 
         protected override void UnloadData()
@@ -57,7 +52,7 @@ namespace MultigridProjectorClient
 
             MultigridProjection.EnsureNoProjections();
 
-            if (Config.CurrentConfig.AlignProjection)
+            if (Config.CurrentConfig.ProjectorAligner)
             {
                 ProjectorAligner.Instance?.Dispose();
             }

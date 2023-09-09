@@ -90,7 +90,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Extra\ActionIcons.cs" />
+    <Compile Include="Utilities\ActionIcons.cs" />
     <Compile Include="Extra\ConnectSubgrids.cs" />
     <Compile Include="Extra\RepairProjection.cs" />
     <Compile Include="Extra\ProjectorAligner.cs" />

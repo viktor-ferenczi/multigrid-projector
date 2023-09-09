@@ -1,4 +1,4 @@
-namespace MultigridProjectorClient.Extra
+namespace MultigridProjectorClient.Utilities
 {
     public static class ActionIcons
     {

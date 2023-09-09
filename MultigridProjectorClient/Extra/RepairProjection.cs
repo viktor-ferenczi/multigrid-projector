@@ -18,6 +18,8 @@ namespace MultigridProjectorClient.Extra
 {
     internal static class RepairProjection
     {
+        private static bool Enabled => Config.CurrentConfig.RepairProjection;
+
         public static void Initialize()
         {
             bool IsWorkingButNotProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid == null;
@@ -29,7 +31,7 @@ namespace MultigridProjectorClient.Extra
                 MyStringId.GetOrCompute("Loads the projector's own grid as a repair projection."),
                 LoadMechanicalGroup)
             {
-                Visible = IsWorking,
+                Visible = (projector) => Enabled && IsWorking(projector),
                 Enabled = IsWorkingButNotProjecting,
                 SupportsMultipleBlocks = false
             };
