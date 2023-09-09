@@ -66,11 +66,7 @@ namespace MultigridProjectorClient.Extra
             var projectorBuilder = gridBuilder
                 .CubeBlocks
                 .OfType<MyObjectBuilder_Projector>()
-                .FirstOrDefault(b =>
-                    b.SubtypeId.ToString() == projector.BlockDefinition.SubtypeId &&
-                    (Vector3I)b.Min == projector.Min &&
-                    (MyBlockOrientation)b.BlockOrientation == projector.Orientation &&
-                    (b.CustomName ?? b.Name) == (projector.CustomName ?? projector.Name));
+                .FirstOrDefault(b => b.Name == projector.Name);
 
             if (projectorBuilder == null) return;
 
