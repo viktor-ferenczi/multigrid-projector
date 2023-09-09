@@ -92,7 +92,6 @@
   <ItemGroup>
     <Compile Include="Extra\ActionIcons.cs" />
     <Compile Include="Extra\ConnectSubgrids.cs" />
-    <Compile Include="Extra\ProjectorSessionComponent.cs" />
     <Compile Include="Extra\RepairProjection.cs" />
     <Compile Include="Extra\ProjectorAligner.cs" />
     <Compile Include="Extra\ShipWelding.cs" />

@@ -10,8 +10,12 @@ using Sandbox.Game.Gui;
 using Sandbox.Game.SessionComponents.Clipboard;
 using Sandbox.Graphics.GUI;
 using Sandbox.ModAPI;
+using Sandbox.ModAPI.Interfaces.Terminal;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Text;
+using VRage.Game;
 using VRage.Input;
 using VRage.Utils;
 using VRageMath;
@@ -110,6 +114,14 @@ namespace MultigridProjectorClient.Extra
 
         public static void Initialize()
         {
+            CreateTerminalControls();
+            CreateToolbarControls();
+
+            Instance = new ProjectorAligner();
+        }
+
+        private static void CreateTerminalControls()
+        {
             MyTerminalControlButton<MySpaceProjector> alignProjection = new MyTerminalControlButton<MySpaceProjector>(
                 "AlignProjectionButton",
                 MyStringId.GetOrCompute("Align Projection"),
@@ -122,8 +134,29 @@ namespace MultigridProjectorClient.Extra
             };
 
             AddControl.AddControlAfter("Blueprint", alignProjection);
+        }
 
-            Instance = new ProjectorAligner();
+        private static void CreateToolbarControls()
+        {
+            List<IMyTerminalAction> customActions = new List<IMyTerminalAction>();
+
+            {
+                IMyTerminalAction action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ProjectorAlignerStart");
+                action.Enabled = (terminalBlock) => terminalBlock is IMyProjector;
+                action.Action = (terminalBlock) => Instance?.Assign(terminalBlock as IMyProjector);
+                action.ValidForGroups = true;
+                action.Icon = ActionIcons.MOVING_OBJECT_TOGGLE;
+                action.Name = new StringBuilder("Start manual projection alignment");
+                action.Writer = (b, s) => s.Append("Align");
+                action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
+                customActions.Add(action);
+            }
+
+            MyAPIGateway.TerminalControls.CustomActionGetter += (block, actions) =>
+            {
+                if (block is IMyProjector)
+                    actions.AddRange(customActions);
+            };
         }
 
         public static void ShowDialog(MyProjectorBase projector)
@@ -185,7 +218,7 @@ namespace MultigridProjectorClient.Extra
         private void UpdateOffsetAndRotation()
         {
             // Caller guarantees that the projector is working and projecting
-            Debug.Assert(IsProjecting(this.projector));
+            Debug.Assert(IsProjecting(projector));
 
             if (projector.ProjectionOffset == offset &&
                 projector.ProjectionRotation == rotation)
@@ -200,7 +233,7 @@ namespace MultigridProjectorClient.Extra
         private void Move(int directionIndex)
         {
             // Caller guarantees that the projector is working and projecting
-            Debug.Assert(IsProjecting(this.projector));
+            Debug.Assert(IsProjecting(projector));
 
             Base6Directions.Direction direction = (Base6Directions.Direction)directionIndex;
             Vector3D directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
@@ -215,7 +248,7 @@ namespace MultigridProjectorClient.Extra
         private void Rotate(int directionIndex)
         {
             // Caller guarantees that the projector is working and projecting
-            Debug.Assert(IsProjecting(this.projector));
+            Debug.Assert(IsProjecting(projector));
 
             Base6Directions.Direction direction = (Base6Directions.Direction)directionIndex;
             Vector3D directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
@@ -236,7 +269,7 @@ namespace MultigridProjectorClient.Extra
         public void Assign(IMyProjector projector)
         {
             // Make sure the action passed an active projector  
-            if (IsProjecting(this.projector))
+            if (!IsProjecting(projector))
                 return;
 
             this.projector = projector;
