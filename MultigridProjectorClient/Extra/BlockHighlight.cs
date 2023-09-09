@@ -6,7 +6,9 @@ using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.Gui;
 using Sandbox.ModAPI;
+using Sandbox.ModAPI.Interfaces.Terminal;
 using System.Collections.Generic;
+using System.Text;
 using VRage.Game;
 using VRage.Utils;
 using VRageMath;
@@ -18,12 +20,17 @@ namespace MultigridProjectorClient.Extra
     {
         // Implement highlighting for blocks that have not been built or partially built
         private static HashSet<MyProjectorBase> TargetProjectors = new HashSet<MyProjectorBase>();
+        private static bool IsProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid != null;
+        private static bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
 
         public static void Initialize()
         {
-            bool IsProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid != null;
-            bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
+            CreateTerminalControls();
+            CreateToolbarControls();
+        }
 
+        private static void CreateTerminalControls()
+        {
             MyTerminalControlCheckbox<MySpaceProjector> highlightBlocks = new MyTerminalControlCheckbox<MySpaceProjector>(
                 "HighlightBlocks",
                 MyStringId.GetOrCompute("Highlight Blocks"),
@@ -49,6 +56,53 @@ namespace MultigridProjectorClient.Extra
             };
 
             AddControl.AddControlAfter("ShowOnlyBuildable", highlightBlocks);
+        }
+
+        private static void CreateToolbarControls()
+        {
+            List<IMyTerminalAction> customActions = new List<IMyTerminalAction>();
+
+            {
+                IMyTerminalAction action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("BlockHighlightToggle");
+                action.Enabled = (terminalBlock) => terminalBlock is IMyProjector;
+                action.Action = (terminalBlock) => BlockHighlight.ToggleHighlightBlocks(terminalBlock as IMyProjector);
+                action.ValidForGroups = true;
+                action.Icon = ActionIcons.TOGGLE;
+                action.Name = new StringBuilder("Toggle block highlighting");
+                action.Writer = (b, s) => s.Append("Highlight");
+                action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
+                customActions.Add(action);
+            }
+
+            {
+                IMyTerminalAction action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("BlockHighlightEnable");
+                action.Enabled = (terminalBlock) => terminalBlock is IMyProjector;
+                action.Action = (terminalBlock) => BlockHighlight.EnableHighlightBlocks(terminalBlock as IMyProjector);
+                action.ValidForGroups = true;
+                action.Icon = ActionIcons.ON;
+                action.Name = new StringBuilder("Enable block highlighting");
+                action.Writer = (b, s) => s.Append("Highlight");
+                action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
+                customActions.Add(action);
+            }
+
+            {
+                IMyTerminalAction action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("BlockHighlightDisable");
+                action.Enabled = (terminalBlock) => terminalBlock is IMyProjector;
+                action.Action = (terminalBlock) => BlockHighlight.DisableHighlightBlocks(terminalBlock as IMyProjector);
+                action.ValidForGroups = true;
+                action.Icon = ActionIcons.OFF;
+                action.Name = new StringBuilder("Disable block highlighting");
+                action.Writer = (b, s) => s.Append("Highlight");
+                action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
+                customActions.Add(action);
+            }
+
+            MyAPIGateway.TerminalControls.CustomActionGetter += (block, actions) =>
+            {
+                if (block is IMyProjector)
+                    actions.AddRange(customActions);
+            };
         }
 
         public static bool IsHighlightBlocksEnabled(IMyProjector projector)
