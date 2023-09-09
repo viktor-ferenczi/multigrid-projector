@@ -15,7 +15,7 @@ namespace MultigridProjectorClient.Utilities
         public bool ConnectSubgrids = true;
 
         public bool RepairProjection = true;
-        public bool AlignProjection = true;
+        public bool ProjectorAligner = true;
         public bool BlockHighlight = true;
     }
 

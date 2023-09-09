@@ -105,6 +105,8 @@ namespace MultigridProjectorClient.Extra
         private static readonly Vector3I MinOffset = new Vector3I(-50, -50, -50);
         private static readonly Vector3I MaxOffset = new Vector3I(+50, +50, +50);
 
+        private static bool Enabled => Config.CurrentConfig.ProjectorAligner;
+
         private IMyProjector projector;
         private Vector3I offset;
         private Vector3I rotation;
@@ -128,7 +130,7 @@ namespace MultigridProjectorClient.Extra
                 MyStringId.GetOrCompute("Manually align the projection using keys familiar from block placement."),
                 ShowDialog)
             {
-                Visible = (_) => true,
+                Visible = (_) => Enabled,
                 Enabled = IsProjecting,
                 SupportsMultipleBlocks = false
             };
@@ -142,7 +144,7 @@ namespace MultigridProjectorClient.Extra
 
             {
                 IMyTerminalAction action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ProjectorAlignerStart");
-                action.Enabled = (terminalBlock) => terminalBlock is IMyProjector;
+                action.Enabled = (terminalBlock) => Enabled && terminalBlock is IMyProjector;
                 action.Action = (terminalBlock) => Instance?.Assign(terminalBlock as IMyProjector);
                 action.ValidForGroups = true;
                 action.Icon = ActionIcons.MOVING_OBJECT_TOGGLE;
@@ -268,9 +270,13 @@ namespace MultigridProjectorClient.Extra
 
         public void Assign(IMyProjector projector)
         {
-            // Make sure the action passed an active projector  
+            // Make sure the action passed an active projector
+            // Some blocks (eg button panels) will call this regardless of the projector's state
             if (!IsProjecting(projector))
+            {
+                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", "No projection to align!");
                 return;
+            }
 
             this.projector = projector;
             offset = projector.ProjectionOffset;

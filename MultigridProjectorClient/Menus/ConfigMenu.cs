@@ -16,10 +16,9 @@ namespace MultigridProjectorClient.Menus
         private static readonly StringBuilder MessageText = new StringBuilder(
             "Here you may change settings for Multigrid Projector if you so choose.\n" +
             "Hover over a toggle to see a short description of that setting.\n" +
-            "These can only be changed when not currently in a game.\n" +
-            "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+            "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
-        public static MyGuiScreenMessageBox CreateDialog(bool allowEdit)
+        public static MyGuiScreenMessageBox CreateDialog(bool allowEdit = true)
         {
             // I find it easier to hijack a message box for this then making the UI from scratch
             // TODO: Some day turn this into a proper GUI
@@ -88,7 +87,7 @@ namespace MultigridProjectorClient.Menus
             Vector2 extraPos = new Vector2(0f, compatibilityPos.Y + togglePadding * 4.5f);
             MyGuiControlLabel extra = new MyGuiControlLabel(extraPos, new Vector2(0.25f, 0.03f), "Extra Features:", originAlign: MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_CENTER, textScale: 1f);
             CreateOption("Repair Projection", "Load a copy of a ship intoa projector so that it can be rebuilt if any accidents happen.", extraPos + new Vector2(basePos.X, togglePadding), controls, () => ConfigObject.RepairProjection, (b) => ConfigObject.RepairProjection = b, allowEdit);
-            CreateOption("Align Projection", "Enable intuitive alignment of projections using the same keys you would use when aligning blocks normally.", extraPos + new Vector2(basePos.X, togglePadding*2), controls, () => ConfigObject.AlignProjection, (b) => ConfigObject.AlignProjection = b, allowEdit);
+            CreateOption("Align Projection", "Enable intuitive alignment of projections using the same keys you would use when aligning blocks normally.", extraPos + new Vector2(basePos.X, togglePadding*2), controls, () => ConfigObject.ProjectorAligner, (b) => ConfigObject.ProjectorAligner = b, allowEdit);
             CreateOption("Highlight Blocks", "Highlight projected blocks based on their status and completion.", extraPos + new Vector2(basePos.X, togglePadding*3), controls, () => ConfigObject.BlockHighlight, (b) => ConfigObject.BlockHighlight = b, allowEdit);
             controls.Add(extra);
 
@@ -141,7 +140,7 @@ namespace MultigridProjectorClient.Menus
                     checkbox.IsChecked = ConfigObject.RepairProjection;
 
                 if (checkbox.Name == "Align Projection")
-                    checkbox.IsChecked = ConfigObject.AlignProjection;
+                    checkbox.IsChecked = ConfigObject.ProjectorAligner;
 
                 if (checkbox.Name == "Highlight Blocks")
                     checkbox.IsChecked = ConfigObject.BlockHighlight;
