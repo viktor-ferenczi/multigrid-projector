@@ -95,7 +95,7 @@ namespace MultigridProjectorClient.Extra
 
             // Make sure the component list alwayc contains the same amount of newlines
             // The UI won't scale correctly otherwise
-            int padding = 23 - compList.Split('\n').Count;
+            int padding = 24 - compList.Split('\n').Count;
             if (padding > 0)
             {
                 compList.Append('\n', padding);
