@@ -19,12 +19,16 @@ namespace MultigridProjectorClient.Extra
     internal static class RepairProjection
     {
         private static bool Enabled => Config.CurrentConfig.RepairProjection;
+        private static bool IsWorkingButNotProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid == null;
+        private static bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
 
         public static void Initialize()
         {
-            bool IsWorkingButNotProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid == null;
-            bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
+            CreateTerminalControls();
+        }
 
+        private static void CreateTerminalControls()
+        {
             MyTerminalControlButton<MySpaceProjector> loadRepairProjection = new MyTerminalControlButton<MySpaceProjector>(
                 "RepairProjection",
                 MyStringId.GetOrCompute("Load Repair Projection"),
