@@ -40,6 +40,7 @@ namespace MultigridProjectorClient
             ProjectorAligner.Initialize();
             RepairProjection.Initialize();
             BlockHighlight.Initialize();
+            CraftProjection.Initialize();
         }
 
         protected override void UnloadData()
