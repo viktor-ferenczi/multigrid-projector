@@ -27,7 +27,7 @@ namespace MultigridProjectorClient.Menus
                 buttonType: MyMessageBoxButtonsType.YES_NO,
                 messageText: MessageText,
                 messageCaption: MessageCaption,
-                size: new Vector2(0.55f, 0.725f),
+                size: new Vector2(0.55f, 0.8f),
                 onClosing: () => Config.SaveConfig());
 
             // Make the background color less transparent, as the default is very faint and this is an important message
@@ -89,6 +89,7 @@ namespace MultigridProjectorClient.Menus
             CreateOption("Repair Projection", "Load a copy of a ship intoa projector so that it can be rebuilt if any accidents happen.", extraPos + new Vector2(basePos.X, togglePadding), controls, () => ConfigObject.RepairProjection, (b) => ConfigObject.RepairProjection = b, allowEdit);
             CreateOption("Align Projection", "Enable intuitive alignment of projections using the same keys you would use when aligning blocks normally.", extraPos + new Vector2(basePos.X, togglePadding*2), controls, () => ConfigObject.ProjectorAligner, (b) => ConfigObject.ProjectorAligner = b, allowEdit);
             CreateOption("Highlight Blocks", "Highlight projected blocks based on their status and completion.", extraPos + new Vector2(basePos.X, togglePadding*3), controls, () => ConfigObject.BlockHighlight, (b) => ConfigObject.BlockHighlight = b, allowEdit);
+            CreateOption("Assemble Projections", "View a projection's component cost and queue it for assembly.", extraPos + new Vector2(basePos.X, togglePadding*4), controls, () => ConfigObject.CraftProjection, (b) => ConfigObject.CraftProjection = b, allowEdit);
             controls.Add(extra);
 
             // Register our reset settings function
@@ -144,6 +145,9 @@ namespace MultigridProjectorClient.Menus
 
                 if (checkbox.Name == "Highlight Blocks")
                     checkbox.IsChecked = ConfigObject.BlockHighlight;
+
+                if (checkbox.Name == "Assemble Projections")
+                    checkbox.IsChecked = ConfigObject.CraftProjection;
             }
         }
     }

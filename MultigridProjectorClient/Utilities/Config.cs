@@ -17,6 +17,7 @@ namespace MultigridProjectorClient.Utilities
         public bool RepairProjection = true;
         public bool ProjectorAligner = true;
         public bool BlockHighlight = true;
+        public bool CraftProjection = true;
     }
 
     internal static class Config
