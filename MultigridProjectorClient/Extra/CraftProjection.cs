@@ -36,7 +36,7 @@ namespace MultigridProjectorClient.Extra
         private static void CreateTerminalControls()
         {
             MyTerminalControlButton<MySpaceProjector> assembleMissing = new MyTerminalControlButton<MySpaceProjector>(
-                "CraftProjectionMissing",
+                "CraftProjection",
                 MyStringId.GetOrCompute("Assemble Projection"),
                 MyStringId.GetOrCompute("Send the required components to the current assembler"),
                 MakeDialog)
