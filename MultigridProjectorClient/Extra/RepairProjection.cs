@@ -26,7 +26,7 @@ namespace MultigridProjectorClient.Extra
             bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
 
             MyTerminalControlButton<MySpaceProjector> loadRepairProjection = new MyTerminalControlButton<MySpaceProjector>(
-                "LoadRepairProjection",
+                "RepairProjection",
                 MyStringId.GetOrCompute("Load Repair Projection"),
                 MyStringId.GetOrCompute("Loads the projector's own grid as a repair projection."),
                 LoadMechanicalGroup)

@@ -125,7 +125,7 @@ namespace MultigridProjectorClient.Extra
         private static void CreateTerminalControls()
         {
             MyTerminalControlButton<MySpaceProjector> alignProjection = new MyTerminalControlButton<MySpaceProjector>(
-                "AlignProjectionButton",
+                "ProjectorAligner",
                 MyStringId.GetOrCompute("Align Projection"),
                 MyStringId.GetOrCompute("Manually align the projection using keys familiar from block placement."),
                 ShowDialog)

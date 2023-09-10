@@ -33,7 +33,7 @@ namespace MultigridProjectorClient.Extra
         private static void CreateTerminalControls()
         {
             MyTerminalControlCheckbox<MySpaceProjector> highlightBlocks = new MyTerminalControlCheckbox<MySpaceProjector>(
-                "HighlightBlocks",
+                "BlockHighlight",
                 MyStringId.GetOrCompute("Highlight Blocks"),
                 MyStringId.GetOrCompute("Highlight blocks based on their status:\n" +
                     "Green - Can be built\n" +
