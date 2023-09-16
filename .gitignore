@@ -5,6 +5,7 @@ Bin64
 Torch
 Program-for-code-editor.cs
 packages.config
+Directory.Build.props
 /packages
 **/bin
 **/obj
