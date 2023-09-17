@@ -1,4 +1,5 @@
 ﻿using Entities.Blocks;
+using HarmonyLib;
 using MultigridProjector.Extensions;
 using MultigridProjector.Utilities;
 using MultigridProjectorClient.Utilities;
@@ -119,20 +120,13 @@ namespace MultigridProjectorClient.Extra
 
         private static MyAssembler GetProductionAssembler()
         {
-            try
-            {
-                MyGuiScreenTerminal terminal = (MyGuiScreenTerminal)Reflection.GetValue(typeof(MyGuiScreenTerminal), "m_instance");
-                object production = Reflection.GetValue(typeof(MyGuiScreenTerminal), terminal, "m_controllerProduction");
-                MyAssembler assembler = (MyAssembler)Reflection.GetValue(production, "m_selectedAssembler");
+            MyAssembler assembler = Traverse.Create<MyGuiScreenTerminal>()
+                .Field("m_instance")
+                .Field("m_controllerProduction")
+                .Field("m_selectedAssembler")
+                .GetValue<MyAssembler>();
 
-                return assembler;
-            }
-            catch (Exception ex)
-            {
-                PluginLog.Error(ex);
-            }
-
-            return null;
+            return assembler;
         }
 
         private static Dictionary<MyDefinitionId, int> GetBlueprintComponents(MyProjectorBase projector)
