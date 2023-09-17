@@ -14,7 +14,7 @@ namespace MultigridProjectorClient.Menus
         private static readonly StringBuilder MessageCaption = new StringBuilder("Multigrid Projector - Config");
 
         private static readonly StringBuilder MessageText = new StringBuilder(
-            "Here you may change settings for Multigrid Projector if you so choose.\n" +
+            "Here you may change settings for Multigrid Projector.\n" +
             "Hover over a toggle to see a short description of that setting.\n" +
             "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
