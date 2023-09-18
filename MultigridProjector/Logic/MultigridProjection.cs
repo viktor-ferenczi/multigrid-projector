@@ -914,7 +914,6 @@ namespace MultigridProjector.Logic
             // Clone the block builder to prevent damaging the original blueprint
             topBlockBuilder = (MyObjectBuilder_CubeBlock)topBlockBuilder.Clone();
 
-            // FIXME: Top blocks are never terminal blocks, so this is not needed in theory
             // Make sure no EntityId collision will occur on re-welding a block on a previously disconnected (split)
             // part of a built subgrid which has not been destroyed (or garbage collected) yet
             if (topBlockBuilder.EntityId != 0 && MyEntityIdentifier.ExistsById(topBlockBuilder.EntityId))
@@ -928,6 +927,13 @@ namespace MultigridProjector.Logic
 
             // Ownership is determined by the projector's grid, not by who is welding the block
             topBlockBuilder.BuiltBy = Projector.OwnerId;
+
+            // In survival build only the wireframe of the head
+            if (MySession.Static.SurvivalMode)
+            {
+                topBlockBuilder.BuildPercent = 0.01f;
+                topBlockBuilder.IntegrityPercent = 0.01f;
+            }
 
             // Add top block as the first block of the new grid
             topGridBuilder.CubeBlocks.Add(topBlockBuilder);
@@ -1060,6 +1066,13 @@ namespace MultigridProjector.Logic
 
             // Ownership is determined by the projector's grid, not by who is welding the block
             baseBlockBuilder.BuiltBy = Projector.OwnerId;
+
+            // In survival build only the wireframe of the head
+            if (MySession.Static.SurvivalMode)
+            {
+                baseBlockBuilder.BuildPercent = 0.01f;
+                baseBlockBuilder.IntegrityPercent = 0.01f;
+            }
 
             // Add base block as the first block of the new grid
             baseGridBuilder.CubeBlocks.Add(baseBlockBuilder);
@@ -1574,6 +1587,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
                 PluginLog.Warn($"Ignored System.NullReferenceException in CreateTopPart or Attach called from CreateTopPartAndAttach: projector.DebugName = \"{Projector.DebugName}\", subgrid.Index = {subgrid.Index}, baseBlock.Position = {baseBlock.Position}, baseBlock.DebugName = \"{baseBlock.DebugName}\"");
             }
+
             return false;
         }
 

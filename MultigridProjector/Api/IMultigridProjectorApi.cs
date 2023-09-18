@@ -7,7 +7,7 @@ namespace MultigridProjector.Api
 {
     public interface IMultigridProjectorApi
     {
-        // Multigrid Projector version: 0.5.3
+        // Multigrid Projector version: 0.5.4
         string Version { get; }
 
         // Returns the number of subgrids in the active projection, returns zero if there is no projection
