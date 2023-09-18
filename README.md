@@ -89,8 +89,12 @@ Thank you and enjoy!
 ## Credits
 
 ### Contributors
-- Space: Client side welding without server plugin
-- Pas2704: Bug fixes
+- Viktor Ferenczi
+- @SpaceGT
+  * Client side welding without server plugin
+  * Build system fixes, better linking of dependencies
+- @Pas2704
+  * Bug fixes
 
 ### Patreon Supporters
 
