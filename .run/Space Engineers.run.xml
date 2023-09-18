@@ -7,6 +7,7 @@
     <option name="USE_EXTERNAL_CONSOLE" value="0" />
     <option name="USE_MONO" value="0" />
     <option name="RUNTIME_ARGUMENTS" value="" />
+    <option name="RUNTIME_TYPE" value="netfw" />
     <method v="2">
       <option name="Build" default="false" projectName="MultigridProjectorClient" projectPath="file://$PROJECT_DIR$/MultigridProjectorClient/MultigridProjectorClient.csproj" />
     </method>

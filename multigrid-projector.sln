@@ -16,11 +16,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution items", "{A91A9B2E-2D0D-454E-8C46-94812DE0587C}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
+		Directory.Build.props = Directory.Build.props
+		Directory.Build.template.props = Directory.Build.template.props
 		LICENSE = LICENSE
-		README.md = README.md
 		pluginhub.xml = pluginhub.xml
-		Edit-and-run-before-opening-solution.bat = Edit-and-run-before-opening-solution.bat
+		README.md = README.md
 		Release.bat = Release.bat
+		verify_props.bat = verify_props.bat
 	EndProjectSection
 EndProject
 Global

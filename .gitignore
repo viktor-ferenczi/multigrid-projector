@@ -1,10 +1,8 @@
 .idea
 .vs
 multigrid-projector.sln.DotSettings.user
-Bin64
-Torch
-Program-for-code-editor.cs
 packages.config
+Directory.Build.props
 /packages
 **/bin
 **/obj

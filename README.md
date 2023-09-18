@@ -51,7 +51,21 @@ Reason for the IL code verification is to detect potentially breaking code chang
 introduced over game updates. In such a cases the verification blocks the plugin
 from loading instead of crashing later.
 
-You can detect this case by looking in the game's log file for this text: `Refusing to load the plugin due to potentially incompatible code changes`
+You can detect this case by looking in the game's log file for this text: 
+`Refusing to load the plugin due to potentially incompatible code changes`
+
+## Building from source
+
+The top level plugin projects have dependencies on their respective game files.
+The game assemblies (DLLs) are referenced from the directories defined in the
+`Directory.Build.props` file. This file is not part of the repository, 
+you need to create it yourself from a template:
+
+- Copy: `Directory.Build.template.props` => `Directory.Build.props`
+- Edit `Directory.Build.props` to match your local setup
+
+You need to do this only once per working copy. 
+You may also want to save this file for later reuse.
 
 ## Want to know more?
 - [SE Mods Discord](https://discord.gg/PYPFPGf3Ca)
