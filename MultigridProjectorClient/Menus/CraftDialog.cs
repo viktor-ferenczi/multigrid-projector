@@ -13,7 +13,13 @@ namespace MultigridProjectorClient.Menus
     {
         private static readonly StringBuilder MessageCaption = new StringBuilder("Multigrid Projector - Assemble Projection");
 
-        public static MyGuiScreenMessageBox CreateDialog(StringBuilder heading, StringBuilder messageTextLeft, StringBuilder messageTextRight, Action assembleAll, Action assembleMissing)
+        public static MyGuiScreenMessageBox CreateDialog(
+            StringBuilder heading,
+            StringBuilder messageTextLeft,
+            StringBuilder messageTextRight,
+            Action assembleAll,
+            Action assembleMissing,
+            Action onClosing = null)
         {
             // I find it easier to hijack a message box for this then making the UI from scratch
             // TODO: Some day turn this into a proper GUI
@@ -22,7 +28,8 @@ namespace MultigridProjectorClient.Menus
                 buttonType: MyMessageBoxButtonsType.YES_NO,
                 messageText: messageTextLeft,
                 messageCaption: MessageCaption,
-                size: new Vector2(0.6f, 0.7f));
+                size: new Vector2(0.6f, 0.7f),
+                onClosing: onClosing);
 
             // Make the background color less transparent, as the default is very faint and this is an important message
             messageBox.BackgroundColor = new Vector4(1f, 1f, 1f, 10.0f);

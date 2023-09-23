@@ -112,13 +112,15 @@ namespace MultigridProjectorClient.Extra
                 PluginLog.Error("Component list overflow!");
             }
 
-            MyGuiSandbox.AddScreen(
-                    Menus.CraftDialog.CreateDialog(
-                        heading,
-                        compList,
-                        compCost,
-                        () => SendToAssembler(assembler, blueprintComponents),
-                        () => SendToAssembler(assembler, requiredComponents)));
+            MyGuiScreenMessageBox dialog = Menus.CraftDialog.CreateDialog(
+                heading,
+                compList,
+                compCost,
+                () => SendToAssembler(assembler, blueprintComponents),
+                () => SendToAssembler(assembler, requiredComponents),
+                SwitchToProductionTab);
+
+            MyGuiSandbox.AddScreen(dialog);
         }
 
         private static MyAssembler GetProductionAssembler()
@@ -304,6 +306,16 @@ namespace MultigridProjectorClient.Extra
 
                 assembler.AddQueueItemRequest(blueprint, amount);
             }
+        }
+
+        public static void SwitchToProductionTab()
+        {
+            MyGuiControlTabControl terminalTabs = Traverse.Create<MyGuiScreenTerminal>()
+                .Field("m_instance")
+                .Field("m_terminalTabs")
+                .GetValue<MyGuiControlTabControl>();
+
+            terminalTabs.SelectedPage = (int)MyTerminalPageEnum.Production;
         }
     }
 }
