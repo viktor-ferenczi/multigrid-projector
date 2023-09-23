@@ -16,6 +16,7 @@ using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using VRage.Game;
@@ -42,11 +43,11 @@ namespace MultigridProjectorClient.Extra
             MyTerminalControlButton<MySpaceProjector> assembleMissing = new MyTerminalControlButton<MySpaceProjector>(
                 "CraftProjection",
                 MyStringId.GetOrCompute("Assemble Projection"),
-                MyStringId.GetOrCompute("Send the required components to the current assembler"),
+                MyStringId.GetOrCompute("View and assemble the components needed to build the projection"),
                 MakeDialog)
             {
                 Visible = (_) => Enabled,
-                Enabled = (projector) => IsProjecting(projector) && GetProductionAssembler() != null && projector.GetRemainingBlocksPerType().Count > 0,
+                Enabled = (projector) => IsProjecting(projector) && projector.GetRemainingBlocksPerType().Count > 0,
                 SupportsMultipleBlocks = false
             };
 
@@ -57,8 +58,7 @@ namespace MultigridProjectorClient.Extra
         {
             MyAssembler assembler = GetProductionAssembler();
 
-            StringBuilder compList = new StringBuilder("\n\n\n");
-            StringBuilder compCost = new StringBuilder("\n\n\n");
+            HashSet<MyGuiControlTable.Row> rows = new HashSet<MyGuiControlTable.Row>();
 
             Dictionary<MyDefinitionId, int> blueprintComponents = GetBlueprintComponents(projector);
             Dictionary<MyDefinitionId, int> inventoryComponents = GetInventoryComponents(projector.CubeGrid);
@@ -80,45 +80,44 @@ namespace MultigridProjectorClient.Extra
                     name = name.Substring(0, index);
                 }
 
-                compList.Append(name + "\n");
+                // Discard the "." after "Comp."
+                int index2 = name.IndexOf("Comp.");
+                if (index2 != -1)
+                {
+                    name = name.Substring(0, index2+4);
+                }
 
                 int inventoryAmount = 0;
                 if (inventoryComponents.ContainsKey(id))
                     inventoryAmount = inventoryComponents[id];
 
-                compCost.Append(inventoryAmount + " / " + blueprintAmount + "\n");
+                int requiredAmount = 0;
+                if (requiredComponents.ContainsKey(id))
+                    requiredAmount = requiredComponents[id];
+
+                MyGuiControlTable.Row row = new MyGuiControlTable.Row();
+                row.AddCell(new MyGuiControlTable.Cell(name));
+                row.AddCell(new MyGuiControlTable.Cell(requiredAmount.ToString(), toolTip: $"You need to manufacture {requiredAmount} {name}{(requiredAmount != 1 ? "s" : "")}"));
+                row.AddCell(new MyGuiControlTable.Cell(inventoryAmount.ToString(), toolTip: $"You and the current grid have {inventoryAmount} {name}{(inventoryAmount != 1 ? "s" : "")}"));
+                row.AddCell(new MyGuiControlTable.Cell(blueprintAmount.ToString(), toolTip: $"Completing this blueprint requires {blueprintAmount} {name}{(blueprintAmount != 1 ? "s" : "")}"));
+
+                rows.Add(row);
             }
 
-            StringBuilder heading = new StringBuilder(
-                "Assembler selected in the production tab:\n" +
-                $"{assembler.DisplayNameText}\n" +
-                "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
-            
-            // Lazy fix to make the UI expand to the intended size
-            compList.Append(' ', 125);
-
-            // Make sure the component list always contains the same amount of newlines
-            // The UI won't scale correctly otherwise
-            int padding = 24 - compList.Split('\n').Count;
-            if (padding > 0)
+            MyGuiScreenMessageBox dialog;
+            if (assembler != null)
             {
-                compList.Append('\n', padding);
-                compCost.Append('\n', padding);
+                dialog = Menus.CraftDialog.CreateDialog(
+                    assembler.DisplayNameText,
+                    rows,
+                    () => SendToAssembler(assembler, blueprintComponents),
+                    () => SendToAssembler(assembler, requiredComponents),
+                    SwitchToProductionTab);
             }
             else
             {
-                // If a large enough number of new components are added this may trigger
-                // In the future a scrolling textbox may be used to mitigate this
-                PluginLog.Error("Component list overflow!");
+                dialog = Menus.CraftDialog.CreateDialog("[None]", rows);
             }
-
-            MyGuiScreenMessageBox dialog = Menus.CraftDialog.CreateDialog(
-                heading,
-                compList,
-                compCost,
-                () => SendToAssembler(assembler, blueprintComponents),
-                () => SendToAssembler(assembler, requiredComponents),
-                SwitchToProductionTab);
 
             MyGuiSandbox.AddScreen(dialog);
         }
