@@ -7,8 +7,10 @@ using MultigridProjectorClient.Utilities;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
+using Sandbox.Game.Entities.Character;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.Gui;
+using Sandbox.Game.World;
 using Sandbox.Graphics.GUI;
 using Sandbox.ModAPI;
 using Sandbox.ModAPI.Ingame;
@@ -231,6 +233,27 @@ namespace MultigridProjectorClient.Extra
                                 components.Add(id, count);
                             }
                         }
+                    }
+                }
+            }
+
+            MyCharacter character = MySession.Static.LocalCharacter;
+            for (int i = 0; i < character.InventoryCount; i++)
+            {
+                List<MyPhysicalInventoryItem> items = character.GetInventory(i).GetItems();
+
+                foreach (MyPhysicalInventoryItem item in items)
+                {
+                    MyDefinitionId id = item.GetDefinitionId();
+                    int count = (int)item.Amount;
+
+                    if (components.ContainsKey(id))
+                    {
+                        components[id] += count;
+                    }
+                    else
+                    {
+                        components.Add(id, count);
                     }
                 }
             }
