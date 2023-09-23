@@ -1,6 +1,7 @@
 ﻿using Entities.Blocks;
 using HarmonyLib;
 using MultigridProjector.Extensions;
+using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using MultigridProjectorClient.Utilities;
 using Sandbox.Definitions;
@@ -132,34 +133,78 @@ namespace MultigridProjectorClient.Extra
         private static Dictionary<MyDefinitionId, int> GetBlueprintComponents(MyProjectorBase projector)
         {
             Dictionary<MyDefinitionId, int> components = new Dictionary<MyDefinitionId, int>();
-            Dictionary<MyCubeBlockDefinition, int> remainingBlocks = projector.GetRemainingBlocksPerType();
 
-            foreach (KeyValuePair<MyCubeBlockDefinition, int> block in remainingBlocks)
+            if (!MultigridProjection.TryFindProjectionByProjector(projector, out MultigridProjection projection))
+                return components;
+
+            Subgrid[] subgrids = projection.GetSupportedSubgrids();
+            foreach (Subgrid subgrid in subgrids)
             {
-                MyCubeBlockDefinition.Component[] blockComponents = block.Key.Components;
+                HashSet<MySlimBlock> previewBlocks = subgrid.PreviewGrid.CubeBlocks;
 
-                foreach (MyCubeBlockDefinition.Component component in blockComponents)
+                foreach (MySlimBlock previewBlock in previewBlocks)
                 {
-                    if (components.ContainsKey(component.Definition.Id))
+                    Dictionary<MyDefinitionId, int> requiredComponents = null;
+                    Dictionary<MyDefinitionId, int> previewBlockComponents = GetBlockComponents(previewBlock);
+
+                    // Consider the progress of the built counterpart
+                    MySlimBlock builtBlock = Construction.GetBuiltBlock(previewBlock);
+                    if (builtBlock != null && builtBlock.Integrity < previewBlock.Integrity)
                     {
-                        components[component.Definition.Id] += component.Count;
+                        Dictionary<MyDefinitionId, int> builtBlockComponents = GetBlockComponents(builtBlock);
+                        requiredComponents = GetRequiredComponents(previewBlockComponents, builtBlockComponents);
                     }
-                    else
-                    {
-                        components.Add(component.Definition.Id, component.Count);
-                    }
+
+                    AddComponents(ref components, requiredComponents ?? previewBlockComponents);
                 }
             }
 
             return components;
         }
 
-        private static Dictionary<MyDefinitionId, int> GetInventoryComponents(MyCubeGrid startGrid)
+        private static Dictionary<MyDefinitionId, int> AddComponents(ref Dictionary<MyDefinitionId, int> dict1, Dictionary<MyDefinitionId, int> dict2)
+        {
+            foreach (KeyValuePair<MyDefinitionId, int> kvp in dict2)
+            {
+                if (dict1.ContainsKey(kvp.Key))
+                {
+                    dict1[kvp.Key] += kvp.Value;
+                }
+                else
+                {
+                    dict1.Add(kvp.Key, kvp.Value);
+                }
+            }
+
+            return dict1;
+        }
+
+        private static Dictionary<MyDefinitionId, int> GetBlockComponents(MySlimBlock slimBlock)
+        {
+            Dictionary<MyDefinitionId, int> components = new Dictionary<MyDefinitionId, int>();
+
+            MyCubeBlockDefinition blockDefinition = slimBlock.BlockDefinition;
+            MyCubeBlockDefinition.Component[] blockComponents = blockDefinition.Components;
+
+            for (int i = 0; i < blockComponents.Length; i++)
+            {
+                MyCubeBlockDefinition.Component component = blockComponents[i];
+                MyComponentStack.GroupInfo groupInfo = slimBlock.ComponentStack.GetGroupInfo(i);
+
+                AddComponents(ref components, new Dictionary<MyDefinitionId, int>() {
+                    { component.Definition.Id, groupInfo.MountedCount }
+                });
+            }
+
+            return components;
+        }
+
+        private static Dictionary<MyDefinitionId, int> GetInventoryComponents(MyCubeGrid startGrid, GridLinkTypeEnum linkType = GridLinkTypeEnum.Mechanical)
         {
             Dictionary<MyDefinitionId, int> components = new Dictionary<MyDefinitionId, int>();
 
             HashSet<VRage.Game.ModAPI.IMyCubeGrid> grids = new HashSet<VRage.Game.ModAPI.IMyCubeGrid>();
-            MyAPIGateway.GridGroups.GetGroup(startGrid, GridLinkTypeEnum.Mechanical, grids);
+            MyAPIGateway.GridGroups.GetGroup(startGrid, linkType, grids);
 
             foreach (MyCubeGrid grid in grids.Cast<MyCubeGrid>())
             {
@@ -225,6 +270,9 @@ namespace MultigridProjectorClient.Extra
             {
                 MyDefinitionId id = component.Key;
                 int amount = component.Value;
+
+                if (amount == 0)
+                    continue;
 
                 MyBlueprintDefinitionBase blueprint = MyDefinitionManager.Static.TryGetBlueprintDefinitionByResultId(id);
 
