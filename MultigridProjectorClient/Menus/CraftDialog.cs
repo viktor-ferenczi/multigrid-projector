@@ -3,6 +3,7 @@ using Sandbox.Game;
 using Sandbox.Graphics.GUI;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using VRage.Utils;
 using VRageMath;
@@ -88,11 +89,11 @@ namespace MultigridProjectorClient.Menus
             componentTable.SetColumnName(2, new StringBuilder("Inventory"));
             componentTable.SetColumnName(3, new StringBuilder("Blueprint"));
 
-            componentTable.SortByColumn(1);
-
-            foreach (MyGuiControlTable.Row row in rows)
+            // Order rows by missing components (cell index 1)
+            List<MyGuiControlTable.Row> orderedRows = rows.OrderByDescending(x => int.Parse(x.GetCell(3).Text.ToString())).ToList();
+            for (int i = 0; i < orderedRows.Count; i++)
             {
-                componentTable.Add(row);
+                componentTable.Insert(i, orderedRows[i]);
             }
 
             MyGuiControls controls = (MyGuiControls)Reflection.GetValue(typeof(MyGuiScreenBase), messageBox, "m_controls");
