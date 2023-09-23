@@ -90,7 +90,7 @@ namespace MultigridProjectorClient.Menus
             componentTable.SetColumnName(3, new StringBuilder("Blueprint"));
 
             // Order rows by missing components (cell index 1)
-            List<MyGuiControlTable.Row> orderedRows = rows.OrderByDescending(x => int.Parse(x.GetCell(3).Text.ToString())).ToList();
+            List<MyGuiControlTable.Row> orderedRows = rows.OrderByDescending(x => int.Parse(x.GetCell(3).Text.ToString().Replace(",", ""))).ToList();
             for (int i = 0; i < orderedRows.Count; i++)
             {
                 componentTable.Insert(i, orderedRows[i]);

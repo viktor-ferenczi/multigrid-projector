@@ -97,9 +97,9 @@ namespace MultigridProjectorClient.Extra
 
                 MyGuiControlTable.Row row = new MyGuiControlTable.Row();
                 row.AddCell(new MyGuiControlTable.Cell(name));
-                row.AddCell(new MyGuiControlTable.Cell(requiredAmount.ToString(), toolTip: $"You need to manufacture {requiredAmount} {name}{(requiredAmount != 1 ? "s" : "")}"));
-                row.AddCell(new MyGuiControlTable.Cell(inventoryAmount.ToString(), toolTip: $"You and the current grid have {inventoryAmount} {name}{(inventoryAmount != 1 ? "s" : "")}"));
-                row.AddCell(new MyGuiControlTable.Cell(blueprintAmount.ToString(), toolTip: $"Completing this blueprint requires {blueprintAmount} {name}{(blueprintAmount != 1 ? "s" : "")}"));
+                row.AddCell(new MyGuiControlTable.Cell(requiredAmount.ToString("N0"), toolTip: $"You need to manufacture {requiredAmount:N0} {name}{(requiredAmount != 1 ? "s" : "")}"));
+                row.AddCell(new MyGuiControlTable.Cell(inventoryAmount.ToString("N0"), toolTip: $"You and the current grid have {inventoryAmount:N0} {name}{(inventoryAmount != 1 ? "s" : "")}"));
+                row.AddCell(new MyGuiControlTable.Cell(blueprintAmount.ToString("N0"), toolTip: $"Completing this blueprint requires {blueprintAmount:N0} {name}{(blueprintAmount != 1 ? "s" : "")}"));
 
                 rows.Add(row);
             }
