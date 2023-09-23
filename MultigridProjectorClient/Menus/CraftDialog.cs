@@ -65,7 +65,7 @@ namespace MultigridProjectorClient.Menus
             }
             else
             {
-                noButton.SetToolTip(new MyToolTips($"Assemble all the 'Missing' components"));
+                noButton.SetToolTip(new MyToolTips($"Assemble all the 'Blueprint' components"));
                 noButton.Enabled = false;
             }
 
