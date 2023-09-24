@@ -40,7 +40,7 @@ namespace MultigridProjector.Extensions
         private static readonly MethodInfo AddGroupInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyCubeGrid), "AddGroup", new []{typeof(MyBlockGroup), typeof(bool)}));
         public static void AddGroup(this MyCubeGrid obj, MyBlockGroup group, bool unionSameNameGroups = true)
         {
-            AddGroupInfo.Invoke(obj, new object[] {@group, unionSameNameGroups});
+            AddGroupInfo.Invoke(obj, new object[] {group, unionSameNameGroups});
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -48,11 +48,6 @@ namespace MultigridProjector.Extensions
         {
             var cubeIndex = grid.WorldToGridInteger(block.WorldPosition);
             return grid.GetCubeBlock(cubeIndex);
-        }
-
-        public static MyCubeSize GetOppositeCubeSize(MyCubeSize cubeSize)
-        {
-            return cubeSize == MyCubeSize.Large ? MyCubeSize.Small : MyCubeSize.Large;
         }
     }
 }

@@ -262,13 +262,6 @@ namespace MultigridProjector.Extensions
             return (Vector3I) ProjectionRotationFieldInfo.GetValue(projector);
         }
 
-        private static readonly FieldInfo ProjectionOffsetFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_projectionOffset"));
-
-        public static Vector3I GetProjectionOffset(this MyProjectorBase projector)
-        {
-            return (Vector3I) ProjectionOffsetFieldInfo.GetValue(projector);
-        }
-
         private static readonly PropertyInfo IsActivatingFieldInfo = Validation.EnsureInfo(AccessTools.Property(typeof(MyProjectorBase), "IsActivating"));
 
         public static void SetIsActivating(this MyProjectorBase projector, bool value)

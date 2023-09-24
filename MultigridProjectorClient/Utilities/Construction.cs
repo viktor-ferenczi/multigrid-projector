@@ -37,7 +37,7 @@ namespace MultigridProjectorClient.Utilities
                 MySlimBlock target = grid.GetCubeBlock(location);
                 grid.SkinBlocks(target.Min, target.Max, new Vector3(255, 0, 0), MyStringHash.GetOrCompute("Weldless"), false);
 
-                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", $"Please remove this block: {target?.FatBlock.DisplayNameText ?? target.ToString()}");
+                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", $"Please remove this block: {target.FatBlock.DisplayNameText ?? target.ToString()}");
             }
         }
 
@@ -96,7 +96,7 @@ namespace MultigridProjectorClient.Utilities
                 (m) => m.Name == "RaiseStaticEvent" && m.IsGenericMethodDefinition && m.GetParameters().Length == 4,
                 new Type[] { Reflection.GetType(cubeBuilder, "GridSpawnRequestData") });
 
-            // Invoke the method with the warpper function, request data, and default optional parameters
+            // Invoke the method with the wrapper function, request data, and default optional parameters
             RaiseStaticEvent.DynamicInvoke(RequestGridSpawnWrapper, requestData, default(EndpointId), null);
 
             // Call everything subscribed to the OnBlockAdded event
@@ -132,7 +132,7 @@ namespace MultigridProjectorClient.Utilities
             subgrid.GetBlockOrientationQuaternion(block, out var previewQuaternion);
 
             // Define where the block should be placed
-            HashSet<MyCubeGrid.MyBlockLocation> blockLocations = new HashSet<MyCubeGrid.MyBlockLocation>()
+            HashSet<MyCubeGrid.MyBlockLocation> blockLocations = new HashSet<MyCubeGrid.MyBlockLocation>
             {
                 new MyCubeGrid.MyBlockLocation(
                     block.BlockDefinition.Id,
@@ -157,28 +157,15 @@ namespace MultigridProjectorClient.Utilities
             if (!TryGetSubgrid(projectedBlock, out Subgrid subgrid))
                 return null;
 
-            MyCubeGrid builtGrid = subgrid.BuiltGrid;
-            MyCubeGrid previewGrid = subgrid.PreviewGrid;
-
-            // Get the block on the built grid of the subgrid in the same position as the projectd block
-            Vector3I blockPos = builtGrid.WorldToGridInteger(previewGrid.GridIntegerToWorld(projectedBlock.Position));
-            MySlimBlock blockAtPos = builtGrid.GetCubeBlock(blockPos);
-
-            return blockAtPos;
-        }
-
-        private static MySlimBlock GetPreviewBlockAtPos(MySlimBlock builtBlock)
-        {
-            // ConnectSubgrids has a useful function to get the subgrid (if applicable) of any block
-            if (!TryGetSubgrid(builtBlock, out Subgrid subgrid))
+            if (!subgrid.HasBuilt)
                 return null;
 
             MyCubeGrid builtGrid = subgrid.BuiltGrid;
             MyCubeGrid previewGrid = subgrid.PreviewGrid;
 
-            // Get the block on the built grid of the subgrid in the same position as the projectd block
-            Vector3I blockPos = previewGrid.WorldToGridInteger(builtGrid.GridIntegerToWorld(builtBlock.Position));
-            MySlimBlock blockAtPos = previewGrid.GetCubeBlock(blockPos);
+            // Get the block on the built grid of the subgrid in the same position as the projected block
+            Vector3I blockPos = builtGrid.WorldToGridInteger(previewGrid.GridIntegerToWorld(projectedBlock.Position));
+            MySlimBlock blockAtPos = builtGrid.GetCubeBlock(blockPos);
 
             return blockAtPos;
         }
@@ -188,16 +175,6 @@ namespace MultigridProjectorClient.Utilities
             MySlimBlock blockAtPos = GetBuiltBlockAtPos(projectedBlock);
 
             if (VerifyBuiltBlock(projectedBlock, blockAtPos))
-                return blockAtPos;
-
-            return null;
-        }
-
-        public static MySlimBlock GetPreviewBlock(MySlimBlock builtBlock)
-        {
-            MySlimBlock blockAtPos = GetPreviewBlockAtPos(builtBlock);
-
-            if (VerifyBuiltBlock(blockAtPos, builtBlock))
                 return blockAtPos;
 
             return null;
@@ -223,16 +200,16 @@ namespace MultigridProjectorClient.Utilities
         public static bool CanPlaceBlock(MyCubeBlockDefinition blockDefinition, MatrixD worldMatrix, bool dynamicMode = true)
         {
             float cubeSize = MyDefinitionManager.Static.GetCubeSize(blockDefinition.CubeSize);
-            BoundingBoxD localbox = new BoundingBoxD((Vector3D)(-blockDefinition.Size * cubeSize * 0.5f), (Vector3D)(blockDefinition.Size * cubeSize * 0.5f));
+            BoundingBoxD localBox = new BoundingBoxD(-blockDefinition.Size * cubeSize * 0.5f, blockDefinition.Size * cubeSize * 0.5f);
             MyGridPlacementSettings settings = blockDefinition.CubeSize == MyCubeSize.Large ? MyBlockBuilderBase.CubeBuilderDefinition.BuildingSettings.LargeGrid : MyBlockBuilderBase.CubeBuilderDefinition.BuildingSettings.SmallGrid;
 
-            return MyCubeGrid.TestBlockPlacementArea(blockDefinition, new MyBlockOrientation(), worldMatrix, ref settings, localbox, dynamicMode);
+            return MyCubeGrid.TestBlockPlacementArea(blockDefinition, new MyBlockOrientation(), worldMatrix, ref settings, localBox, dynamicMode);
         }
 
         public static bool WeldBlock(MyProjectorBase projector, MySlimBlock cubeBlock, long owner, ref long builtBy)
         {
             // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
-            if (!TryGetSubgrid(cubeBlock, out Subgrid subgrid, out MultigridProjection projection))
+            if (!TryGetSubgrid(cubeBlock, out Subgrid subgrid, out MultigridProjection _))
                 return true;
 
             int gridIndex = subgrid.Index;
@@ -276,8 +253,8 @@ namespace MultigridProjectorClient.Utilities
 
             void OnPreviewPlace(MyCubeBlock builtBlock)
             {
-                if (builtBlock is MyTerminalBlock)
-                    UpdateBlock.CopyProperties((MyTerminalBlock)previewBlock, (MyTerminalBlock)builtBlock);
+                if (builtBlock is MyTerminalBlock block)
+                    UpdateBlock.CopyProperties((MyTerminalBlock)previewBlock, block);
 
                 // We need to wait for the basepart to replicate for the block to be fully placed
                 if (builtBlock is MyMechanicalConnectionBlockBase builtBase)
@@ -310,8 +287,8 @@ namespace MultigridProjectorClient.Utilities
                     }, (_) => builtBase.TopBlock != null);
                 }
 
-                if (builtBlock is MyAttachableTopBlockBase && Config.CurrentConfig.ConnectSubgrids)
-                    UpdateBaseParts((MyAttachableTopBlockBase)previewBlock, (MyAttachableTopBlockBase)builtBlock);
+                if (builtBlock is MyAttachableTopBlockBase @base && Config.CurrentConfig.ConnectSubgrids)
+                    UpdateBaseParts((MyAttachableTopBlockBase)previewBlock, @base);
             }
 
             // FIXME: Use previewBlock.IsBuilt

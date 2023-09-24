@@ -4,7 +4,6 @@ using HarmonyLib;
 using MultigridProjector.Utilities;
 using MultigridProjectorClient.Utilities;
 using Sandbox.Graphics.GUI;
-using Sandbox.ModAPI;
 using VRage.Plugins;
 
 namespace MultigridProjectorClient
@@ -53,10 +52,11 @@ namespace MultigridProjectorClient
             PluginLog.Info("Client plugin loaded");
         }
 
+        // This is invoked by Plugin Loader
+        // ReSharper disable once UnusedMember.Global
         public void OpenConfigDialog()
         {
-            bool allowEdit = MyAPIGateway.Session == null;
-            MyGuiSandbox.AddScreen(Menus.ConfigMenu.CreateDialog(allowEdit));
+            MyGuiSandbox.AddScreen(Menus.ConfigMenu.CreateDialog());
         }
 
         public void Dispose()

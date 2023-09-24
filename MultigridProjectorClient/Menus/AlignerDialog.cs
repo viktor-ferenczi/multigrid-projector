@@ -12,7 +12,7 @@ namespace MultigridProjectorClient.Menus
 {
     internal static class AlignerDialog
     {
-        private static readonly string KeySplitter = " | ";
+        private const string KeySplitter = " | ";
         private static readonly StringBuilder MessageCaption = new StringBuilder("Multigrid Projector - Projection Alignment");
         
         private static readonly StringBuilder HeadingText = new StringBuilder(
@@ -26,7 +26,7 @@ namespace MultigridProjectorClient.Menus
             "This will capture all input until stopped (press ESC to cancel).\n" +
             $"Hold {GetControlType(MyControlsSpace.SPRINT)} to suspend alignment.\n" +
             "While suspended you are free to reposition yourself and interact with the world.\n" +
-            "All translations and rotations are relative to your charcter's head orientation.\n" +
+            "All translations and rotations are relative to your character's head orientation.\n" +
             "These controls are based on the controls for block alignment, and respect your current binds.\n" +
             "\n\n" +
             "Forwards:\n" +
@@ -79,7 +79,7 @@ namespace MultigridProjectorClient.Menus
             }
 
             if (output.EndsWith(KeySplitter))
-                output = output.Substring(0, output.LastIndexOf(KeySplitter));
+                output = output.Substring(0, output.LastIndexOf(KeySplitter, StringComparison.Ordinal));
 
             return output;
         }

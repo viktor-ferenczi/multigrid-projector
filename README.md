@@ -92,6 +92,8 @@ Thank you and enjoy!
 - Viktor Ferenczi
 - @SpaceGT
   * Client side welding without server plugin
+  * Enqueue missing parts into assemblers (Assemble Projection)
+  * Highlighting weldable or incomplete projected blocks (Highlight Blocks)
   * Build system fixes, better linking of dependencies
 - @Pas2704
   * Bug fixes

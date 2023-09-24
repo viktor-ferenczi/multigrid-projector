@@ -14,10 +14,7 @@ namespace MultigridProjector.Patches
     {
         [ServerOnly]
         private static bool Prefix(
-            // ReSharper disable once InconsistentNaming
-            MyGridPhysicalHierarchy __instance,
-            long linkId, 
-            MyCubeGrid parentNode, 
+            MyCubeGrid parentNode,
             MyCubeGrid childNode)
         {
             // FIXME: This is most likely not needed anymore. Look for the warning below in server/client logs. Remove this patch if not happening.

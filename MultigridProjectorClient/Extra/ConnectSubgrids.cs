@@ -169,10 +169,10 @@ namespace MultigridProjectorClient.Extra
             else if (connectionType == ConnectionType.Legacy)
             {
                 MyAPIGateway.Utilities.ShowMessage("Multigrid Projector",
-                    $"This connection appears to have been deprecated and cannot be made in survival anymore. " +
-                    $"Either paste the blueprint in or find one designed for the latest Space Engineers version");
+                    "This connection appears to have been deprecated and cannot be made in survival anymore. " +
+                    "Either paste the blueprint in or find one designed for the latest Space Engineers version");
             }
-            else if (connectionType == ConnectionType.Special)
+            else if (connectionType == ConnectionType.Special && sourceTop != null)
             {
                 MyBlockVisuals visuals = new MyBlockVisuals(
                     sourceTop.SlimBlock.ColorMaskHSV.PackHSVToUint(),
@@ -292,7 +292,7 @@ namespace MultigridProjectorClient.Extra
                 return ConnectionType.Special;
             }
 
-            else if (baseSize == MyCubeSize.Small)
+            if (baseSize == MyCubeSize.Small)
             {
                 if (topDefinitionGroup[MyCubeSize.Small] == topDefinition)
                     return ConnectionType.Default;
@@ -348,7 +348,7 @@ namespace MultigridProjectorClient.Extra
                 moveVector = new Vector3D(0, offset, 0);
 
             // Rotor bases face upwards so moving the part 'forwards' also means moving the world matrix up
-            // However we actaully want to move the 'backwards' as they are pointing towards the head, so moving them
+            // However we actually want to move the 'backwards' as they are pointing towards the head, so moving them
             // forwards just result in the block placement intersecting even more
             if (blockSubType.Contains("Stator"))
                 moveVector = new Vector3D(0, -offset, 0);
@@ -395,7 +395,7 @@ namespace MultigridProjectorClient.Extra
                     return MatrixD.Zero;
             }
 
-            // Play it safe so that the desync dosen't cause the placement to fail
+            // Play it safe so that the desync doesn't cause the placement to fail
             newMatrix = OffsetMatrix(blockSubType, worldMatrix, mid + epsilon * 10);
 
             return newMatrix;

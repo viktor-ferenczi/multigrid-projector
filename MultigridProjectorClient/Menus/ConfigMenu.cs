@@ -4,6 +4,7 @@ using MultigridProjectorClient.Utilities;
 using VRage.Utils;
 using System.Text;
 using System;
+using System.Diagnostics;
 
 namespace MultigridProjectorClient.Menus
 {
@@ -14,12 +15,11 @@ namespace MultigridProjectorClient.Menus
         private static readonly StringBuilder MessageCaption = new StringBuilder("Multigrid Projector - Config");
 
         private static readonly StringBuilder MessageText = new StringBuilder(
-            "Here you may change settings for Multigrid Projector if you so choose.\n" +
+            "Here you may change settings for Multigrid Projector.\n" +
             "Hover over a toggle to see a short description of that setting.\n" +
-            "These can only be changed when not currently in a game.\n" +
-            "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
+            "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n");
 
-        public static MyGuiScreenMessageBox CreateDialog(bool allowEdit)
+        public static MyGuiScreenMessageBox CreateDialog(bool allowEdit = true)
         {
             // I find it easier to hijack a message box for this then making the UI from scratch
             // TODO: Some day turn this into a proper GUI
@@ -28,7 +28,7 @@ namespace MultigridProjectorClient.Menus
                 buttonType: MyMessageBoxButtonsType.YES_NO,
                 messageText: MessageText,
                 messageCaption: MessageCaption,
-                size: new Vector2(0.55f, 0.725f),
+                size: new Vector2(0.55f, 0.8f),
                 onClosing: () => Config.SaveConfig());
 
             // Make the background color less transparent, as the default is very faint and this is an important message
@@ -54,8 +54,9 @@ namespace MultigridProjectorClient.Menus
 
             // Create toggles
             MyGuiControls controls = (MyGuiControls)Reflection.GetValue(typeof(MyGuiScreenBase), messageBox, "m_controls");
+            Debug.Assert(messageBox.Size != null, "messageBox.Size is null");
             Vector2 basePos = new Vector2(-messageBox.Size.Value.X/3, -0.18f);
-            float togglePadding = 0.04f;
+            const float togglePadding = 0.04f;
 
             Vector2 corePos = new Vector2(0f, basePos.Y);
             MyGuiControlLabel core = new MyGuiControlLabel(corePos, new Vector2(0.25f, 0.03f), "Core:", originAlign: MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_CENTER, textScale: 1f);
@@ -87,9 +88,10 @@ namespace MultigridProjectorClient.Menus
 
             Vector2 extraPos = new Vector2(0f, compatibilityPos.Y + togglePadding * 4.5f);
             MyGuiControlLabel extra = new MyGuiControlLabel(extraPos, new Vector2(0.25f, 0.03f), "Extra Features:", originAlign: MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_CENTER, textScale: 1f);
-            CreateOption("Repair Projection", "Load a copy of a ship intoa projector so that it can be rebuilt if any accidents happen.", extraPos + new Vector2(basePos.X, togglePadding), controls, () => ConfigObject.RepairProjection, (b) => ConfigObject.RepairProjection = b, allowEdit);
-            CreateOption("Align Projection", "Enable intuitive alignment of projections using the same keys you would use when aligning blocks normally.", extraPos + new Vector2(basePos.X, togglePadding*2), controls, () => ConfigObject.AlignProjection, (b) => ConfigObject.AlignProjection = b, allowEdit);
+            CreateOption("Repair Projection", "Load a copy of a ship into projector so that it can be rebuilt if any accidents happen.", extraPos + new Vector2(basePos.X, togglePadding), controls, () => ConfigObject.RepairProjection, (b) => ConfigObject.RepairProjection = b, allowEdit);
+            CreateOption("Align Projection", "Enable intuitive alignment of projections using the same keys you would use when aligning blocks normally.", extraPos + new Vector2(basePos.X, togglePadding*2), controls, () => ConfigObject.ProjectorAligner, (b) => ConfigObject.ProjectorAligner = b, allowEdit);
             CreateOption("Highlight Blocks", "Highlight projected blocks based on their status and completion.", extraPos + new Vector2(basePos.X, togglePadding*3), controls, () => ConfigObject.BlockHighlight, (b) => ConfigObject.BlockHighlight = b, allowEdit);
+            CreateOption("Assemble Projections", "View a projection's component cost and queue it for assembly.", extraPos + new Vector2(basePos.X, togglePadding*4), controls, () => ConfigObject.CraftProjection, (b) => ConfigObject.CraftProjection = b, allowEdit);
             controls.Add(extra);
 
             // Register our reset settings function
@@ -141,10 +143,13 @@ namespace MultigridProjectorClient.Menus
                     checkbox.IsChecked = ConfigObject.RepairProjection;
 
                 if (checkbox.Name == "Align Projection")
-                    checkbox.IsChecked = ConfigObject.AlignProjection;
+                    checkbox.IsChecked = ConfigObject.ProjectorAligner;
 
                 if (checkbox.Name == "Highlight Blocks")
                     checkbox.IsChecked = ConfigObject.BlockHighlight;
+
+                if (checkbox.Name == "Assemble Projections")
+                    checkbox.IsChecked = ConfigObject.CraftProjection;
             }
         }
     }

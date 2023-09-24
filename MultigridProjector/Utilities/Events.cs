@@ -1,5 +1,4 @@
-﻿using MultigridProjector.Utilities;
-using Sandbox.Game.Entities;
+﻿using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.World;
@@ -92,16 +91,15 @@ namespace MultigridProjector.Utilities
                 null,
                 (_, handler) => MyEntities.OnEntityAdd += handler,
                 (_, handler) => MyEntities.OnEntityAdd -= handler,
-                (entity) =>
+                entity =>
                 {
                     MySlimBlock block = ((MyCubeGrid)entity).GetBlocks().First();
                     action(block);
-                    return;
                 },
-                (entity) =>
+                entity =>
                 {
                     if (entity is MyCubeGrid grid && grid.BlocksCount == 1)
-                        return predicate(grid.GetBlocks().First());
+                        return predicate?.Invoke(grid.GetBlocks().First()) ?? true;
 
                     return false;
                 });

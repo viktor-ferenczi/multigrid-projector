@@ -12,12 +12,12 @@ namespace MultigridProjector.Utilities
     [AttributeUsage(AttributeTargets.Class)]
     public class EnsureOriginal : Attribute
     {
-        public readonly string[] AllowedHexDigests;
-        public string AllowedHexDigestsAsText => string.Join(", ", AllowedHexDigests);
+        private readonly string[] allowedHexDigests;
+        private string AllowedHexDigestsAsText => string.Join(", ", allowedHexDigests);
 
         public EnsureOriginal(params string[] allowedHexDigests)
         {
-            AllowedHexDigests = allowedHexDigests;
+            this.allowedHexDigests = allowedHexDigests;
         }
 
         public static void VerifyAll()
@@ -65,10 +65,14 @@ namespace MultigridProjector.Utilities
             if (methodInfo == null)
                 return $"Could not get method information for the {declaringType.Name}.{methodName} method patched in class {patchType.Name}";
 
+#if DEBUG
+            PluginLog.Logger.Debug($"Verifying patch method: {methodInfo.DeclaringType.Name}.{methodInfo.Name}");
+#endif
+
             try
             {
                 var actualDigest = HashMethodBody(methodInfo).ToString("x8");
-                if (!ensureOriginal.AllowedHexDigests.Contains(actualDigest))
+                if (!ensureOriginal.allowedHexDigests.Contains(actualDigest))
                     return $"Body of patched method {declaringType.Name}.{methodName} has changed: actual {actualDigest}, expected one of {ensureOriginal.AllowedHexDigestsAsText}\"";
             }
             catch (TargetInvocationException e)

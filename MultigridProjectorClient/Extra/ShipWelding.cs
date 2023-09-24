@@ -19,7 +19,7 @@ using VRage.Game.Entity;
 
 namespace MultigridProjectorClient.Extra
 {
-    internal class ShipWelding
+    internal static class ShipWelding
     {
         public static void WeldLoop()
         {
@@ -44,6 +44,7 @@ namespace MultigridProjectorClient.Extra
             }
         }
 
+        // FIXME: Return value is never used
         private static bool TryWeldPreviewBlock(Subgrid subgrid, Vector3I position, MyShipWelder welder)
         {
             MySlimBlock block = subgrid.PreviewGrid.GetCubeBlock(position);

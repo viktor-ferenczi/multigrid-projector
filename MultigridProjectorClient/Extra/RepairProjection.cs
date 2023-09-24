@@ -14,22 +14,29 @@ using Sandbox.Game.Gui;
 using VRage.Utils;
 using MultigridProjector.Utilities;
 
+// ReSharper disable SuggestVarOrType_Elsewhere
 namespace MultigridProjectorClient.Extra
 {
     internal static class RepairProjection
     {
+        private static bool Enabled => Config.CurrentConfig.RepairProjection;
+        private static bool IsWorkingButNotProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid == null;
+        private static bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
+
         public static void Initialize()
         {
-            bool IsWorkingButNotProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid == null;
-            bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
+            CreateTerminalControls();
+        }
 
+        private static void CreateTerminalControls()
+        {
             MyTerminalControlButton<MySpaceProjector> loadRepairProjection = new MyTerminalControlButton<MySpaceProjector>(
-                "LoadRepairProjection",
+                "RepairProjection",
                 MyStringId.GetOrCompute("Load Repair Projection"),
                 MyStringId.GetOrCompute("Loads the projector's own grid as a repair projection."),
                 LoadMechanicalGroup)
             {
-                Visible = IsWorking,
+                Visible = (projector) => Enabled && IsWorking(projector),
                 Enabled = IsWorkingButNotProjecting,
                 SupportsMultipleBlocks = false
             };
@@ -42,8 +49,8 @@ namespace MultigridProjectorClient.Extra
             List<IMyCubeGrid> grids = CollectGrids(projector);
             List<MyObjectBuilder_CubeGrid> gridBuilders = grids.Select(grid => grid.GetObjectBuilder()).Cast<MyObjectBuilder_CubeGrid>().ToList();
 
-            Delegate InitFromObjectBuilder = Reflection.GetMethod(typeof(MyProjectorBase), projector, "InitFromObjectBuilder");
-            InitFromObjectBuilder.DynamicInvoke(gridBuilders, null);
+            Delegate initFromObjectBuilder = Reflection.GetMethod(typeof(MyProjectorBase), projector, "InitFromObjectBuilder");
+            initFromObjectBuilder.DynamicInvoke(gridBuilders, null);
 
             projector.SetValue("KeepProjection", true);
             AlignToRepairProjector(projector, gridBuilders[0]);
@@ -66,16 +73,11 @@ namespace MultigridProjectorClient.Extra
             var projectorBuilder = gridBuilder
                 .CubeBlocks
                 .OfType<MyObjectBuilder_Projector>()
-                .FirstOrDefault(b =>
-                    b.SubtypeId.ToString() == projector.BlockDefinition.SubtypeId &&
-                    (Vector3I)b.Min == projector.Min &&
-                    (MyBlockOrientation)b.BlockOrientation == projector.Orientation &&
-                    (b.CustomName ?? b.Name) == (projector.CustomName ?? projector.Name));
+                .FirstOrDefault(b => b.Name == projector.Name);
 
             if (projectorBuilder == null) return;
 
-            Quaternion gridToProjectorQuaternion;
-            projector.Orientation.GetQuaternion(out gridToProjectorQuaternion);
+            projector.Orientation.GetQuaternion(out var gridToProjectorQuaternion);
             var projectorToGridQuaternion = Quaternion.Inverse(gridToProjectorQuaternion);
 
             OrientationAlgebra.ProjectionRotationFromForwardAndUp(

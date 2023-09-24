@@ -20,7 +20,7 @@ namespace MultigridProjector.Utilities
         public static Role Role;
         public static bool ServerHasPlugin;
         private const ushort HandlerId = 0x7b94;
-        private static readonly byte[] Signature = new byte[] { 2, 3, 5, 7, 11, 13, 17, 19 };
+        private static readonly byte[] Signature = { 2, 3, 5, 7, 11, 13, 17, 19 };
 
         public delegate void OnPacketReceived(byte[] data, ulong fromSteamId, bool fromServer);
         public static event OnPacketReceived PacketReceived;
@@ -29,7 +29,7 @@ namespace MultigridProjector.Utilities
         {
             Role = DetectRole();
 
-            // If we're in singleplayer we already know we have MGP
+            // If we're in single player we already know we have MGP
             if (Role == Role.SinglePlayer)
             {
                 ServerHasPlugin = true;
@@ -41,7 +41,7 @@ namespace MultigridProjector.Utilities
             // Wait until the message handler is registered
             Events.InvokeOnGameThread(() =>
             {
-                // If connnecting to a server listen if it has MGP
+                // If connecting to a server listen if it has MGP
                 if (Role == Role.MultiplayerClient)
                 {
                     ServerHasPlugin = false;

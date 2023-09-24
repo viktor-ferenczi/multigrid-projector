@@ -33,7 +33,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup>
-    <RunPostBuildEvent>OnOutputUpdated</RunPostBuildEvent>
+    <RunPostBuildEvent>Always</RunPostBuildEvent>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
@@ -90,6 +90,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extra\CraftProjection.cs" />
+    <Compile Include="Menus\CraftDialog.cs" />
+    <Compile Include="Utilities\ActionIcons.cs" />
     <Compile Include="Extra\ConnectSubgrids.cs" />
     <Compile Include="Extra\RepairProjection.cs" />
     <Compile Include="Extra\ProjectorAligner.cs" />
