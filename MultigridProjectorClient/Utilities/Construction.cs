@@ -170,39 +170,11 @@ namespace MultigridProjectorClient.Utilities
             return blockAtPos;
         }
 
-        /// FIXME: Used only from a method which is never used
-        private static MySlimBlock GetPreviewBlockAtPos(MySlimBlock builtBlock)
-        {
-            // ConnectSubgrids has a useful function to get the subgrid (if applicable) of any block
-            if (!TryGetSubgrid(builtBlock, out Subgrid subgrid))
-                return null;
-
-            MyCubeGrid builtGrid = subgrid.BuiltGrid;
-            MyCubeGrid previewGrid = subgrid.PreviewGrid;
-
-            // Get the block on the built grid of the subgrid in the same position as the projected block
-            Vector3I blockPos = previewGrid.WorldToGridInteger(builtGrid.GridIntegerToWorld(builtBlock.Position));
-            MySlimBlock blockAtPos = previewGrid.GetCubeBlock(blockPos);
-
-            return blockAtPos;
-        }
-
         public static MySlimBlock GetBuiltBlock(MySlimBlock projectedBlock)
         {
             MySlimBlock blockAtPos = GetBuiltBlockAtPos(projectedBlock);
 
             if (VerifyBuiltBlock(projectedBlock, blockAtPos))
-                return blockAtPos;
-
-            return null;
-        }
-
-        // FIXME: Never used
-        public static MySlimBlock GetPreviewBlock(MySlimBlock builtBlock)
-        {
-            MySlimBlock blockAtPos = GetPreviewBlockAtPos(builtBlock);
-
-            if (VerifyBuiltBlock(blockAtPos, builtBlock))
                 return blockAtPos;
 
             return null;

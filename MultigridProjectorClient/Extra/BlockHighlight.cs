@@ -166,10 +166,9 @@ namespace MultigridProjectorClient.Extra
                         Color highlightColor;
                         if (buildCheck == BuildCheckResult.AlreadyBuilt)
                         {
-                            Vector3I builtBlockPos = subgrid.BuiltGrid.WorldToGridInteger(subgrid.PreviewGrid.GridIntegerToWorld(block.Position));
-                            MySlimBlock builtBlock = subgrid.BuiltGrid.GetCubeBlock(builtBlockPos);
+                            MySlimBlock builtBlock = Construction.GetBuiltBlock(block);
 
-                            if (builtBlock.Integrity < block.Integrity)
+                            if (builtBlock?.Integrity < block.Integrity)
                                 highlightColor = Color.Yellow;
                             else
                                 continue;

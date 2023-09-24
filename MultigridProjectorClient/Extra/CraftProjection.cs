@@ -59,7 +59,10 @@ namespace MultigridProjectorClient.Extra
 
             Dictionary<MyDefinitionId, int> blueprintComponents = GetBlueprintComponents(projector);
             Dictionary<MyDefinitionId, int> inventoryComponents = GetInventoryComponents(projector.CubeGrid);
-            Dictionary<MyDefinitionId, int> requiredComponents = GetRequiredComponents(blueprintComponents, inventoryComponents);
+
+            Dictionary<MyDefinitionId, int> requiredComponents = new Dictionary<MyDefinitionId, int>(blueprintComponents);
+            SubtractComponents(ref requiredComponents, inventoryComponents);
+            ClampComponents(ref requiredComponents);
 
             foreach (KeyValuePair<MyDefinitionId, int> component in blueprintComponents)
             {
@@ -139,7 +142,6 @@ namespace MultigridProjectorClient.Extra
 
                 foreach (MySlimBlock previewBlock in previewBlocks)
                 {
-                    Dictionary<MyDefinitionId, int> requiredComponents = null;
                     Dictionary<MyDefinitionId, int> previewBlockComponents = GetBlockComponents(previewBlock);
 
                     // Consider the progress of the built counterpart
@@ -147,18 +149,18 @@ namespace MultigridProjectorClient.Extra
                     if (builtBlock != null && builtBlock.Integrity < previewBlock.Integrity)
                     {
                         Dictionary<MyDefinitionId, int> builtBlockComponents = GetBlockComponents(builtBlock);
-                        requiredComponents = GetRequiredComponents(previewBlockComponents, builtBlockComponents);
+                        SubtractComponents(ref previewBlockComponents, builtBlockComponents);
+                        ClampComponents(ref previewBlockComponents);
                     }
 
-                    AddComponents(ref components, requiredComponents ?? previewBlockComponents);
+                    AddComponents(ref components, previewBlockComponents);
                 }
             }
 
             return components;
         }
 
-        // FIXME: Return value is never used
-        private static Dictionary<MyDefinitionId, int> AddComponents(ref Dictionary<MyDefinitionId, int> dict1, Dictionary<MyDefinitionId, int> dict2)
+        private static void AddComponents(ref Dictionary<MyDefinitionId, int> dict1, Dictionary<MyDefinitionId, int> dict2)
         {
             foreach (KeyValuePair<MyDefinitionId, int> kvp in dict2)
             {
@@ -171,8 +173,34 @@ namespace MultigridProjectorClient.Extra
                     dict1.Add(kvp.Key, kvp.Value);
                 }
             }
+        }
 
-            return dict1;
+        private static void SubtractComponents(ref Dictionary<MyDefinitionId, int> dict1, Dictionary<MyDefinitionId, int> dict2)
+        {
+            foreach (KeyValuePair<MyDefinitionId, int> kvp in dict2)
+            {
+                if (dict1.ContainsKey(kvp.Key))
+                {
+                    dict1[kvp.Key] -= kvp.Value;
+                }
+                else
+                {
+                    dict1.Add(kvp.Key, -kvp.Value);
+                }
+            }
+        }
+
+        public static void ClampComponents(ref Dictionary<MyDefinitionId, int> dict)
+        {
+            List<MyDefinitionId> keys = new List<MyDefinitionId>(dict.Keys);
+            for (int i = 0; i < keys.Count; i++)
+            {
+                MyDefinitionId key = keys[i];
+                if (dict[key] < 0)
+                {
+                    dict[key] = 0;
+                }
+            }
         }
 
         private static Dictionary<MyDefinitionId, int> GetBlockComponents(MySlimBlock slimBlock)
@@ -254,29 +282,6 @@ namespace MultigridProjectorClient.Extra
             }
 
             return components;
-        }
-
-        private static Dictionary<MyDefinitionId, int> GetRequiredComponents(
-            Dictionary<MyDefinitionId, int> blueprintComponents,
-            Dictionary<MyDefinitionId, int> inventoryComponents)
-        {
-            Dictionary<MyDefinitionId, int> requiredComponents = new Dictionary<MyDefinitionId, int>();
-
-            foreach (KeyValuePair<MyDefinitionId, int> component in blueprintComponents)
-            {
-                MyDefinitionId id = component.Key;
-                int blueprintAmount = component.Value;
-
-                int inventoryAmount = inventoryComponents.GetValueOrDefault(id);
-                int requiredAmount = blueprintAmount - inventoryAmount;
-
-                if (requiredAmount < 0)
-                    requiredAmount = 0;
-
-                requiredComponents.Add(id, requiredAmount);
-            }
-
-            return requiredComponents;
         }
 
         private static void SendToAssembler(MyAssembler assembler, Dictionary<MyDefinitionId, int> components)
