@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using VRage.Game;
 using VRage.Utils;
 using VRageMath;
 using static Sandbox.Graphics.GUI.MyGuiControlTable;
@@ -18,8 +19,7 @@ namespace MultigridProjectorClient.Menus
         public static MyGuiScreenMessageBox CreateDialog(
             string assemblerName,
             HashSet<Row> rows,
-            Action assembleAll = null,
-            Action assembleMissing = null,
+            Action<MyDefinitionId, int> assembleFunc = null,
             Action onClosing = null)
         {
             // I find it easier to hijack a message box for this then making the UI from scratch
@@ -40,36 +40,6 @@ namespace MultigridProjectorClient.Menus
 
             // Make the background color less transparent, as the default is very faint and this is an important message
             messageBox.BackgroundColor = new Vector4(1f, 1f, 1f, 10.0f);
-
-            // Change the yes button text
-            MyGuiControlButton yesButton = (MyGuiControlButton)Reflection.GetValue(messageBox, "m_yesButton");
-            yesButton.Text = "Assemble Missing";
-
-            if (assembleMissing != null)
-            {
-                yesButton.SetToolTip(new MyToolTips($"Send all the 'Missing' components to '{assemblerName}'"));
-                yesButton.ButtonClicked += (_) => assembleMissing();
-            }
-            else
-            {
-                yesButton.SetToolTip(new MyToolTips("Assemble all the 'Missing' components"));
-                yesButton.Enabled = false;
-            }
-
-            // Change the no button text
-            MyGuiControlButton noButton = (MyGuiControlButton)Reflection.GetValue(messageBox, "m_noButton");
-            noButton.Text = "Assemble All";
-
-            if (assembleAll != null)
-            {
-                noButton.SetToolTip(new MyToolTips($"Send all the 'Blueprint' components to '{assemblerName}'"));
-                noButton.ButtonClicked += (_) => assembleAll();
-            }
-            else
-            {
-                noButton.SetToolTip(new MyToolTips("Assemble all the 'Blueprint' components"));
-                noButton.Enabled = false;
-            }
 
             // Create a table with all the components and their quantities
             MyGuiControlTable componentTable = new MyGuiControlTable
@@ -123,11 +93,58 @@ namespace MultigridProjectorClient.Menus
             MyGuiControls controls = (MyGuiControls)Reflection.GetValue(typeof(MyGuiScreenBase), messageBox, "m_controls");
             controls.Add(componentTable);
 
+            // Change the yes button text
+            MyGuiControlButton yesButton = (MyGuiControlButton)Reflection.GetValue(messageBox, "m_yesButton");
+            yesButton.Text = "Assemble Missing";
+
+            if (assembleFunc != null)
+            {
+                yesButton.SetToolTip(new MyToolTips($"Send all the 'Missing' components to '{assemblerName}'"));
+                yesButton.ButtonClicked += (_) => Assemble(assembleFunc, componentTable, 1);
+            }
+            else
+            {
+                yesButton.SetToolTip(new MyToolTips("Assemble all the 'Missing' components"));
+                yesButton.Enabled = false;
+            }
+
+            // Change the no button text
+            MyGuiControlButton noButton = (MyGuiControlButton)Reflection.GetValue(messageBox, "m_noButton");
+            noButton.Text = "Assemble All";
+
+            if (assembleFunc != null)
+            {
+                noButton.SetToolTip(new MyToolTips($"Send all the 'Blueprint' components to '{assemblerName}'"));
+                noButton.ButtonClicked += (_) => Assemble(assembleFunc, componentTable, 3);
+            }
+            else
+            {
+                noButton.SetToolTip(new MyToolTips("Assemble all the 'Blueprint' components"));
+                noButton.Enabled = false;
+            }
+
             return messageBox;
         }
+
+        private static void Assemble(Action<MyDefinitionId, int> assembleFunc, MyGuiControlTable table, int column)
+        {
+            foreach (Row row in table.Rows)
+            {
+                MyDefinitionId id = GetCellData<MyDefinitionId>(row, 0);
+                int amount = GetCellData<int>(row, column);
+
+                assembleFunc(id, amount);
+            }
+        }
+
         private static string GetCellText(Row row, int column)
         {
             return row.GetCell(column).Text.ToString();
+        }
+
+        private static T GetCellData<T>(Row row, int column)
+        {
+            return (T)row.GetCell(column).UserData;
         }
 
         private static void SortRows(ref List<Row> rows, int column, bool inverse = false)

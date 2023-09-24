@@ -91,10 +91,10 @@ namespace MultigridProjectorClient.Extra
                 int requiredAmount = requiredComponents.GetValueOrDefault(id);
 
                 MyGuiControlTable.Row row = new MyGuiControlTable.Row();
-                row.AddCell(new MyGuiControlTable.Cell(name));
-                row.AddCell(new MyGuiControlTable.Cell(requiredAmount.ToString("N0"), toolTip: $"You need to manufacture {requiredAmount:N0} {name}{(requiredAmount != 1 ? "s" : "")}"));
-                row.AddCell(new MyGuiControlTable.Cell(inventoryAmount.ToString("N0"), toolTip: $"You and the current grid have {inventoryAmount:N0} {name}{(inventoryAmount != 1 ? "s" : "")}"));
-                row.AddCell(new MyGuiControlTable.Cell(blueprintAmount.ToString("N0"), toolTip: $"Completing this blueprint requires {blueprintAmount:N0} {name}{(blueprintAmount != 1 ? "s" : "")}"));
+                row.AddCell(new MyGuiControlTable.Cell(name, userData: id));
+                row.AddCell(new MyGuiControlTable.Cell(requiredAmount.ToString("N0"), toolTip: $"You need to manufacture {requiredAmount:N0} {name}{(requiredAmount != 1 ? "s" : "")}", userData: requiredAmount));
+                row.AddCell(new MyGuiControlTable.Cell(inventoryAmount.ToString("N0"), toolTip: $"You and the current grid have {inventoryAmount:N0} {name}{(inventoryAmount != 1 ? "s" : "")}", userData: inventoryAmount));
+                row.AddCell(new MyGuiControlTable.Cell(blueprintAmount.ToString("N0"), toolTip: $"Completing this blueprint requires {blueprintAmount:N0} {name}{(blueprintAmount != 1 ? "s" : "")}", userData: blueprintAmount));
 
                 rows.Add(row);
             }
@@ -105,8 +105,7 @@ namespace MultigridProjectorClient.Extra
                 dialog = Menus.CraftDialog.CreateDialog(
                     assembler.DisplayNameText,
                     rows,
-                    () => SendToAssembler(assembler, blueprintComponents),
-                    () => SendToAssembler(assembler, requiredComponents),
+                    (comp, amount) => SendToAssembler(assembler, new Dictionary<MyDefinitionId, int>() { { comp, amount } }),
                     SwitchToProductionTab);
             }
             else
