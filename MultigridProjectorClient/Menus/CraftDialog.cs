@@ -97,31 +97,62 @@ namespace MultigridProjectorClient.Menus
             MyGuiControlButton yesButton = (MyGuiControlButton)Reflection.GetValue(messageBox, "m_yesButton");
             yesButton.Text = "Assemble Missing";
 
+            int totalMissing = 0;
+            foreach (Row row in componentTable.Rows)
+            {
+                totalMissing += GetCellData<int>(row, 1);
+            }
+
             if (assembleFunc != null)
             {
-                yesButton.SetToolTip(new MyToolTips($"Send all the 'Missing' components to '{assemblerName}'"));
+                yesButton.SetToolTip(new MyToolTips($"Send the {totalMissing:N0} 'Missing' components to '{assemblerName}'"));
                 yesButton.ButtonClicked += (_) => Assemble(assembleFunc, componentTable, 1);
             }
             else
             {
-                yesButton.SetToolTip(new MyToolTips("Assemble all the 'Missing' components"));
+                yesButton.SetToolTip(new MyToolTips($"Assemble the {totalMissing:N0} 'Missing' components"));
                 yesButton.Enabled = false;
             }
 
             // Change the no button text
             MyGuiControlButton noButton = (MyGuiControlButton)Reflection.GetValue(messageBox, "m_noButton");
-            noButton.Text = "Assemble All";
+            noButton.Text = "Assemble Selected";
 
-            if (assembleFunc != null)
+            noButton.SetToolTip(new MyToolTips($"Assemble any selected 'Missing' components"));
+            noButton.ButtonClicked += (_) => Assemble(assembleFunc, componentTable.SelectedRow, 1);
+            noButton.Enabled = false;
+
+            componentTable.ItemSelected += (table, eventArgs) =>
             {
-                noButton.SetToolTip(new MyToolTips($"Send all the 'Blueprint' components to '{assemblerName}'"));
-                noButton.ButtonClicked += (_) => Assemble(assembleFunc, componentTable, 3);
-            }
-            else
-            {
-                noButton.SetToolTip(new MyToolTips("Assemble all the 'Blueprint' components"));
-                noButton.Enabled = false;
-            }
+                if (componentTable.SelectedRow == null)
+                {
+                    noButton.Enabled = false;
+                    noButton.SetToolTip(new MyToolTips($"Assemble any selected 'Missing' components"));
+                    return;
+                }
+
+                string selectedName = GetCellText(componentTable.SelectedRow, 0);
+                int selectedAmount = GetCellData<int>(componentTable.SelectedRow, 1);
+
+                if (selectedAmount == 0)
+                {
+                    noButton.Enabled = false;
+                    noButton.SetToolTip(new MyToolTips($"No {selectedName}{(selectedAmount != 1 ? "s" : "")} to assemble"));
+
+                    return;
+                }
+
+                if (assembleFunc == null)
+                {
+                    noButton.SetToolTip(new MyToolTips($"Assemble {selectedAmount:N0} {selectedName}{(selectedAmount != 1 ? "s" : "")}"));
+                    noButton.Enabled = false;
+
+                    return;
+                }
+
+                noButton.SetToolTip(new MyToolTips($"Send {selectedAmount:N0} {selectedName}{(selectedAmount != 1 ? "s" : "")} to '{assemblerName}'"));
+                noButton.Enabled = true;
+            };
 
             return messageBox;
         }
@@ -130,11 +161,16 @@ namespace MultigridProjectorClient.Menus
         {
             foreach (Row row in table.Rows)
             {
-                MyDefinitionId id = GetCellData<MyDefinitionId>(row, 0);
-                int amount = GetCellData<int>(row, column);
-
-                assembleFunc(id, amount);
+                Assemble(assembleFunc, row, column);
             }
+        }
+
+        private static void Assemble(Action<MyDefinitionId, int> assembleFunc, Row row, int column)
+        {
+            MyDefinitionId id = GetCellData<MyDefinitionId>(row, 0);
+            int amount = GetCellData<int>(row, column);
+
+            assembleFunc(id, amount);
         }
 
         private static string GetCellText(Row row, int column)
@@ -154,9 +190,11 @@ namespace MultigridProjectorClient.Menus
                 string cell1 = GetCellText(row1, column);
                 string cell2 = GetCellText(row2, column);
 
+                object cellData1 = GetCellData<object>(row1, column);
+                object cellData2 = GetCellData<object>(row2, column);
+
                 // Numerical Order
-                if (int.TryParse(cell1.Replace(",", ""), out int value1)
-                    && int.TryParse(cell2.Replace(",", ""), out int value2))
+                if (cellData1 is int value1 && cellData2 is int value2)
                 {
                     // Sort by name if values match
                     if (value1 == value2)
@@ -187,6 +225,7 @@ namespace MultigridProjectorClient.Menus
 
         private static void SortByColumn(MyGuiControlTable table, int column, bool inverse = false)
         {
+            Row selectedRow = table.SelectedRow;
             List<Row> rows = new List<Row>(table.Rows);
 
             foreach (Row row in rows)
@@ -199,6 +238,11 @@ namespace MultigridProjectorClient.Menus
             for (int i = 0; i < rows.Count; i++)
             {
                 table.Insert(i, rows[i]);
+            }
+
+            if (selectedRow != null)
+            {
+                table.SelectedRow = selectedRow;
             }
         }
     }
