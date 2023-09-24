@@ -26,7 +26,7 @@ namespace MultigridProjectorClient.Menus
             "This will capture all input until stopped (press ESC to cancel).\n" +
             $"Hold {GetControlType(MyControlsSpace.SPRINT)} to suspend alignment.\n" +
             "While suspended you are free to reposition yourself and interact with the world.\n" +
-            "All translations and rotations are relative to your charcter's head orientation.\n" +
+            "All translations and rotations are relative to your character's head orientation.\n" +
             "These controls are based on the controls for block alignment, and respect your current binds.\n" +
             "\n\n" +
             "Forwards:\n" +

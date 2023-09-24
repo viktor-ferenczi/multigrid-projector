@@ -235,7 +235,7 @@ namespace MultigridProjectorClient.Utilities
 
             foreach (ITerminalProperty property in properties)
             {
-                // Disabling a block messes with setting properties and must be done last (in a seperate function)
+                // Disabling a block messes with setting properties and must be done last (in a separate function)
                 if (property.Id == "OnOff")
                     continue;
 

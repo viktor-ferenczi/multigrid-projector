@@ -29,7 +29,7 @@ namespace MultigridProjector.Utilities
         {
             Role = DetectRole();
 
-            // If we're in singleplayer we already know we have MGP
+            // If we're in single player we already know we have MGP
             if (Role == Role.SinglePlayer)
             {
                 ServerHasPlugin = true;
@@ -41,7 +41,7 @@ namespace MultigridProjector.Utilities
             // Wait until the message handler is registered
             Events.InvokeOnGameThread(() =>
             {
-                // If connnecting to a server listen if it has MGP
+                // If connecting to a server listen if it has MGP
                 if (Role == Role.MultiplayerClient)
                 {
                     ServerHasPlugin = false;

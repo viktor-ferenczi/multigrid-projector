@@ -96,7 +96,7 @@ namespace MultigridProjectorClient.Utilities
                 (m) => m.Name == "RaiseStaticEvent" && m.IsGenericMethodDefinition && m.GetParameters().Length == 4,
                 new Type[] { Reflection.GetType(cubeBuilder, "GridSpawnRequestData") });
 
-            // Invoke the method with the warpper function, request data, and default optional parameters
+            // Invoke the method with the wrapper function, request data, and default optional parameters
             RaiseStaticEvent.DynamicInvoke(RequestGridSpawnWrapper, requestData, default(EndpointId), null);
 
             // Call everything subscribed to the OnBlockAdded event
@@ -179,7 +179,7 @@ namespace MultigridProjectorClient.Utilities
             MyCubeGrid builtGrid = subgrid.BuiltGrid;
             MyCubeGrid previewGrid = subgrid.PreviewGrid;
 
-            // Get the block on the built grid of the subgrid in the same position as the projectd block
+            // Get the block on the built grid of the subgrid in the same position as the projected block
             Vector3I blockPos = previewGrid.WorldToGridInteger(builtGrid.GridIntegerToWorld(builtBlock.Position));
             MySlimBlock blockAtPos = previewGrid.GetCubeBlock(blockPos);
 
@@ -226,10 +226,10 @@ namespace MultigridProjectorClient.Utilities
         public static bool CanPlaceBlock(MyCubeBlockDefinition blockDefinition, MatrixD worldMatrix, bool dynamicMode = true)
         {
             float cubeSize = MyDefinitionManager.Static.GetCubeSize(blockDefinition.CubeSize);
-            BoundingBoxD localbox = new BoundingBoxD((Vector3D)(-blockDefinition.Size * cubeSize * 0.5f), (Vector3D)(blockDefinition.Size * cubeSize * 0.5f));
+            BoundingBoxD localBox = new BoundingBoxD(-blockDefinition.Size * cubeSize * 0.5f, blockDefinition.Size * cubeSize * 0.5f);
             MyGridPlacementSettings settings = blockDefinition.CubeSize == MyCubeSize.Large ? MyBlockBuilderBase.CubeBuilderDefinition.BuildingSettings.LargeGrid : MyBlockBuilderBase.CubeBuilderDefinition.BuildingSettings.SmallGrid;
 
-            return MyCubeGrid.TestBlockPlacementArea(blockDefinition, new MyBlockOrientation(), worldMatrix, ref settings, localbox, dynamicMode);
+            return MyCubeGrid.TestBlockPlacementArea(blockDefinition, new MyBlockOrientation(), worldMatrix, ref settings, localBox, dynamicMode);
         }
 
         public static bool WeldBlock(MyProjectorBase projector, MySlimBlock cubeBlock, long owner, ref long builtBy)

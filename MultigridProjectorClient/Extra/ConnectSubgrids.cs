@@ -348,7 +348,7 @@ namespace MultigridProjectorClient.Extra
                 moveVector = new Vector3D(0, offset, 0);
 
             // Rotor bases face upwards so moving the part 'forwards' also means moving the world matrix up
-            // However we actaully want to move the 'backwards' as they are pointing towards the head, so moving them
+            // However we actually want to move the 'backwards' as they are pointing towards the head, so moving them
             // forwards just result in the block placement intersecting even more
             if (blockSubType.Contains("Stator"))
                 moveVector = new Vector3D(0, -offset, 0);
@@ -395,7 +395,7 @@ namespace MultigridProjectorClient.Extra
                     return MatrixD.Zero;
             }
 
-            // Play it safe so that the desync dosen't cause the placement to fail
+            // Play it safe so that the desync doesn't cause the placement to fail
             newMatrix = OffsetMatrix(blockSubType, worldMatrix, mid + epsilon * 10);
 
             return newMatrix;

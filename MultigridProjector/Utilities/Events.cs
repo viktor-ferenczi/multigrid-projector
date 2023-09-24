@@ -92,13 +92,12 @@ namespace MultigridProjector.Utilities
                 null,
                 (_, handler) => MyEntities.OnEntityAdd += handler,
                 (_, handler) => MyEntities.OnEntityAdd -= handler,
-                (entity) =>
+                entity =>
                 {
                     MySlimBlock block = ((MyCubeGrid)entity).GetBlocks().First();
                     action(block);
-                    return;
                 },
-                (entity) =>
+                entity =>
                 {
                     if (entity is MyCubeGrid grid && grid.BlocksCount == 1)
                         return predicate(grid.GetBlocks().First());

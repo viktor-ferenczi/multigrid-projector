@@ -86,7 +86,7 @@ namespace MultigridProjectorClient.Menus
 
             Vector2 extraPos = new Vector2(0f, compatibilityPos.Y + togglePadding * 4.5f);
             MyGuiControlLabel extra = new MyGuiControlLabel(extraPos, new Vector2(0.25f, 0.03f), "Extra Features:", originAlign: MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_CENTER, textScale: 1f);
-            CreateOption("Repair Projection", "Load a copy of a ship intoa projector so that it can be rebuilt if any accidents happen.", extraPos + new Vector2(basePos.X, togglePadding), controls, () => ConfigObject.RepairProjection, (b) => ConfigObject.RepairProjection = b, allowEdit);
+            CreateOption("Repair Projection", "Load a copy of a ship into projector so that it can be rebuilt if any accidents happen.", extraPos + new Vector2(basePos.X, togglePadding), controls, () => ConfigObject.RepairProjection, (b) => ConfigObject.RepairProjection = b, allowEdit);
             CreateOption("Align Projection", "Enable intuitive alignment of projections using the same keys you would use when aligning blocks normally.", extraPos + new Vector2(basePos.X, togglePadding*2), controls, () => ConfigObject.ProjectorAligner, (b) => ConfigObject.ProjectorAligner = b, allowEdit);
             CreateOption("Highlight Blocks", "Highlight projected blocks based on their status and completion.", extraPos + new Vector2(basePos.X, togglePadding*3), controls, () => ConfigObject.BlockHighlight, (b) => ConfigObject.BlockHighlight = b, allowEdit);
             CreateOption("Assemble Projections", "View a projection's component cost and queue it for assembly.", extraPos + new Vector2(basePos.X, togglePadding*4), controls, () => ConfigObject.CraftProjection, (b) => ConfigObject.CraftProjection = b, allowEdit);

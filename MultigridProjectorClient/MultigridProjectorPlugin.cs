@@ -4,7 +4,6 @@ using HarmonyLib;
 using MultigridProjector.Utilities;
 using MultigridProjectorClient.Utilities;
 using Sandbox.Graphics.GUI;
-using Sandbox.ModAPI;
 using VRage.Plugins;
 
 namespace MultigridProjectorClient
