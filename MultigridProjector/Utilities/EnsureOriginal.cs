@@ -65,6 +65,10 @@ namespace MultigridProjector.Utilities
             if (methodInfo == null)
                 return $"Could not get method information for the {declaringType.Name}.{methodName} method patched in class {patchType.Name}";
 
+#if DEBUG
+            PluginLog.Logger.Debug($"Verifying patch method: {methodInfo.DeclaringType.Name}.{methodInfo.Name}");
+#endif
+
             try
             {
                 var actualDigest = HashMethodBody(methodInfo).ToString("x8");
