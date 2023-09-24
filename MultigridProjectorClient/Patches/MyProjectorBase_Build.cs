@@ -20,8 +20,6 @@ namespace MultigridProjector.Patches
             MyProjectorBase __instance,
             MySlimBlock cubeBlock,
             long owner,
-            long builder,
-            bool requestInstant,
             ref long builtBy)
         {
             var projector = __instance;

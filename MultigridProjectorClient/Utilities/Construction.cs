@@ -170,6 +170,7 @@ namespace MultigridProjectorClient.Utilities
             return blockAtPos;
         }
 
+        /// FIXME: Used only from a method which is never used
         private static MySlimBlock GetPreviewBlockAtPos(MySlimBlock builtBlock)
         {
             // ConnectSubgrids has a useful function to get the subgrid (if applicable) of any block
@@ -196,6 +197,7 @@ namespace MultigridProjectorClient.Utilities
             return null;
         }
 
+        // FIXME: Never used
         public static MySlimBlock GetPreviewBlock(MySlimBlock builtBlock)
         {
             MySlimBlock blockAtPos = GetPreviewBlockAtPos(builtBlock);
@@ -235,7 +237,7 @@ namespace MultigridProjectorClient.Utilities
         public static bool WeldBlock(MyProjectorBase projector, MySlimBlock cubeBlock, long owner, ref long builtBy)
         {
             // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
-            if (!TryGetSubgrid(cubeBlock, out Subgrid subgrid, out MultigridProjection projection))
+            if (!TryGetSubgrid(cubeBlock, out Subgrid subgrid, out MultigridProjection _))
                 return true;
 
             int gridIndex = subgrid.Index;
@@ -279,8 +281,8 @@ namespace MultigridProjectorClient.Utilities
 
             void OnPreviewPlace(MyCubeBlock builtBlock)
             {
-                if (builtBlock is MyTerminalBlock)
-                    UpdateBlock.CopyProperties((MyTerminalBlock)previewBlock, (MyTerminalBlock)builtBlock);
+                if (builtBlock is MyTerminalBlock block)
+                    UpdateBlock.CopyProperties((MyTerminalBlock)previewBlock, block);
 
                 // We need to wait for the basepart to replicate for the block to be fully placed
                 if (builtBlock is MyMechanicalConnectionBlockBase builtBase)
@@ -313,8 +315,8 @@ namespace MultigridProjectorClient.Utilities
                     }, (_) => builtBase.TopBlock != null);
                 }
 
-                if (builtBlock is MyAttachableTopBlockBase && Config.CurrentConfig.ConnectSubgrids)
-                    UpdateBaseParts((MyAttachableTopBlockBase)previewBlock, (MyAttachableTopBlockBase)builtBlock);
+                if (builtBlock is MyAttachableTopBlockBase @base && Config.CurrentConfig.ConnectSubgrids)
+                    UpdateBaseParts((MyAttachableTopBlockBase)previewBlock, @base);
             }
 
             // FIXME: Use previewBlock.IsBuilt

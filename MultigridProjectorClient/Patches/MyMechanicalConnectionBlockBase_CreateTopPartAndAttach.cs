@@ -16,10 +16,7 @@ namespace MultigridProjector.Patches
         [ServerOnly]
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
-            MyMechanicalConnectionBlockBase __instance,
-            long builtBy,
-            bool smallToLarge,
-            bool instantBuild)
+            MyMechanicalConnectionBlockBase __instance)
         {
             var baseBlock = __instance;
 

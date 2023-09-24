@@ -52,6 +52,8 @@ namespace MultigridProjectorClient
             PluginLog.Info("Client plugin loaded");
         }
 
+        // This is invoked by Plugin Loader
+        // ReSharper disable once UnusedMember.Global
         public void OpenConfigDialog()
         {
             MyGuiSandbox.AddScreen(Menus.ConfigMenu.CreateDialog());

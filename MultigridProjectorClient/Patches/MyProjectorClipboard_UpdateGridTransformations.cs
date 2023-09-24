@@ -18,8 +18,6 @@ namespace MultigridProjector.Patches
         // ReSharper disable once UnusedMember.Local
         private static bool Prefix(
             // ReSharper disable once InconsistentNaming
-            MyProjectorClipboard __instance,
-            // ReSharper disable once InconsistentNaming
             MyProjectorBase ___m_projector)
         {
             var projector = ___m_projector;

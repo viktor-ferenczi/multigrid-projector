@@ -172,7 +172,7 @@ namespace MultigridProjectorClient.Extra
                     "This connection appears to have been deprecated and cannot be made in survival anymore. " +
                     "Either paste the blueprint in or find one designed for the latest Space Engineers version");
             }
-            else if (connectionType == ConnectionType.Special)
+            else if (connectionType == ConnectionType.Special && sourceTop != null)
             {
                 MyBlockVisuals visuals = new MyBlockVisuals(
                     sourceTop.SlimBlock.ColorMaskHSV.PackHSVToUint(),

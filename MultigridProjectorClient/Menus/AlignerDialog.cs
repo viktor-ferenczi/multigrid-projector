@@ -12,7 +12,7 @@ namespace MultigridProjectorClient.Menus
 {
     internal static class AlignerDialog
     {
-        private static readonly string KeySplitter = " | ";
+        private const string KeySplitter = " | ";
         private static readonly StringBuilder MessageCaption = new StringBuilder("Multigrid Projector - Projection Alignment");
         
         private static readonly StringBuilder HeadingText = new StringBuilder(
@@ -79,7 +79,7 @@ namespace MultigridProjectorClient.Menus
             }
 
             if (output.EndsWith(KeySplitter))
-                output = output.Substring(0, output.LastIndexOf(KeySplitter));
+                output = output.Substring(0, output.LastIndexOf(KeySplitter, StringComparison.Ordinal));
 
             return output;
         }

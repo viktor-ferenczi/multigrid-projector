@@ -49,10 +49,5 @@ namespace MultigridProjector.Extensions
             var cubeIndex = grid.WorldToGridInteger(block.WorldPosition);
             return grid.GetCubeBlock(cubeIndex);
         }
-
-        public static MyCubeSize GetOppositeCubeSize(MyCubeSize cubeSize)
-        {
-            return cubeSize == MyCubeSize.Large ? MyCubeSize.Small : MyCubeSize.Large;
-        }
     }
 }

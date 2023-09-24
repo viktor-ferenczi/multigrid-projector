@@ -58,6 +58,7 @@ namespace MultigridProjector.Extensions
             return grids.Sum(g => (long) g.CubeBlocks.Count);
         }
 
+        // FIXME: Return value never used, unknownBlockCount never used
         public static bool TryCalculatePcu(this IEnumerable<MyObjectBuilder_CubeGrid> gridBuilders, out long totalPcu, out int unknownBlockCount)
         {
             totalPcu = 0;

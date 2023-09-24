@@ -20,8 +20,7 @@ namespace MultigridProjector.Patches
         private static void Postfix(
             // ReSharper disable once InconsistentNaming
             MyProjectorBase __instance,
-            MyObjectBuilder_CubeBlock objectBuilder,
-            MyCubeGrid cubeGrid)
+            MyObjectBuilder_CubeBlock objectBuilder)
         {
             var projector = __instance;
 

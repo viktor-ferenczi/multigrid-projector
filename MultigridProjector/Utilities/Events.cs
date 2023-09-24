@@ -99,7 +99,7 @@ namespace MultigridProjector.Utilities
                 entity =>
                 {
                     if (entity is MyCubeGrid grid && grid.BlocksCount == 1)
-                        return predicate(grid.GetBlocks().First());
+                        return predicate?.Invoke(grid.GetBlocks().First()) ?? true;
 
                     return false;
                 });

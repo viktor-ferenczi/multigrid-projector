@@ -80,8 +80,8 @@ namespace MultigridProjectorClient.Menus
                 BorderHighlightEnabled = false,
             };
 
-            float name = 0.4f;
-            float number = 0.2f;
+            const float name = 0.4f;
+            const float number = 0.2f;
             componentTable.SetCustomColumnWidths(new[] { name, number, number, number });
             componentTable.SetColumnName(0, new StringBuilder("Component"));
             componentTable.SetColumnName(1, new StringBuilder("Missing"));

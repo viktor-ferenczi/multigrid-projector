@@ -157,6 +157,7 @@ namespace MultigridProjectorClient.Extra
             return components;
         }
 
+        // FIXME: Return value is never used
         private static Dictionary<MyDefinitionId, int> AddComponents(ref Dictionary<MyDefinitionId, int> dict1, Dictionary<MyDefinitionId, int> dict2)
         {
             foreach (KeyValuePair<MyDefinitionId, int> kvp in dict2)

@@ -1188,18 +1188,6 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static void RemoveHead(TopConnection topConnection)
-        {
-            if (topConnection.HasBuilt)
-            {
-                topConnection.Block.Detach(false);
-                topConnection.Block.CubeGrid.Close();
-            }
-
-            topConnection.ClearBuiltBlock();
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void UpdateAfterSimulation()
         {
             if (!Initialized || Projector.Closed)
@@ -1431,6 +1419,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
         [Everywhere]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        // ReSharper disable once UnusedParameter.Global
         public bool TestPlacementAreaCube(Subgrid subgrid, MyCubeGrid targetGrid, Vector3I min)
         {
             if (!PreviewBaseBlocks.TryGetValue(new BlockMinLocation(subgrid.Index, min), out var previewBlock))

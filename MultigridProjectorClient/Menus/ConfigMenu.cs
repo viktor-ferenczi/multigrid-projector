@@ -4,6 +4,7 @@ using MultigridProjectorClient.Utilities;
 using VRage.Utils;
 using System.Text;
 using System;
+using System.Diagnostics;
 
 namespace MultigridProjectorClient.Menus
 {
@@ -53,8 +54,9 @@ namespace MultigridProjectorClient.Menus
 
             // Create toggles
             MyGuiControls controls = (MyGuiControls)Reflection.GetValue(typeof(MyGuiScreenBase), messageBox, "m_controls");
+            Debug.Assert(messageBox.Size != null, "messageBox.Size is null");
             Vector2 basePos = new Vector2(-messageBox.Size.Value.X/3, -0.18f);
-            float togglePadding = 0.04f;
+            const float togglePadding = 0.04f;
 
             Vector2 corePos = new Vector2(0f, basePos.Y);
             MyGuiControlLabel core = new MyGuiControlLabel(corePos, new Vector2(0.25f, 0.03f), "Core:", originAlign: MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_CENTER, textScale: 1f);

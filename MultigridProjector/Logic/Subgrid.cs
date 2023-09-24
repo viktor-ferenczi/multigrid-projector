@@ -30,7 +30,6 @@ namespace MultigridProjector.Logic
         public MyCubeGrid BuiltGrid { get; private set; }
         public readonly RwLock BuiltGridLock = new RwLock();
         public bool HasBuilt => BuiltGrid != null;
-        public MyCubeSize GridSizeEnum => PreviewGrid.GridSizeEnum;
 
         // Initial statistics of the subgrid with none of the blocks welded
         private readonly ProjectionStats initialStats = new ProjectionStats();
@@ -670,9 +669,7 @@ namespace MultigridProjector.Logic
 
             using (BuiltGridLock.Read())
             {
-                var oldStats = Stats;
-                Stats = stats;
-                stats = oldStats;
+                (Stats, stats) = (stats, Stats);
             }
 
             StateHash = stateHash;

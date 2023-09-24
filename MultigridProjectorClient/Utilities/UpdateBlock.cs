@@ -22,8 +22,8 @@ namespace MultigridProjectorClient.Utilities
 {
     internal static class UpdateToolbar
     {
-        private static readonly string UnknownText = "UNKNOWN ACTION";
-        private static readonly string PlaceholderText = "ACTION ENTITY NOT FOUND";
+        private const string UnknownText = "UNKNOWN ACTION";
+        private const string PlaceholderText = "ACTION ENTITY NOT FOUND";
 
         private static MyToolbarItem CreateTerminalToolbarItem(MyObjectBuilder_ToolbarItemTerminalBlock builder)
         {
