@@ -17,7 +17,6 @@ using VRage.ObjectBuilders;
 using Sandbox.Game.GameSystems;
 using MultigridProjector.Extensions;
 using System.Linq;
-using System.Reflection;
 
 namespace MultigridProjectorClient.Utilities
 {
@@ -64,7 +63,7 @@ namespace MultigridProjectorClient.Utilities
             MyObjectBuilder_ToolbarItemTerminalGroup data = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemTerminalGroup>();
             data.GroupName = text;
             data._Action = "";
-            data.Parameters = new List<MyObjectBuilder_ToolbarItemActionParameter>() { MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemActionParameter>() };
+            data.Parameters = new List<MyObjectBuilder_ToolbarItemActionParameter> { MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemActionParameter>() };
 
             // This is used internally to find which grid the block group is on.
             // It needs to be set to the block we want to assign the toolbar to.
@@ -77,7 +76,7 @@ namespace MultigridProjectorClient.Utilities
         {
             MyBlockGroup dummyGroup = (MyBlockGroup)Activator.CreateInstance(typeof(MyBlockGroup), true);
             dummyGroup.Name = new StringBuilder(name);
-            Reflection.SetValue(dummyGroup, "Blocks", new HashSet<MyTerminalBlock>() { dummyBlock });
+            Reflection.SetValue(dummyGroup, "Blocks", new HashSet<MyTerminalBlock> { dummyBlock });
 
             MyGridTerminalSystem terminalSystem = dummyBlock.CubeGrid.GridSystems.TerminalSystem;
             terminalSystem.AddUpdateGroup(dummyGroup, true);
@@ -161,7 +160,7 @@ namespace MultigridProjectorClient.Utilities
                     continue;
                 }
 
-                else if (builder is MyObjectBuilder_ToolbarItemTerminalGroup groupBuilder)
+                if (builder is MyObjectBuilder_ToolbarItemTerminalGroup groupBuilder)
                 {
                     bool groupExists = false;
                     foreach (MyBlockGroup group in destinationBlock.CubeGrid.GetBlockGroups())
@@ -183,13 +182,11 @@ namespace MultigridProjectorClient.Utilities
                 }
 
                 // If the toolbar item is of an unknown type make a dummy item as an error message
-                else
                 {
                     MyToolbarItem newToolbarItem = CreateDummyToolbarItem(UnknownText, destinationBlock.EntityId);
                     SetItemAtIndexWithDummyGroup(destinationToolbar, i, newToolbarItem, UnknownText, destinationBlock);
 
                     PluginLog.Error($"Cannot process toolbar item: {toolbarItem}");
-                    continue;
                 }
             }
         }

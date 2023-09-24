@@ -1,16 +1,12 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using Entities.Blocks;
 using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using MultigridProjectorClient.Menus;
 using MultigridProjectorClient.Utilities;
 using Sandbox.Game.Entities.Blocks;
-using Sandbox.Game.Localization;
 using Sandbox.Graphics.GUI;
-using VRage;
 using VRage.Game;
 
 namespace MultigridProjector.Patches

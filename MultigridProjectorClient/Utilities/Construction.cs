@@ -37,7 +37,7 @@ namespace MultigridProjectorClient.Utilities
                 MySlimBlock target = grid.GetCubeBlock(location);
                 grid.SkinBlocks(target.Min, target.Max, new Vector3(255, 0, 0), MyStringHash.GetOrCompute("Weldless"), false);
 
-                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", $"Please remove this block: {target?.FatBlock.DisplayNameText ?? target.ToString()}");
+                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", $"Please remove this block: {target.FatBlock.DisplayNameText ?? target.ToString()}");
             }
         }
 
@@ -132,7 +132,7 @@ namespace MultigridProjectorClient.Utilities
             subgrid.GetBlockOrientationQuaternion(block, out var previewQuaternion);
 
             // Define where the block should be placed
-            HashSet<MyCubeGrid.MyBlockLocation> blockLocations = new HashSet<MyCubeGrid.MyBlockLocation>()
+            HashSet<MyCubeGrid.MyBlockLocation> blockLocations = new HashSet<MyCubeGrid.MyBlockLocation>
             {
                 new MyCubeGrid.MyBlockLocation(
                     block.BlockDefinition.Id,

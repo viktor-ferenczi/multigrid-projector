@@ -1514,7 +1514,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 if (buildCheckResult != BuildCheckResult.OK) continue;
 
                 // Buildable block
-                raycastData = new MyWelder.ProjectionRaycastData()
+                raycastData = new MyWelder.ProjectionRaycastData
                 {
                     raycastResult = buildCheckResult,
                     hitCube = slimBlock,

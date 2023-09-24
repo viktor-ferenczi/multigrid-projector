@@ -186,7 +186,7 @@ namespace MultigridProjectorClient.Extra
                 MyCubeBlockDefinition.Component component = blockComponents[i];
                 MyComponentStack.GroupInfo groupInfo = slimBlock.ComponentStack.GetGroupInfo(i);
 
-                AddComponents(ref components, new Dictionary<MyDefinitionId, int>()
+                AddComponents(ref components, new Dictionary<MyDefinitionId, int>
                 {
                     { component.Definition.Id, groupInfo.MountedCount }
                 });

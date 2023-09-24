@@ -169,8 +169,8 @@ namespace MultigridProjectorClient.Extra
             else if (connectionType == ConnectionType.Legacy)
             {
                 MyAPIGateway.Utilities.ShowMessage("Multigrid Projector",
-                    $"This connection appears to have been deprecated and cannot be made in survival anymore. " +
-                    $"Either paste the blueprint in or find one designed for the latest Space Engineers version");
+                    "This connection appears to have been deprecated and cannot be made in survival anymore. " +
+                    "Either paste the blueprint in or find one designed for the latest Space Engineers version");
             }
             else if (connectionType == ConnectionType.Special)
             {
@@ -292,7 +292,7 @@ namespace MultigridProjectorClient.Extra
                 return ConnectionType.Special;
             }
 
-            else if (baseSize == MyCubeSize.Small)
+            if (baseSize == MyCubeSize.Small)
             {
                 if (topDefinitionGroup[MyCubeSize.Small] == topDefinition)
                     return ConnectionType.Default;

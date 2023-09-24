@@ -50,7 +50,7 @@ namespace MultigridProjectorClient.Menus
             }
             else
             {
-                yesButton.SetToolTip(new MyToolTips($"Assemble all the 'Missing' components"));
+                yesButton.SetToolTip(new MyToolTips("Assemble all the 'Missing' components"));
                 yesButton.Enabled = false;
             }
 
@@ -65,12 +65,12 @@ namespace MultigridProjectorClient.Menus
             }
             else
             {
-                noButton.SetToolTip(new MyToolTips($"Assemble all the 'Blueprint' components"));
+                noButton.SetToolTip(new MyToolTips("Assemble all the 'Blueprint' components"));
                 noButton.Enabled = false;
             }
 
             // Create a table with all the components and their quantities
-            MyGuiControlTable componentTable = new MyGuiControlTable()
+            MyGuiControlTable componentTable = new MyGuiControlTable
             {
                 Position = new Vector2(0f, -0.2f),
                 Size = new Vector2(0.85f * 0.6f, 0.3f),

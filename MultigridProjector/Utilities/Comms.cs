@@ -20,7 +20,7 @@ namespace MultigridProjector.Utilities
         public static Role Role;
         public static bool ServerHasPlugin;
         private const ushort HandlerId = 0x7b94;
-        private static readonly byte[] Signature = new byte[] { 2, 3, 5, 7, 11, 13, 17, 19 };
+        private static readonly byte[] Signature = { 2, 3, 5, 7, 11, 13, 17, 19 };
 
         public delegate void OnPacketReceived(byte[] data, ulong fromSteamId, bool fromServer);
         public static event OnPacketReceived PacketReceived;

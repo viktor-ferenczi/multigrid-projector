@@ -3,7 +3,6 @@ using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
-using VRage.Game.Entity.EntityComponents.Interfaces;
 
 namespace MultigridProjector.Patches
 {
