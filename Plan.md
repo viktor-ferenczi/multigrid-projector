@@ -22,6 +22,29 @@ Save the names of blocks in each slot into the `CustomData` of blocks with slots
 - `*Controller`
 - `*Button*`
 
+These are the block classes with a `Toolbar` property, but there is no shared interface for this purpose:
+```cs
+public MyToolbar Toolbar { get; set; }
+```
+
+Source search results:
+```
+Sandbox.Game\Sandbox\Game\Entities\Blocks  (2 usages found)
+	MySensorBlock.cs  (1 usage found)
+		77 public MyToolbar Toolbar { get; set; }
+	MyTargetDummyBlock.cs  (1 usage found)
+		79 public MyToolbar Toolbar { get; set; }
+SpaceEngineers.Game\SpaceEngineers\Game\Entities\Blocks  (4 usages found)
+	MyButtonPanel.cs  (1 usage found)
+		63 public MyToolbar Toolbar { get; set; }
+	MyEventControllerBlock.cs  (1 usage found)
+		78 public MyToolbar Toolbar { get; set; }
+	MyFlightMovementBlock.cs  (1 usage found)
+		130 public MyToolbar Toolbar { get; set; }
+	MyTimerBlock.cs  (1 usage found)
+		57 public MyToolbar Toolbar { get; set; }
+```
+
 ### When to save/load
 
 - Append the names of blocks in slots to `CustomData` on saving BPs:
