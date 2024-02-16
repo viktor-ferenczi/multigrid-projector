@@ -48,6 +48,28 @@ Save the names of blocks in each slot into the `CustomData` of blocks with slots
 - Welding does not change, the slot setting happens after welding
 - Setting of the slots can happen on client side, so no server side change is required
 
+### Remove existing hack
+
+There is a hack in `MultigridProjection.cs`:
+
+```cs
+// Allow rebuilding the blueprint without EntityId collisions without power-cycling the projector,
+// relies on the detection of cutting down the built grids by the lack of functional blocks, see
+// where requestRemap is set to true
+```
+
+The above hack can be removed in favor of this fix.
+
+Any `EntityID` collision has already been resolved by these lines further below anyway:
+```cs
+// Make sure no EntityId collision will occur on re-welding a block on a previously disconnected (split)
+// part of a built subgrid which has not been destroyed (or garbage collected) yet
+if (blockBuilder.EntityId != 0 && MyEntityIdentifier.ExistsById(blockBuilder.EntityId))
+{
+    blockBuilder.EntityId = MyEntityIdentifier.AllocateId();
+}
+```
+
 ### Testing
 
 - It must work in all game modes and with/without MGP installed on server side.
