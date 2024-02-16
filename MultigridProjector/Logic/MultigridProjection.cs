@@ -139,12 +139,11 @@ namespace MultigridProjector.Logic
         // YAML generated from the current state, cleared when the scan number changes
         private string latestYaml;
 
-        // Requests a remap operation on building the next functional (non-armor) block
-        private bool requestRemap;
-        private bool remapRequested = true;
-
         // Controls when the plugin and Mod API can access projector information already
         internal bool IsValidForApi => Initialized && HasScanned;
+
+        // Mapping of toolbar slots to the respective blocks by location instead of EntityId
+        private readonly ToolbarFixer toolbarFixer;
 
         public static void EnsureNoProjections()
         {
@@ -193,8 +192,10 @@ namespace MultigridProjector.Logic
                 MapPreviewBlocks();
                 CreateSubgrids();
                 MarkSupportedSubgrids();
+                toolbarFixer = new ToolbarFixer(SupportedSubgrids);
             }
 
+            ListenOnSubgridEvents();
             CreateUpdateWork();
 
             Projector.PropertiesChanged += OnPropertiesChanged;
@@ -229,11 +230,41 @@ namespace MultigridProjector.Logic
 
             stats.Clear();
 
+            StopListeningOnSubgridEvents();
+
             foreach (var subgrid in subgrids)
                 subgrid.Dispose();
 
             using (subgridsLock.Write())
                 subgrids.Clear();
+        }
+
+        private void ListenOnSubgridEvents()
+        {
+            foreach (var subgrid in SupportedSubgrids)
+            {
+                subgrid.OnTerminalBlockAdded += OnTerminalBlockAdded;
+            }
+        }
+
+        private void StopListeningOnSubgridEvents()
+        {
+            foreach (var subgrid in SupportedSubgrids)
+            {
+                subgrid.OnTerminalBlockAdded -= OnTerminalBlockAdded;
+            }
+        }
+
+        private void OnTerminalBlockAdded(Subgrid subgrid, MyTerminalBlock terminalBlock)
+        {
+            if (!subgrid.TryGetProjectedBlock(subgrid.BuiltToPreviewBlockPosition(terminalBlock.Position), out var projectedBlock))
+                return;
+
+            if (terminalBlock.BlockDefinition.Id != projectedBlock.Preview.BlockDefinition.Id)
+                return;
+
+            toolbarFixer.ConfigureToolbar(this, subgrid, terminalBlock);
+            toolbarFixer.AssignBlockToToolbars(this, subgrid, terminalBlock);
         }
 
         private void MapBlueprintBlocks()
@@ -561,25 +592,6 @@ namespace MultigridProjector.Logic
             UpdateMechanicalConnections();
             AggregateStatistics();
             UpdateProjectorStats();
-
-            if (Sync.IsServer)
-            {
-                if (stats.BuiltOnlyArmorBlocks)
-                {
-                    // Requesting a remap once after the built blocks are cut down from the projector
-                    // The actual remapping will happen right before the first fat block is built
-                    if (!remapRequested)
-                    {
-                        requestRemap = true;
-                        remapRequested = true;
-                    }
-                }
-                else
-                {
-                    // Allow for requesting a remap once after the built blocks are cut down from the projector
-                    remapRequested = false;
-                }
-            }
 
             if (!unsupportedGridsHidden)
             {
@@ -1328,17 +1340,6 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             var previewFatBlock = previewBlock.FatBlock;
 
-            // Allow rebuilding the blueprint without EntityId collisions without power-cycling the projector,
-            // relies on the detection of cutting down the built grids by the lack of functional blocks, see
-            // where requestRemap is set to true
-            if (requestRemap && previewFatBlock != null)
-            {
-                requestRemap = false;
-                PluginLog.Debug($"Remapping blueprint loaded into projector {Projector.CustomName} [{Projector.EntityId}] in preparation for building it again");
-                lock (GridBuilders)
-                    MyEntities.RemapObjectBuilderCollection(GridBuilders);
-            }
-
             var previewMin = previewFatBlock?.Min ?? previewBlock.Position;
             var previewMax = previewFatBlock?.Max ?? previewBlock.Position;
 
@@ -1842,7 +1843,8 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         [Everywhere]
         public static void GetObjectBuilderOfProjector(MyProjectorBase projector, bool copy, MyObjectBuilder_CubeBlock blockBuilder)
         {
-            if (!copy) return;
+            if (!copy)
+                return;
 
             var clipboard = projector.GetClipboard();
             if (clipboard?.CopiedGrids == null || clipboard.CopiedGrids.Count < 2)
@@ -2088,6 +2090,11 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         public void RaiseAttachedEntityChanged()
         {
             ForceUpdateProjection();
+        }
+
+        public void FixToolbars()
+        {
+            toolbarFixer.FixToolbars(this);
         }
     }
 }
