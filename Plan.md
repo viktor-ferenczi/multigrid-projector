@@ -24,7 +24,9 @@ Save the names of blocks in each slot into the `CustomData` of blocks with slots
 
 ### When to save/load
 
-- Append the names of blocks in slots to `CustomData` on saving BPs.
+- Append the names of blocks in slots to `CustomData` on saving BPs:
+  * `MultigridProjection.GetObjectBuilderOfProjector` for `Ctrl-B` (saving grid as blueprint)
+  * `RepairProjection.LoadMechanicalGroup` for the "Load Repair Projection" action on the projector.
 - If the `CustomData` already has contents, then append a fancy separator and the slot data after it.
 - On welding a functional block with slots use the `CustomData` to wire up blocks into slots instead of `EntityID` which is always wrong due to remapping.
 - On welding any functional block search for slots it may belong to and fill them in.
