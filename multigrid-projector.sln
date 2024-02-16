@@ -20,6 +20,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution 
 		README.md = README.md
 		Release.bat = Release.bat
 		verify_props.bat = verify_props.bat
+		Plan.md = Plan.md
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModApiTest", "ModApiTest\ModApiTest.csproj", "{04FC636C-D04F-405B-B72A-62CB720855E1}"

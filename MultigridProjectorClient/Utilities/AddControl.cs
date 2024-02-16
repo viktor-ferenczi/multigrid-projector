@@ -5,7 +5,7 @@ using System.Collections.Generic;
 
 namespace MultigridProjectorClient.Utilities
 {
-    internal static class AddControl
+    static class AddControl
     {
         public static bool AddControlAfter<TBlock>(string id, MyTerminalControl<TBlock> control) where TBlock : MyTerminalBlock
         {

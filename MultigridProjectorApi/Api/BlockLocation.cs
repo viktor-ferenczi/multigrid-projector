@@ -13,9 +13,13 @@ namespace MultigridProjector.Api
             Position = position;
         }
 
+        public bool Equals(ref BlockLocation other) =>
+            GridIndex == other.GridIndex &&
+            Position == other.Position;
+
         public override int GetHashCode()
         {
-            return (((((GridIndex * 397) ^ Position.X) * 397) ^ Position.Y) * 397) ^ Position.Z;
+            return ((GridIndex * 397 ^ Position.X) * 397 ^ Position.Y) * 397 ^ Position.Z;
         }
     }
 }

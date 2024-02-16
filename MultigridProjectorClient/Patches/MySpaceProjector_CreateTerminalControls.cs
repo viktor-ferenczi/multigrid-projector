@@ -30,6 +30,7 @@ namespace MultigridProjectorClient.Patches
                 .Concat(RepairProjection.IterControls())
                 .Concat(ProjectorAligner.IterControls())
                 .Concat(CraftProjection.IterControls())
+                .Concat(ToolbarFix.IterControls())
                 .ToList();
 
             var existingControls = new List<ITerminalControl>();
