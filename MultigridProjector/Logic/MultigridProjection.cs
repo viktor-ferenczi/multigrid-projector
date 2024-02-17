@@ -867,6 +867,8 @@ namespace MultigridProjector.Logic
 
             UpdateSubgridConnectedness();
             UnregisterDisconnectedSubgrids();
+
+            slotsMapping.FixToolbarSlots(subgrids);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -889,7 +891,6 @@ namespace MultigridProjector.Logic
             BuildMissingHead(baseConnection, baseSubgrid);
             RegisterConnectedSubgrid(baseSubgrid, baseConnection, topConnection, topSubgrid);
         }
-
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void BuildMissingHead(BaseConnection baseConnection, Subgrid baseSubgrid)
         {

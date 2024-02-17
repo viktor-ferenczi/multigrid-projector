@@ -6,6 +6,7 @@ using SpaceEngineers.Game.Entities.Blocks;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Sandbox.Graphics.GUI;
 using VRage;
 using VRage.Game.ModAPI;
 
@@ -101,7 +102,8 @@ namespace MultigridProjector.Logic
             }
         }
 
-        public bool TryGetBlockForSlot(BlockMinLocation controllerLocation, int slotIndex, out BlockMinLocation blockLocation)
+        // FIXME: Likely not required, remove if not needed for sure
+        private bool TryGetBlockForSlot(BlockMinLocation controllerLocation, int slotIndex, out BlockMinLocation blockLocation)
         {
             if (blocksByControllerSlot.TryGetValue(controllerLocation, out var blockLocations))
             {
@@ -110,6 +112,39 @@ namespace MultigridProjector.Logic
 
             blockLocation = default;
             return false;
+        }
+
+        public void FixToolbarSlots(List<Subgrid> subgrids)
+        {
+            foreach (var (controllerLocation, slotBlockLocations) in blocksByControllerSlot)
+            {
+                var controllerProjectedBlock = subgrids[controllerLocation.GridIndex].Blocks[controllerLocation.MinPosition];
+                if (!(controllerProjectedBlock.SlimBlock.FatBlock is MyFunctionalBlock controllerBlock))
+                    continue;
+
+                var toolbar = GetToolbar(controllerBlock);
+                var slotIndex = 0;
+                foreach (var item in toolbar.Items)
+                {
+                    if (item is MyToolbarItemTerminalBlock terminalItem)
+                    {
+                        if (!MyEntityIdentifier.ExistsById(terminalItem.BlockEntityId))
+                        {
+                            if (slotBlockLocations.TryGetValue(slotIndex, out var blockLocation))
+                            {
+                                var blockProjectedBlock = subgrids[blockLocation.GridIndex].Blocks[blockLocation.MinPosition];
+                                if (blockProjectedBlock.SlimBlock.FatBlock is MyTerminalBlock terminalBlock)
+                                {
+                                    // FIXME: BlockEntityId has no public setter, use another API or reflection (test!)
+                                    terminalItem.BlockEntityId = terminalBlock.EntityId;
+                                }
+                            }
+                        }
+                    }
+
+                    slotIndex++;
+                }
+            }
         }
 
         public static void RememberSlots(List<IMyCubeGrid> grids)
