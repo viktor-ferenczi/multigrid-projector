@@ -12,7 +12,9 @@ worst, making them impossible to weld reliably without reloading the projection.
 
 ### Solution
 
-Save the names of blocks in each slot into the `CustomData` of blocks with slots. 
+Save the names of blocks in each slot into a new entry of the 
+`MyObjectBuilder_ModStorageComponent` of the block with the slots.
+Use a new hardcoded GUID as Mod ID.
 
 ### Affected blocks with slots
 
@@ -71,11 +73,11 @@ SpaceEngineers.ObjectBuilders\Sandbox\Common\ObjectBuilders  (7 usages found)
 
 ### When to save/load
 
-- Append the names of blocks in slots to `CustomData` on saving BPs:
+- Append the names of blocks in slots to `MyObjectBuilder_ModStorageComponent` on saving BPs:
   * `MultigridProjection.GetObjectBuilderOfProjector` for `Ctrl-B` (saving grid as blueprint)
   * `RepairProjection.LoadMechanicalGroup` for the "Load Repair Projection" action on the projector.
-- If the `CustomData` already has contents, then append a fancy separator and the slot data after it.
-- On welding a functional block with slots use the `CustomData` to wire up blocks into slots instead of `EntityID` which is always wrong due to remapping.
+- On welding a functional block with slots use the stored values from `MyObjectBuilder_ModStorageComponent`
+  to wire up blocks into slots instead of `EntityID` which is always wrong due to remapping.
 - On welding any functional block search for slots it may belong to and fill them in.
 - Searching of the `BuiltBlock` to wire up by name.
 - Make this feature configurable, enable by default.
@@ -87,15 +89,9 @@ SpaceEngineers.ObjectBuilders\Sandbox\Common\ObjectBuilders  (7 usages found)
 
 ### Data structures
 
-- Mapping from preview blocks with slots to the preview blocks of functional blocks in each used slot based on CustomData.
+- Mapping from preview blocks with slots to the preview blocks of functional blocks in each used slot.
 - Fill this mapping only once when the BP is loaded, it will not change.
 - Create an inverse map to speed up the search from the functional block to the block with the slots.
-
-### Server or client
-
-- The configuration is client side only, since blueprints are saved there
-- Welding does not change, the slot setting happens after welding
-- Setting of the slots can happen on client side, so no server side change is required
 
 ### Remove existing hack
 
