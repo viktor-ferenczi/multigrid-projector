@@ -128,6 +128,9 @@ namespace MultigridProjector.Logic
         // Controls when the plugin and Mod API can access projector information already
         internal bool IsValidForApi => Initialized && HasScanned;
 
+        // Toolbar slot mapping information (if it was present in the blueprint)
+        private SlotsMapping slotsMapping;
+
         public static void EnsureNoProjections()
         {
             int projectionCount;
@@ -175,6 +178,7 @@ namespace MultigridProjector.Logic
                 MapPreviewBlocks();
                 CreateSubgrids();
                 MarkSupportedSubgrids();
+                slotsMapping = new SlotsMapping(subgrids);
             }
 
             CreateUpdateWork();
@@ -1781,6 +1785,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         public static void GetObjectBuilderOfProjector(MyProjectorBase projector, bool copy, MyObjectBuilder_CubeBlock blockBuilder)
         {
             if (!copy) return;
+
+            var grids = projector.CollectFocusedGrids();
+            SlotsMapping.RememberSlots(grids);
 
             var clipboard = projector.GetClipboard();
             if (clipboard?.CopiedGrids == null || clipboard.CopiedGrids.Count < 2)

@@ -34,8 +34,6 @@ Source search results:
 Sandbox.Game\Sandbox\Game\Entities\Blocks  (2 usages found)
 	MySensorBlock.cs  (1 usage found)
 		77 public MyToolbar Toolbar { get; set; }
-	MyTargetDummyBlock.cs  (1 usage found)
-		79 public MyToolbar Toolbar { get; set; }
 SpaceEngineers.Game\SpaceEngineers\Game\Entities\Blocks  (4 usages found)
 	MyButtonPanel.cs  (1 usage found)
 		63 public MyToolbar Toolbar { get; set; }

@@ -5,7 +5,10 @@ using MultigridProjector.Utilities;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
+using Sandbox.ModAPI;
+using System.Collections.Generic;
 using VRage.Game;
+using VRage.Game.ModAPI;
 using VRageMath;
 
 namespace MultigridProjector.Extensions
@@ -33,15 +36,16 @@ namespace MultigridProjector.Extensions
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsMatchingBuilder(this MySlimBlock previewBlock, MyObjectBuilder_CubeBlock blockBuilder)
         {
-            return previewBlock.BlockDefinition.Id == blockBuilder.GetId() && 
-                   previewBlock.Orientation.Forward == blockBuilder.BlockOrientation.Forward && 
+            return previewBlock.BlockDefinition.Id == blockBuilder.GetId() &&
+                   previewBlock.Orientation.Forward == blockBuilder.BlockOrientation.Forward &&
                    previewBlock.Orientation.Up == blockBuilder.BlockOrientation.Up;
         }
-        
+
         private static readonly MethodInfo RecreateTopInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyMechanicalConnectionBlockBase), "RecreateTop"));
+
         public static void RecreateTop(this MyMechanicalConnectionBlockBase stator, long? builderId = null, bool smallToLarge = false, bool instantBuild = false)
         {
-            RecreateTopInfo.Invoke(stator, new object[] {builderId, smallToLarge, instantBuild});
+            RecreateTopInfo.Invoke(stator, new object[] { builderId, smallToLarge, instantBuild });
         }
 
         // Aligns the grid of the block to a corresponding block on another grid
@@ -62,6 +66,18 @@ namespace MultigridProjector.Extensions
 
             // Move the preview grid
             block.CubeGrid.PositionComp.SetWorldMatrix(ref wm, skipTeleportCheck: true);
+        }
+
+        // Collects the grids which would be copied, cut or blueprinted while facing a block
+        public static List<IMyCubeGrid> CollectFocusedGrids(this MyCubeBlock focusedBlock)
+        {
+            var grids = new List<IMyCubeGrid>();
+            MyAPIGateway.GridGroups.GetGroup(focusedBlock.CubeGrid, GridLinkTypeEnum.Mechanical, grids);
+
+            grids.Remove(focusedBlock.CubeGrid);
+            grids.Insert(0, focusedBlock.CubeGrid);
+
+            return grids;
         }
     }
 }

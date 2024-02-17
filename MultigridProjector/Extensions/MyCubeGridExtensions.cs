@@ -6,7 +6,6 @@ using MultigridProjector.Utilities;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.GameSystems;
-using VRage.Game;
 using VRageMath;
 
 namespace MultigridProjector.Extensions
