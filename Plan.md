@@ -45,6 +45,30 @@ SpaceEngineers.Game\SpaceEngineers\Game\Entities\Blocks  (4 usages found)
 		57 public MyToolbar Toolbar { get; set; }
 ```
 
+The object builder classes have this member:
+```cs
+public MyObjectBuilder_Toolbar Toolbar;
+```
+
+Source search results:
+```
+SpaceEngineers.ObjectBuilders\Sandbox\Common\ObjectBuilders  (7 usages found)
+    MyObjectBuilder_ButtonPanel.cs  (1 usage found)
+        23 public MyObjectBuilder_Toolbar Toolbar;
+    MyObjectBuilder_DefensiveCombatBlock.cs  (1 usage found)
+        49 public MyObjectBuilder_Toolbar Toolbar;
+    MyObjectBuilder_EventControllerBlock.cs  (1 usage found)
+        23 public MyObjectBuilder_Toolbar Toolbar;
+    MyObjectBuilder_SensorBlock.cs  (1 usage found)
+        26 public MyObjectBuilder_Toolbar Toolbar;
+    MyObjectBuilder_ShipController.cs  (1 usage found)
+        34 public MyObjectBuilder_Toolbar Toolbar;
+    MyObjectBuilder_TimerBlock.cs  (1 usage found)
+        23 public MyObjectBuilder_Toolbar Toolbar;
+    MyObjectBuilder_TurretControlBlock.cs  (1 usage found)
+        55 public MyObjectBuilder_Toolbar Toolbar;
+```
+
 ### When to save/load
 
 - Append the names of blocks in slots to `CustomData` on saving BPs:
