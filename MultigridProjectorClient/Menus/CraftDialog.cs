@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using Sandbox.ModAPI;
 using VRage.Game;
 using VRage.Utils;
 using VRageMath;
@@ -19,6 +20,7 @@ namespace MultigridProjectorClient.Menus
         public static MyGuiScreenMessageBox CreateDialog(
             string assemblerName,
             HashSet<Row> rows,
+            List<string> bomLines,
             Action<MyDefinitionId, int> assembleFunc = null,
             Action onClosing = null)
         {
@@ -26,11 +28,12 @@ namespace MultigridProjectorClient.Menus
             // TODO: Some day turn this into a proper GUI
             MyGuiScreenMessageBox messageBox = MyGuiSandbox.CreateMessageBox(
                 MyMessageBoxStyleEnum.Info,
-                buttonType: MyMessageBoxButtonsType.YES_NO,
+                buttonType: MyMessageBoxButtonsType.YES_NO_CANCEL,
                 messageText: new StringBuilder($"Assembler selected in the production tab:\n{assemblerName}"),
                 messageCaption: MessageCaption,
                 size: new Vector2(0.6f, 0.7f),
-                onClosing: onClosing);
+                onClosing: onClosing
+            );
 
             // Get the (private) multiline text control so that we can change the text position
             MyGuiControlMultilineText messageBoxText = (MyGuiControlMultilineText)Reflection.GetValue(messageBox, "m_messageBoxText");
@@ -121,6 +124,13 @@ namespace MultigridProjectorClient.Menus
             noButton.SetToolTip(new MyToolTips($"Assemble any selected 'Missing' components"));
             noButton.ButtonClicked += (_) => Assemble(assembleFunc, componentTable.SelectedRow, 1);
             noButton.Enabled = false;
+            
+            // Change to Cancel button text
+            // FIXME: Prevent button from closing dialog
+            MyGuiControlButton cancelButton = (MyGuiControlButton)Reflection.GetValue(messageBox, "m_cancelButton");
+            cancelButton.Text = "Copy BoM";
+            cancelButton.SetToolTip(new MyToolTips("Copy an Isy-compatible Bill of Materials to clipboard, for use with Special containers."));
+            cancelButton.ButtonClicked += (_) => CopyBom(bomLines);
 
             componentTable.ItemSelected += (table, eventArgs) =>
             {
@@ -155,6 +165,7 @@ namespace MultigridProjectorClient.Menus
             };
 
             return messageBox;
+
         }
 
         private static void Assemble(Action<MyDefinitionId, int> assembleFunc, MyGuiControlTable table, int column)
@@ -171,6 +182,12 @@ namespace MultigridProjectorClient.Menus
             int amount = GetCellData<int>(row, column);
 
             assembleFunc(id, amount);
+        }
+        
+        private static void CopyBom(List<string> bomLines)
+        {
+            MyClipboardHelper.SetClipboard(string.Join("\n", bomLines));
+            MyAPIGateway.Utilities.ShowNotification("Copied BoM to Clipboard", 6000);
         }
 
         private static string GetCellText(Row row, int column)
