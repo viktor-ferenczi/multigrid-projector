@@ -11,19 +11,22 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorClient", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorDedicated", "MultigridProjectorDedicated\MultigridProjectorDedicated.csproj", "{D4F47DCB-9C07-4C1A-BC8C-CE42E87683EE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MultigridProjectorMods", "MultigridProjectorMods\MultigridProjectorMods.csproj", "{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution items", "Solution items", "{A91A9B2E-2D0D-454E-8C46-94812DE0587C}"
 	ProjectSection(SolutionItems) = preProject
 		.gitignore = .gitignore
 		Directory.Build.props = Directory.Build.props
 		Directory.Build.template.props = Directory.Build.template.props
 		LICENSE = LICENSE
-		pluginhub.xml = pluginhub.xml
 		README.md = README.md
 		Release.bat = Release.bat
 		verify_props.bat = verify_props.bat
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ModApiTest", "ModApiTest\ModApiTest.csproj", "{04FC636C-D04F-405B-B72A-62CB720855E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IngameApiTest", "IngameApiTest\IngameApiTest.csproj", "{6ADA9B77-C3EA-4BE1-81D9-56266CA71FD1}"
+EndProject
+Project("{D954291E-2A0B-460D-934E-DC6B0785DB48}") = "MultigridProjectorApi", "MultigridProjectorApi\MultigridProjectorApi.shproj", "{5481F7B8-7B58-4A48-BCE8-D354D8932003}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -46,11 +49,14 @@ Global
 		{D4F47DCB-9C07-4C1A-BC8C-CE42E87683EE}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
 		{D4F47DCB-9C07-4C1A-BC8C-CE42E87683EE}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4F47DCB-9C07-4C1A-BC8C-CE42E87683EE}.Release|Any CPU.Build.0 = Release|Any CPU
-		{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
-		{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C91C0E2A-7076-40D8-89C6-B6B67EF3E0DD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{04FC636C-D04F-405B-B72A-62CB720855E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{04FC636C-D04F-405B-B72A-62CB720855E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{04FC636C-D04F-405B-B72A-62CB720855E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{04FC636C-D04F-405B-B72A-62CB720855E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6ADA9B77-C3EA-4BE1-81D9-56266CA71FD1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6ADA9B77-C3EA-4BE1-81D9-56266CA71FD1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6ADA9B77-C3EA-4BE1-81D9-56266CA71FD1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6ADA9B77-C3EA-4BE1-81D9-56266CA71FD1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

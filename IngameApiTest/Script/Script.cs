@@ -1,35 +1,29 @@
+#if INGAME
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using VRage.Game.ModAPI;
-using Sandbox.ModAPI;
+using Sandbox.ModAPI.Ingame;
 using Sandbox.ModAPI.Interfaces;
+using VRage.Game.ModAPI.Ingame;
 using VRageMath;
 
-namespace MultigridProjector.Api
+namespace Script
 {
-    public class Program
+    // ReSharper disable once UnusedType.Global
+    class Program : MyGridProgram
     {
-        #region These are normally provided by the game. Do NOT copy these!
+#endif
 
-        public IMyProgrammableBlock Me;
-        public IMyGridTerminalSystem GridTerminalSystem;
+        #region SCRIPT
 
-        public void Echo(string message)
-        {
-        }
+/* Multigrid Projector Ingame Script API Example
 
-        #endregion
+Requires the Multigrid Projector plugin:
+https://github.com/viktor-ferenczi/multigrid-projector
 
-        #region Example script to access MGP from a programmable block
-
-        /* Multigrid Projector API Example
-
-        Requires the Multigrid Projector plugin:
-        https://steamcommunity.com/sharedfiles/filedetails/?id=2415983416
-
-        */
+*/
 
         private MultigridProjectorProgrammableBlockAgent mgp;
         private IMyProjector projector;
@@ -68,7 +62,7 @@ namespace MultigridProjector.Api
         private void EchoBlueprintDetails()
         {
             var sb = new StringBuilder();
-            
+
             var projectorEntityId = projector.EntityId;
             var projectorName = $"{projector.BlockDefinition.SubtypeName} {projector.CustomName ?? projector.DisplayNameText ?? projector.DisplayName} [{projectorEntityId}]";
             var projectingGridName = $"{projector.CubeGrid.CustomName ?? projector.CubeGrid.DisplayName} [{projector.CubeGrid.EntityId}]";
@@ -361,5 +355,8 @@ namespace MultigridProjector.Api
         }
 
         #endregion
+
+#if INGAME
     }
 }
+#endif

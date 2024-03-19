@@ -1,0 +1,25 @@
+[h1]Mod API Test for the Multigrid Projector[/h1]
+
+This mod is intended as an example for SE modders who want to make their mods compatible with the Multigrid Projector plugin
+or want to build new mods based on the information it exposed from active projections.
+
+[list]
+[*] [url=https://github.com/sepluginloader/SpaceEngineersLauncher]Plugin Loader[/url]
+[*] [url=https://github.com/viktor-ferenczi/multigrid-projector]Multigrid Projector plugin[/url]
+[/list]
+
+Please see the full API documentation in the
+[url=https://github.com/viktor-ferenczi/multigrid-projector]Multigrid Projector plugin[/url] repository,
+search for [b]IMultigridProjectorApi[/b].
+
+Please join the [url=https://discord.gg/PYPFPGf3Ca]SE Mods Discord[/url] for more information or hands-on help.
+
+[h2]How to run this test mod[/h2]
+[list]
+[*] Install the [url=https://github.com/sepluginloader/SpaceEngineersLauncher]Plugin Loader[/url]
+[*] Enable the Multigrid Projector plugin, apply, restart the game
+[*] Add this test mod to a world
+[*] Load the world
+[*] Place a projector and load a blueprint into it
+[*] The SE client log file should contain details of the projection retrieved via the API
+[/list]

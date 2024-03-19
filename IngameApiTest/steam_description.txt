@@ -1,0 +1,15 @@
+[h1]Ingame Script API Test for the Multigrid Projector[/h1]
+
+This mod is intended as an example for players who want to use the projection information
+provided by the Multigrid Projector plugin in their ingame scripts.
+
+[list]
+[*] [url=https://github.com/sepluginloader/SpaceEngineersLauncher]Plugin Loader[/url]
+[*] [url=https://github.com/viktor-ferenczi/multigrid-projector]Multigrid Projector plugin[/url]
+[/list]
+
+Please see the full API documentation in the
+[url=https://github.com/viktor-ferenczi/multigrid-projector]Multigrid Projector plugin[/url] repository,
+search for [b]IMultigridProjectorApi[/b].
+
+Please join the [url=https://discord.gg/PYPFPGf3Ca]SE Mods Discord[/url] for more information or hands-on help.

@@ -130,10 +130,6 @@
     <Compile Include="Utilities\Config.cs" />
     <Compile Include="Utilities\Reflection.cs" />
     <Content Include="deploy.bat" />
-    <Content Include="steam_description.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="README.md" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.2.2" />
@@ -146,4 +142,5 @@
   <PropertyGroup>
     <PostBuildEvent>call "$(ProjectDir)deploy.bat" "$(TargetFileName)" "$(TargetDir)" "$(Bin64)"</PostBuildEvent>
   </PropertyGroup>
+  <Import Project="..\MultigridProjectorApi\MultigridProjectorApi.projitems" Label="Shared" />
 </Project>
