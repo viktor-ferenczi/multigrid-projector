@@ -1,5 +1,4 @@
-﻿using System;
-using Entities.Blocks;
+﻿using Entities.Blocks;
 using HarmonyLib;
 using MultigridProjector.Extensions;
 using MultigridProjector.Logic;
@@ -69,23 +68,8 @@ namespace MultigridProjectorClient.Extra
                 MyDefinitionId id = component.Key;
                 int blueprintAmount = component.Value;
 
-                // The display name for components always comes with a full description tacked onto the end
-                // We discard everything after the first newline
-                // If no newline is found the whole name is used (eg modded blocks)
-                string name = MyDefinitionManager.Static.TryGetBlueprintDefinitionByResultId(id).DisplayNameText;
-
-                int index = name.IndexOf("\n", StringComparison.Ordinal);
-                if (index != -1)
-                {
-                    name = name.Substring(0, index);
-                }
-
-                // Discard the "." after "Comp."
-                int index2 = name.IndexOf("Comp.", StringComparison.Ordinal);
-                if (index2 != -1)
-                {
-                    name = name.Substring(0, index2 + 4);
-                }
+                MyDefinitionManager.Static.TryGetComponentDefinition(id, out MyComponentDefinition compDef);
+                string name = compDef.DisplayNameText ?? id.SubtypeName ?? "Unknown Component";
 
                 int inventoryAmount = inventoryComponents.GetValueOrDefault(id);
                 int requiredAmount = requiredComponents.GetValueOrDefault(id);
