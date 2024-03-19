@@ -55,6 +55,7 @@ namespace MultigridProjectorClient.Extra
             MyAssembler assembler = GetProductionAssembler();
 
             HashSet<MyGuiControlTable.Row> rows = new HashSet<MyGuiControlTable.Row>();
+            List<string> bomLines = new List<string>();
 
             Dictionary<MyDefinitionId, int> blueprintComponents = GetBlueprintComponents(projector);
             Dictionary<MyDefinitionId, int> inventoryComponents = GetInventoryComponents(projector.CubeGrid);
@@ -62,6 +63,8 @@ namespace MultigridProjectorClient.Extra
             Dictionary<MyDefinitionId, int> requiredComponents = new Dictionary<MyDefinitionId, int>(blueprintComponents);
             SubtractComponents(ref requiredComponents, inventoryComponents);
             ClampComponents(ref requiredComponents);
+            
+            const string idPrefix = "MyObjectBuilder_";
 
             foreach (KeyValuePair<MyDefinitionId, int> component in blueprintComponents)
             {
@@ -86,6 +89,13 @@ namespace MultigridProjectorClient.Extra
                 row.AddCell(new MyGuiControlTable.Cell(blueprintAmount.ToString("N0"), toolTip: blueprintToolTip, userData: blueprintAmount));
 
                 rows.Add(row);
+
+                var idStr = id.ToString();
+                if (idStr.StartsWith(idPrefix))
+                {
+                    idStr = idStr.Substring(idPrefix.Length);
+                }
+                bomLines.Add($"{idStr}={blueprintAmount}");
             }
 
             MyGuiScreenMessageBox dialog;
@@ -94,12 +104,13 @@ namespace MultigridProjectorClient.Extra
                 dialog = Menus.CraftDialog.CreateDialog(
                     assembler.DisplayNameText,
                     rows,
+                    bomLines,
                     (comp, amount) => SendToAssembler(assembler, new Dictionary<MyDefinitionId, int>() { { comp, amount } }),
                     SwitchToProductionTab);
             }
             else
             {
-                dialog = Menus.CraftDialog.CreateDialog("[None]", rows);
+                dialog = Menus.CraftDialog.CreateDialog("[None]", rows, bomLines);
             }
 
             MyGuiSandbox.AddScreen(dialog);
