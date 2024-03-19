@@ -95,6 +95,9 @@ Thank you and enjoy!
   * Enqueue missing parts into assemblers (Assemble Projection)
   * Highlighting weldable or incomplete projected blocks (Highlight Blocks)
   * Build system fixes, better linking of dependencies
+- @mkaito
+  * Crash fix
+  * Copy BoM 
 - @Pas2704
   * Bug fixes
 
