@@ -1,0 +1,17 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>52D163D0-8439-4AD4-98A4-237DA6A38C82</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>MultigridProjectorApi</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Api\BlockLocation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Api\BlockState.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Api\IMultigridProjectorApi.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Api\MultigridProjectorModAgent.cs" />
+  </ItemGroup>
+</Project>

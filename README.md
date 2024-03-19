@@ -7,8 +7,9 @@ Multigrid Projector for the Space Engineers game.
 - Works both in single player and multiplayer
 
 ## Install the client plugin
+
 1. Subscribe to this mod
-2. Install the [Plugin Loader](https://github.com/sepluginloader/SpaceEngineersLauncher)
+2. Install [Plugin Loader](https://github.com/sepluginloader/SpaceEngineersLauncher)
 3. Start the game
 4. Open the Plugins menu (should be in the Main Menu)
 5. Enable the Multigrid Projector plugin
@@ -20,9 +21,9 @@ After enabling the plugin it will be active for all single player worlds you loa
 
 ## Server plugins
 
-**If you are using a 3rd party game server hosting provider**, then please follow their documentation on how to install the server plugin or contanct their support with your questions.
-
 In case of problems join the [SE Mods Discord](https://discord.gg/PYPFPGf3Ca) to get help.
+
+**If you are using a 3rd party game server hosting provider**, then please follow their documentation on how to install the server plugin or contanct their support with your questions.
 
 ### Torch server plugin installation
 
@@ -73,11 +74,11 @@ You may also want to save this file for later reuse.
 - [Patreon](https://www.patreon.com/semods)
 - [Torch plugin](https://torchapi.com/plugins/view/?guid=d9359ba0-9a69-41c3-971d-eb5170adb97e)
 - [Dedicated Server plugin](https://github.com/viktor-ferenczi/multigrid-projector/releases)
-- [Test world](https://steamcommunity.com/sharedfiles/filedetails/?id=2420963329)
+- [Test world (Rings)](https://steamcommunity.com/sharedfiles/filedetails/?id=2420963329)
 - [Source code](https://github.com/viktor-ferenczi/multigrid-projector)
-- [Mod API Test](https://steamcommunity.com/sharedfiles/filedetails/?id=2433810091)
-- [Programmable block API](https://steamcommunity.com/sharedfiles/filedetails/?id=2471605159)
 - [Bug reports](https://discord.gg/x3Z8Ug5YkQ)
+- [Mod API](https://github.com/viktor-ferenczi/multigrid-projector/tree/main/ModApiTest)
+- [PB API](https://github.com/viktor-ferenczi/multigrid-projector/tree/main/IngameApiTest)
 
 Please support me if you would like to receive regular updates to this client plugin as new game versions are released.
 
@@ -95,6 +96,9 @@ Thank you and enjoy!
   * Enqueue missing parts into assemblers (Assemble Projection)
   * Highlighting weldable or incomplete projected blocks (Highlight Blocks)
   * Build system fixes, better linking of dependencies
+- @mkaito
+  * Crash fix
+  * Copy BoM 
 - @Pas2704
   * Bug fixes
 
@@ -153,11 +157,11 @@ Thank you and enjoy!
 - MultigridProjector: Shared project with the general data model and logic of MGP
 - MultigridProjectorClient: Client plugin "loader"
 - MultigridProjectorServer: Torch server plugin "loader"
-- MultigridProjectorModApiTest: Test mod for the MGP API
+- API: Examples to access MGP from mods and ingame scripts
 
 ### Prerequisites
 
-- .NET Framework 4.8
+- .NET Framework 4.8.1
 - [Space Engineers](https://spaceengineersgame.com)
 - [Torch](https://torchapi.com) extracted and executed once
 - [JetBrains Rider](https://jetbrains.com) or Visual Studio

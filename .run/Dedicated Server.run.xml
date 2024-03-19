@@ -9,7 +9,7 @@
     <option name="RUNTIME_ARGUMENTS" value="" />
     <option name="RUNTIME_TYPE" value="netfw" />
     <method v="2">
-      <option name="Build" default="false" projectName="MultigridProjectorServer" projectPath="file://$PROJECT_DIR$/MultigridProjectorServer/MultigridProjectorServer.csproj" />
+      <option name="Build" default="false" projectName="MultigridProjectorDedicated" projectPath="$PROJECT_DIR$/MultigridProjectorDedicated/MultigridProjectorDedicated.csproj" />
     </method>
   </configuration>
 </component>
