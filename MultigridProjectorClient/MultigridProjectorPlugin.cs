@@ -19,7 +19,7 @@ namespace MultigridProjectorClient
             PluginLog.Logger = new PluginLogger();
 
             PluginLog.Info("Loading client plugin");
-            try
+            // try
             {
                 try
                 {
@@ -36,11 +36,11 @@ namespace MultigridProjectorClient
 
                 Harmony.PatchAll(Assembly.GetExecutingAssembly());
             }
-            catch (Exception e)
-            {
-                PluginLog.Error(e, "Plugin initialization failed");
-                throw;
-            }
+            // catch (Exception e)
+            // {
+            //     PluginLog.Error(e, "Plugin initialization failed");
+            //     throw;
+            // }
 
             PluginLog.Info("Loading config");
             Config.LoadConfig();
