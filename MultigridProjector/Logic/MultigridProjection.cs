@@ -128,6 +128,9 @@ namespace MultigridProjector.Logic
         // Controls when the plugin and Mod API can access projector information already
         internal bool IsValidForApi => Initialized && HasScanned;
 
+        // Enables updating audio and visuals
+        private readonly bool enableAudioVisualUpdates;
+
         public static void EnsureNoProjections()
         {
             int projectionCount;
@@ -159,6 +162,8 @@ namespace MultigridProjector.Logic
             Projector = projector;
             GridBuilders = gridBuilders;
             clipboard = projector.GetClipboard();
+
+            enableAudioVisualUpdates = !Sync.IsDedicated;
 
             latestKeepProjection = Projector.GetKeepProjection();
             latestShowOnlyBuildable = Projector.GetShowOnlyBuildable();
@@ -455,7 +460,7 @@ namespace MultigridProjector.Logic
 
         private void HidePreviewGrids()
         {
-            if (Sync.IsDedicated)
+            if (!enableAudioVisualUpdates)
                 return;
 
             foreach (var subgrid in subgrids)
@@ -547,9 +552,10 @@ namespace MultigridProjector.Logic
             if (Sync.IsServer && stats.BuiltOnlyArmorBlocks)
                 requestRemap = true;
 
-            if (!Sync.IsDedicated)
+            UpdatePreviewBlockVisuals();
+
+            if (enableAudioVisualUpdates)
             {
-                UpdatePreviewBlockVisuals();
                 Projector.UpdateSounds();
                 Projector.SetEmissiveStateWorking();
             }
@@ -652,7 +658,7 @@ namespace MultigridProjector.Logic
 
         private void UpdatePreviewBlockVisuals()
         {
-            if (Sync.IsDedicated)
+            if (!enableAudioVisualUpdates)
                 return;
 
             foreach (var subgrid in SupportedSubgrids)
