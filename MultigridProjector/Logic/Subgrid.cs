@@ -65,6 +65,9 @@ namespace MultigridProjector.Logic
         // Block state hash
         public ulong StateHash { get; private set; }
 
+        // Block state hash of the last visual update
+        private ulong latestVisualUpdateStateHash;
+
         // Indicates whether an unsupported preview grid has already been hidden
         private bool hidden;
 
@@ -562,6 +565,11 @@ namespace MultigridProjector.Logic
 
             using (BlocksLock.Read())
             {
+                if (latestVisualUpdateStateHash == StateHash)
+                    return;
+
+                latestVisualUpdateStateHash = StateHash;
+
                 foreach (var projectedBlock in Blocks.Values)
                     projectedBlock.UpdateVisual(projector, showOnlyBuildable);
             }
