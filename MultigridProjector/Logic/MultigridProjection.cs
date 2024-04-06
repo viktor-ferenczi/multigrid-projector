@@ -124,6 +124,7 @@ namespace MultigridProjector.Logic
 
         // Requests a remap operation on building the next functional (non-armor) block
         private bool requestRemap;
+        private bool remapRequested = true;
 
         // Controls when the plugin and Mod API can access projector information already
         internal bool IsValidForApi => Initialized && HasScanned;
@@ -549,8 +550,23 @@ namespace MultigridProjector.Logic
             AggregateStatistics();
             UpdateProjectorStats();
 
-            if (Sync.IsServer && stats.BuiltOnlyArmorBlocks)
-                requestRemap = true;
+            if (Sync.IsServer)
+            {
+                if (stats.BuiltOnlyArmorBlocks)
+                {
+                    // Requesting a remap once after the built blocks are cut down from the projector
+                    if (!remapRequested)
+                    {
+                        requestRemap = true;
+                        remapRequested = true;
+                    }
+                }
+                else
+                {
+                    // Allow for requesting a remap once after the built blocks are cut down from the projector
+                    remapRequested = false;
+                }
+            }
 
             UpdatePreviewBlockVisuals();
 
