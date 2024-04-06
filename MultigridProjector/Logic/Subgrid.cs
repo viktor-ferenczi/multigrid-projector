@@ -265,7 +265,7 @@ namespace MultigridProjector.Logic
             previewBlock.Orientation.GetQuaternion(out var previewBlockOrientation);
             orientationQuaternion *= previewBlockOrientation;
         }
-        
+
         #endregion
 
         #region Built Grid Registration
@@ -543,19 +543,20 @@ namespace MultigridProjector.Logic
 
         public void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable)
         {
-            if (Sync.IsDedicated)
-                return;
-
             if (PreviewGrid == null)
                 return;
 
             if (!Supported)
             {
-                HideUnsupportedPreviewGrid(projector);
+                if (!hidden)
+                {
+                    HidePreviewGrid(projector);
 
-                using (BlocksLock.Write())
-                    Blocks.Clear();
+                    using (BlocksLock.Write())
+                        Blocks.Clear();
 
+                    hidden = true;
+                }
                 return;
             }
 
@@ -566,23 +567,8 @@ namespace MultigridProjector.Logic
             }
         }
 
-        private void HideUnsupportedPreviewGrid(MyProjectorBase projector)
-        {
-            if (hidden)
-                return;
-
-            HidePreviewGrid(projector);
-            hidden = true;
-        }
-
         public void HidePreviewGrid(MyProjectorBase projector)
         {
-            if (Sync.IsDedicated)
-                return;
-
-            if (PreviewGrid == null)
-                return;
-
             foreach (var slimBlock in PreviewGrid.CubeBlocks)
                 projector.HideCube(slimBlock);
         }
@@ -651,7 +637,7 @@ namespace MultigridProjector.Logic
 
             stats.Clear();
 
-            var stateHash = unchecked (0xdeadbeafdeadbeaful * (ulong) (1 + Index));
+            var stateHash = unchecked(0xdeadbeafdeadbeaful * (ulong) (1 + Index));
 
             MyCubeGrid builtGrid;
             using (BuiltGridLock.Read())
