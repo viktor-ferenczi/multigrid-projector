@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 using System.IO;
 using System.Reflection;
 using System.Windows.Controls;
@@ -51,6 +52,7 @@ namespace MultigridProjectorServer
 
             var configPath = Path.Combine(StoragePath, MultigridProjectorConfig.ConfigFilePath);
             config = Persistent<MultigridProjectorConfig>.Load(configPath);
+            config.Data.PropertyChanged += OnPropertyChanged;
 
             try
             {
@@ -73,6 +75,12 @@ namespace MultigridProjectorServer
             _sessionManager.SessionStateChanged += SessionStateChanged;
 
             PluginLog.Info("Loaded server plugin");
+        }
+
+        private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            // FIXME: Hacking the config there, replace with proper plugin config
+            MultigridProjection.ConfiguredSetPreviewBlockVisuals = Config.SetPreviewBlockVisuals;
         }
 
         private void SessionStateChanged(ITorchSession session, TorchSessionState newstate)
