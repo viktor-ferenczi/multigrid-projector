@@ -55,6 +55,10 @@ namespace MultigridProjector.Logic
         private static readonly ThreadLocal<bool> IsBuildingProjectedBlock = new ThreadLocal<bool>();
         public static bool IsBuildingProjection() => IsBuildingProjectedBlock.Value;
 
+        // FIXME: Hacked the Torch plugin's config value here,
+        // it should be replaced with proper plugin config for all targets
+        public static bool ConfiguredSetPreviewBlockVisuals;
+
         public bool TryGetSupportedSubgrid(int gridIndex, out Subgrid subgrid)
         {
             using (subgridsLock.Read())
@@ -130,7 +134,7 @@ namespace MultigridProjector.Logic
         internal bool IsValidForApi => Initialized && HasScanned;
 
         // Enables updating audio and visuals
-        private readonly bool enableAudioVisualUpdates;
+        private readonly bool setPreviewBlockVisuals;
 
         public static void EnsureNoProjections()
         {
@@ -164,7 +168,7 @@ namespace MultigridProjector.Logic
             GridBuilders = gridBuilders;
             clipboard = projector.GetClipboard();
 
-            enableAudioVisualUpdates = !Sync.IsDedicated;
+            setPreviewBlockVisuals = !Sync.IsDedicated || ConfiguredSetPreviewBlockVisuals;
 
             latestKeepProjection = Projector.GetKeepProjection();
             latestShowOnlyBuildable = Projector.GetShowOnlyBuildable();
@@ -461,7 +465,7 @@ namespace MultigridProjector.Logic
 
         private void HidePreviewGrids()
         {
-            if (!enableAudioVisualUpdates)
+            if (!setPreviewBlockVisuals)
                 return;
 
             foreach (var subgrid in subgrids)
@@ -496,7 +500,7 @@ namespace MultigridProjector.Logic
             if (latestShowOnlyBuildable == showOnlyBuildable) return;
             latestShowOnlyBuildable = showOnlyBuildable;
 
-            UpdatePreviewBlockVisuals();
+            UpdatePreviewBlockVisuals(true);
         }
 
         private void DetectOffsetRotationChange()
@@ -559,18 +563,20 @@ namespace MultigridProjector.Logic
                     {
                         requestRemap = true;
                         remapRequested = true;
+                        PluginLog.Debug($"Remap requested on projector {Projector.CustomName} [{Projector.EntityId}]");
                     }
                 }
                 else
                 {
                     // Allow for requesting a remap once after the built blocks are cut down from the projector
                     remapRequested = false;
+                    PluginLog.Debug($"Remap request allowed on projector {Projector.CustomName} [{Projector.EntityId}]");
                 }
             }
 
             UpdatePreviewBlockVisuals();
 
-            if (enableAudioVisualUpdates)
+            if (setPreviewBlockVisuals)
             {
                 Projector.UpdateSounds();
                 Projector.SetEmissiveStateWorking();
@@ -672,13 +678,13 @@ namespace MultigridProjector.Logic
             Projector.SetStatsDirty(true);
         }
 
-        private void UpdatePreviewBlockVisuals()
+        private void UpdatePreviewBlockVisuals(bool force=false)
         {
-            if (!enableAudioVisualUpdates)
+            if (!setPreviewBlockVisuals)
                 return;
 
             foreach (var subgrid in SupportedSubgrids)
-                subgrid.UpdatePreviewBlockVisuals(Projector, latestShowOnlyBuildable);
+                subgrid.UpdatePreviewBlockVisuals(Projector, latestShowOnlyBuildable, force);
         }
 
         // FIXME: Refactor, simplify
@@ -801,7 +807,7 @@ namespace MultigridProjector.Logic
 
             var yaml = GetYaml(false);
             PluginLog.Error($"Projection with the above problem:\r\n{yaml}");
-            ((IMyProjector)Projector).Enabled = false;
+            ((IMyProjector) Projector).Enabled = false;
         }
 
         private void ShouldUpdateProjection()
@@ -934,7 +940,7 @@ namespace MultigridProjector.Logic
                 return;
 
             // Clone the block builder to prevent damaging the original blueprint
-            topBlockBuilder = (MyObjectBuilder_CubeBlock)topBlockBuilder.Clone();
+            topBlockBuilder = (MyObjectBuilder_CubeBlock) topBlockBuilder.Clone();
 
             // Make sure no EntityId collision will occur on re-welding a block on a previously disconnected (split)
             // part of a built subgrid which has not been destroyed (or garbage collected) yet
@@ -1073,7 +1079,7 @@ namespace MultigridProjector.Logic
                 return;
 
             // Clone the block builder to prevent damaging the original blueprint
-            baseBlockBuilder = (MyObjectBuilder_CubeBlock)baseBlockBuilder.Clone();
+            baseBlockBuilder = (MyObjectBuilder_CubeBlock) baseBlockBuilder.Clone();
 
             // Make sure no EntityId collision will occur on re-welding a block on a previously disconnected (split)
             // part of a built subgrid which has not been destroyed (or garbage collected) yet
@@ -1204,7 +1210,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
                 case MyMotorStator motorStator:
                     motorStator.SetAngleToPhysics();
-                    motorStator.SetValueFloat("Displacement", ((MyMotorStator)baseConnection.Preview).DummyDisplacement);
+                    motorStator.SetValueFloat("Displacement", ((MyMotorStator) baseConnection.Preview).DummyDisplacement);
                     break;
             }
         }
@@ -1244,7 +1250,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return;
 
             // Allow welding only on the first subgrid if the client does not have the MGP plugin installed or an MGP unaware mod sends in a request
-            var subgridIndex = builtBy >= 0 && builtBy < GridCount ? (int)builtBy : 0;
+            var subgridIndex = builtBy >= 0 && builtBy < GridCount ? (int) builtBy : 0;
 
             // Find the subgrid to build on
             Subgrid subgrid;
@@ -1327,7 +1333,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return;
 
             // Clone the block builder to prevent damaging the original blueprint
-            blockBuilder = (MyObjectBuilder_CubeBlock)blockBuilder.Clone();
+            blockBuilder = (MyObjectBuilder_CubeBlock) blockBuilder.Clone();
 
             // Do not build the default top block (head) automatically, because it may have the wrong block orientation
             if (blockBuilder is MyObjectBuilder_MechanicalConnectionBlock mechanicalBase && !(blockBuilder is MyObjectBuilder_MotorSuspension))
@@ -1349,7 +1355,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             // FIXME: This does not belong here, it should go into MyObjectBuilder_BatteryBlock.SetupForProjector. Maybe patch that instead!
             if (MyDefinitionManagerBase.Static != null && blockBuilder is MyObjectBuilder_BatteryBlock batteryBuilder)
             {
-                var cubeBlockDefinition = (MyBatteryBlockDefinition)MyDefinitionManager.Static.GetCubeBlockDefinition(batteryBuilder);
+                var cubeBlockDefinition = (MyBatteryBlockDefinition) MyDefinitionManager.Static.GetCubeBlockDefinition(batteryBuilder);
                 batteryBuilder.CurrentStoredPower = cubeBlockDefinition.InitialStoredPowerRatio * cubeBlockDefinition.MaxStoredPower;
             }
 
@@ -1558,7 +1564,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             // Build head of the right model and size according to the top connection's preview block
             var topDefinition = topConnection.Preview.BlockDefinition;
             var constructorInfo = Validation.EnsureInfo(AccessTools.Constructor(typeof(MyCubeBlockDefinitionGroup)));
-            var definitionGroup = (MyCubeBlockDefinitionGroup)constructorInfo.Invoke(new object[] { });
+            var definitionGroup = (MyCubeBlockDefinitionGroup) constructorInfo.Invoke(new object[] { });
             definitionGroup[MyCubeSize.Small] = topDefinition;
             definitionGroup[MyCubeSize.Large] = topDefinition;
 
@@ -1819,7 +1825,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             // Fix the inconsistent remapping the original implementation has done, this is
             // needed to be able to load back the projection properly from a saved world
-            var builderCubeBlock = (MyObjectBuilder_ProjectorBase)blockBuilder;
+            var builderCubeBlock = (MyObjectBuilder_ProjectorBase) blockBuilder;
             lock (gridBuilders)
                 builderCubeBlock.ProjectedGrids = gridBuilders.Clone();
             MyEntities.RemapObjectBuilderCollection(builderCubeBlock.ProjectedGrids);
@@ -1963,7 +1969,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 catch (Exception e)
                 {
                     PluginLog.Error(e, "Failed to initialize multigrid projection - Removing blueprint to avoid spamming the log.");
-                    ((IMyProjector)projector).SetProjectedGrid(null);
+                    ((IMyProjector) projector).SetProjectedGrid(null);
                     return false;
                 }
 
@@ -1984,7 +1990,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             catch (Exception e)
             {
                 PluginLog.Error(e, "UpdateAfterSimulation of multigrid projection failed - Removing blueprint to avoid spamming the log.");
-                ((IMyProjector)projector).SetProjectedGrid(null);
+                ((IMyProjector) projector).SetProjectedGrid(null);
             }
 
             // Based on the original code

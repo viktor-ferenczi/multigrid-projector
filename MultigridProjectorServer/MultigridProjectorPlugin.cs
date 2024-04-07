@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Reflection;
 using System.Windows.Controls;
 using HarmonyLib;
@@ -32,6 +33,9 @@ namespace MultigridProjectorServer
         public UserControl GetControl() => control ?? (control = new ConfigView());
         private ConfigView control;
 
+        private Persistent<MultigridProjectorConfig> config;
+        public MultigridProjectorConfig Config => config?.Data;
+
         private MultigridProjectorSession mgpSession;
 
         private static Harmony Harmony => new Harmony("com.spaceengineers.multigridprojector");
@@ -44,6 +48,9 @@ namespace MultigridProjectorServer
 
             PluginLog.Logger = new PluginLogger(PluginLog.Prefix);
             PluginLog.Prefix = "";
+
+            var configPath = Path.Combine(StoragePath, MultigridProjectorConfig.ConfigFilePath);
+            config = Persistent<MultigridProjectorConfig>.Load(configPath);
 
             try
             {
@@ -75,6 +82,10 @@ namespace MultigridProjectorServer
                 case TorchSessionState.Loading:
                     break;
                 case TorchSessionState.Loaded:
+
+                    // FIXME: Hacking the config there, replace with proper plugin config
+                    MultigridProjection.ConfiguredSetPreviewBlockVisuals = Config.SetPreviewBlockVisuals;
+
                     mgpSession = new MultigridProjectorSession();
                     break;
 

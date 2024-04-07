@@ -9,7 +9,7 @@ namespace MultigridProjectorServer
         public ConfigView()
         {
             InitializeComponent();
-            DataContext = MultigridProjectorConfig.Instance;
+            DataContext = MultigridProjectorPlugin.Instance.Config;
         }
     }
 }

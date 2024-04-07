@@ -544,7 +544,7 @@ namespace MultigridProjector.Logic
 
         #region Preview Block Visuals
 
-        public void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable)
+        public void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable, bool force)
         {
             if (PreviewGrid == null)
                 return;
@@ -565,7 +565,7 @@ namespace MultigridProjector.Logic
 
             using (BlocksLock.Read())
             {
-                if (latestVisualUpdateStateHash == StateHash)
+                if (!force && latestVisualUpdateStateHash == StateHash)
                     return;
 
                 latestVisualUpdateStateHash = StateHash;
