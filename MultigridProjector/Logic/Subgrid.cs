@@ -65,6 +65,9 @@ namespace MultigridProjector.Logic
         // Block state hash
         public ulong StateHash { get; private set; }
 
+        // Block state hash of the last visual update
+        private ulong latestVisualUpdateStateHash;
+
         // Indicates whether an unsupported preview grid has already been hidden
         private bool hidden;
 
@@ -265,7 +268,7 @@ namespace MultigridProjector.Logic
             previewBlock.Orientation.GetQuaternion(out var previewBlockOrientation);
             orientationQuaternion *= previewBlockOrientation;
         }
-        
+
         #endregion
 
         #region Built Grid Registration
@@ -541,48 +544,39 @@ namespace MultigridProjector.Logic
 
         #region Preview Block Visuals
 
-        public void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable)
+        public void UpdatePreviewBlockVisuals(MyProjectorBase projector, bool showOnlyBuildable, bool force)
         {
-            if (Sync.IsDedicated)
-                return;
-
             if (PreviewGrid == null)
                 return;
 
             if (!Supported)
             {
-                HideUnsupportedPreviewGrid(projector);
+                if (!hidden)
+                {
+                    HidePreviewGrid(projector);
 
-                using (BlocksLock.Write())
-                    Blocks.Clear();
+                    using (BlocksLock.Write())
+                        Blocks.Clear();
 
+                    hidden = true;
+                }
                 return;
             }
 
             using (BlocksLock.Read())
             {
+                if (!force && latestVisualUpdateStateHash == StateHash)
+                    return;
+
+                latestVisualUpdateStateHash = StateHash;
+
                 foreach (var projectedBlock in Blocks.Values)
                     projectedBlock.UpdateVisual(projector, showOnlyBuildable);
             }
         }
 
-        private void HideUnsupportedPreviewGrid(MyProjectorBase projector)
-        {
-            if (hidden)
-                return;
-
-            HidePreviewGrid(projector);
-            hidden = true;
-        }
-
         public void HidePreviewGrid(MyProjectorBase projector)
         {
-            if (Sync.IsDedicated)
-                return;
-
-            if (PreviewGrid == null)
-                return;
-
             foreach (var slimBlock in PreviewGrid.CubeBlocks)
                 projector.HideCube(slimBlock);
         }
@@ -651,7 +645,7 @@ namespace MultigridProjector.Logic
 
             stats.Clear();
 
-            var stateHash = unchecked (0xdeadbeafdeadbeaful * (ulong) (1 + Index));
+            var stateHash = unchecked(0xdeadbeafdeadbeaful * (ulong) (1 + Index));
 
             MyCubeGrid builtGrid;
             using (BuiltGridLock.Read())

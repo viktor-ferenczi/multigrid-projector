@@ -1,5 +1,8 @@
 using System;
+using System.ComponentModel;
+using System.IO;
 using System.Reflection;
+using System.Windows.Controls;
 using HarmonyLib;
 using MultigridProjector.Api;
 using MultigridProjector.Logic;
@@ -7,13 +10,14 @@ using MultigridProjector.Utilities;
 using Torch;
 using Torch.API;
 using Torch.API.Managers;
+using Torch.API.Plugins;
 using Torch.API.Session;
 using Torch.Session;
 
 namespace MultigridProjectorServer
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class MultigridProjectorPlugin : TorchPluginBase
+    public class MultigridProjectorPlugin : TorchPluginBase, IWpfPlugin
     {
         public static MultigridProjectorPlugin Instance { get; private set; }
         private TorchSessionManager _sessionManager;
@@ -25,6 +29,13 @@ namespace MultigridProjectorServer
 
         // ReSharper disable once UnusedMember.Local
         // private readonly MultigridProjectorCommands _commands = new MultigridProjectorCommands();
+
+        // ReSharper disable once UnusedMember.Global
+        public UserControl GetControl() => control ?? (control = new ConfigView());
+        private ConfigView control;
+
+        private Persistent<MultigridProjectorConfig> config;
+        public MultigridProjectorConfig Config => config?.Data;
 
         private MultigridProjectorSession mgpSession;
 
@@ -38,6 +49,10 @@ namespace MultigridProjectorServer
 
             PluginLog.Logger = new PluginLogger(PluginLog.Prefix);
             PluginLog.Prefix = "";
+
+            var configPath = Path.Combine(StoragePath, MultigridProjectorConfig.ConfigFilePath);
+            config = Persistent<MultigridProjectorConfig>.Load(configPath);
+            config.Data.PropertyChanged += OnPropertyChanged;
 
             try
             {
@@ -62,6 +77,12 @@ namespace MultigridProjectorServer
             PluginLog.Info("Loaded server plugin");
         }
 
+        private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            // FIXME: Hacking the config there, replace with proper plugin config
+            MultigridProjection.SetPreviewBlockVisuals = Config.SetPreviewBlockVisuals;
+        }
+
         private void SessionStateChanged(ITorchSession session, TorchSessionState newstate)
         {
             switch (newstate)
@@ -69,8 +90,13 @@ namespace MultigridProjectorServer
                 case TorchSessionState.Loading:
                     break;
                 case TorchSessionState.Loaded:
+
+                    // FIXME: Hacking the config there, replace with proper plugin config
+                    MultigridProjection.SetPreviewBlockVisuals = Config.SetPreviewBlockVisuals;
+
                     mgpSession = new MultigridProjectorSession();
                     break;
+
                 case TorchSessionState.Unloading:
                     if (mgpSession != null)
                     {
