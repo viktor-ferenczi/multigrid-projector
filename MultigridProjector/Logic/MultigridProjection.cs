@@ -563,14 +563,12 @@ namespace MultigridProjector.Logic
                     {
                         requestRemap = true;
                         remapRequested = true;
-                        PluginLog.Debug($"Remap requested on projector {Projector.CustomName} [{Projector.EntityId}]");
                     }
                 }
                 else
                 {
                     // Allow for requesting a remap once after the built blocks are cut down from the projector
                     remapRequested = false;
-                    PluginLog.Debug($"Remap request allowed on projector {Projector.CustomName} [{Projector.EntityId}]");
                 }
             }
 
