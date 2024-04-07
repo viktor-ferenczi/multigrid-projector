@@ -1665,8 +1665,11 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             clipboard.ResetGridOrientation();
 
             var gridBuilders = clipboard.CopiedGrids;
+
+#if INCOMPLETE_UNTESTED
             if (!EnsureBuildableUnderLimits(gridBuilders))
                 return;
+#endif
 
             Projector.SetIsActivating(true);
             clipboard.Activate(() =>
@@ -1685,6 +1688,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             });
         }
 
+#if INCOMPLETE_UNTESTED
         private bool EnsureBuildableUnderLimits(List<MyObjectBuilder_CubeGrid> gridBuilders)
         {
             var identity = MySession.Static.Players.TryGetIdentity(Projector.BuiltBy);
@@ -1733,6 +1737,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             MyGuiAudio.PlaySound(MyGuiSounds.HudUnable);
             MyHud.Notifications.Add(MySession.GetNotificationForLimitResult(limitResult));
         }
+#endif
 
         private void UpdateSubgridConnectedness()
         {
