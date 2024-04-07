@@ -39,6 +39,8 @@
     <Reference Include="NLog, Version=4.0.0.0, Culture=neutral, PublicKeyToken=5120e14c03d0593c">
       <HintPath>$(Torch)\DedicatedServer64\NLog.dll</HintPath>
     </Reference>
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
     <Reference Include="Sandbox.Common, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>$(Torch)\DedicatedServer64\Sandbox.Common.dll</HintPath>
     </Reference>
@@ -63,6 +65,7 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Xaml" />
     <Reference Include="System.Xml" />
     <Reference Include="Torch, Culture=neutral, PublicKeyToken=null">
       <HintPath>$(Torch)\Torch.dll</HintPath>
@@ -94,9 +97,11 @@
     <Reference Include="VRage.Scripting, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null">
       <HintPath>$(Torch)\DedicatedServer64\VRage.Scripting.dll</HintPath>
     </Reference>
+    <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Api\MultigridProjectorTorchAgent.cs" />
+    <Compile Include="ConfigView.xaml.cs" />
     <Compile Include="EnsureOriginalTorch.cs" />
     <Compile Include="MultigridProjectorCommands.cs" />
     <Compile Include="MultigridProjectorConfig.cs" />
@@ -129,6 +134,9 @@
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.2.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.2" />
+  </ItemGroup>
+  <ItemGroup>
+    <Page Include="ConfigView.xaml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\MultigridProjector\MultigridProjector.projitems" Label="Shared" />

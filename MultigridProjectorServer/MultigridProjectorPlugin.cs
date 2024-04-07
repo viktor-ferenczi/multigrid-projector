@@ -1,5 +1,6 @@
 using System;
 using System.Reflection;
+using System.Windows.Controls;
 using HarmonyLib;
 using MultigridProjector.Api;
 using MultigridProjector.Logic;
@@ -7,13 +8,14 @@ using MultigridProjector.Utilities;
 using Torch;
 using Torch.API;
 using Torch.API.Managers;
+using Torch.API.Plugins;
 using Torch.API.Session;
 using Torch.Session;
 
 namespace MultigridProjectorServer
 {
     // ReSharper disable once ClassNeverInstantiated.Global
-    public class MultigridProjectorPlugin : TorchPluginBase
+    public class MultigridProjectorPlugin : TorchPluginBase, IWpfPlugin
     {
         public static MultigridProjectorPlugin Instance { get; private set; }
         private TorchSessionManager _sessionManager;
@@ -25,6 +27,10 @@ namespace MultigridProjectorServer
 
         // ReSharper disable once UnusedMember.Local
         // private readonly MultigridProjectorCommands _commands = new MultigridProjectorCommands();
+
+        // ReSharper disable once UnusedMember.Global
+        public UserControl GetControl() => control ?? (control = new ConfigView());
+        private ConfigView control;
 
         private MultigridProjectorSession mgpSession;
 
@@ -71,6 +77,7 @@ namespace MultigridProjectorServer
                 case TorchSessionState.Loaded:
                     mgpSession = new MultigridProjectorSession();
                     break;
+
                 case TorchSessionState.Unloading:
                     if (mgpSession != null)
                     {

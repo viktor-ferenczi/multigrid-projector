@@ -15,26 +15,30 @@ namespace MultigridProjectorServer
         private static readonly string ConfigFileName = "MultigridProjector.cfg";
         private static bool _loading;
 
-        private bool _enablePlugin = true;
+        private bool _setPreviewBlockVisuals = true;
+
+#if INCOMPLETE_UNTESTED
         private bool _blockLimit;
         private bool _pcuLimit;
+#endif
 
         private static MultigridProjectorConfig _instance;
         public static MultigridProjectorConfig Instance => _instance ?? (_instance = new MultigridProjectorConfig());
         private static XmlSerializer ConfigSerializer => new XmlSerializer(typeof(MultigridProjectorConfig));
         private static string ConfigFilePath => Path.Combine(MultigridProjectorPlugin.Instance.StoragePath, ConfigFileName);
 
-        [Display(Description = "Enables/disables the plugin", Name = "Enable Plugin", Order = 1)]
-        public bool EnablePlugin
+        [Display(Order = 1, GroupName = "Compatibility", Name = "Set preview block visuals", Description = "Compatibility with mods depending on preview block transparency.")]
+        public bool SetPreviewBlockVisuals
         {
-            get => _enablePlugin;
+            get => _setPreviewBlockVisuals;
             set
             {
-                _enablePlugin = value;
-                OnPropertyChanged(nameof(EnablePlugin));
+                _setPreviewBlockVisuals = value;
+                OnPropertyChanged(nameof(SetPreviewBlockVisuals));
             }
         }
 
+#if INCOMPLETE_UNTESTED
         [Display(Description = "Enforce player block limit", Name = "Block limit", Order = 2)]
         public bool BlockLimit
         {
@@ -56,6 +60,7 @@ namespace MultigridProjectorServer
                 OnPropertyChanged(nameof(PcuLimit));
             }
         }
+#endif
 
         protected override void OnPropertyChanged(string propName = "")
         {
