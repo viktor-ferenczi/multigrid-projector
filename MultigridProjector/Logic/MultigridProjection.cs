@@ -559,6 +559,7 @@ namespace MultigridProjector.Logic
                 if (stats.BuiltOnlyArmorBlocks)
                 {
                     // Requesting a remap once after the built blocks are cut down from the projector
+                    // The actual remapping will happen right before the first fat block is built
                     if (!remapRequested)
                     {
                         requestRemap = true;
