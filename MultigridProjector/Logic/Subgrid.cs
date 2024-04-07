@@ -232,6 +232,8 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IEnumerable<(Vector3I, BlockState)> IterBlockStates(BoundingBoxI box, int mask)
         {
+            var fullBox = box.Min == Vector3I.MinValue && box.Max == Vector3I.MaxValue;
+
             using (BlocksLock.Read())
             {
                 foreach (var (position, projectedBlock) in Blocks)
@@ -240,7 +242,7 @@ namespace MultigridProjector.Logic
                     if (((int) blockState & mask) == 0)
                         continue;
 
-                    if (box.Contains(position) == ContainmentType.Contains)
+                    if (fullBox || box.Contains(position) == ContainmentType.Contains)
                         yield return (position, blockState);
                 }
             }
@@ -657,7 +659,7 @@ namespace MultigridProjector.Logic
                 {
                     projectedBlock.DetectBlock(projector, builtGrid);
                     stats.RegisterBlock(projectedBlock.Preview, projectedBlock.State);
-                    stateHash = unchecked((stateHash << 11) - stateHash) ^ (ulong) projectedBlock.State;
+                    stateHash = unchecked(stateHash * 389u + (ulong) projectedBlock.State);
                 }
             }
 

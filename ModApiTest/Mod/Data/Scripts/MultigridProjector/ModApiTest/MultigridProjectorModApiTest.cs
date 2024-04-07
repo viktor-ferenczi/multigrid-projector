@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using VRage.Game.Components;
@@ -17,46 +18,46 @@ namespace MultigridProjector.ModApiTest
     // ReSharper disable once UnusedType.Global
     public class MultigridProjectorModApiTest : MyGameLogicComponent
     {
-        private static MultigridProjectorModAgent mgp;
-        private static MultigridProjectorModAgent Mgp => mgp ?? (mgp = new MultigridProjectorModAgent());
         private static bool mgpVersionLogged;
 
         private IMyProjector projector;
+        private IMultigridProjectorApi mgp;
+
         private List<MyObjectBuilder_CubeGrid> gridBuilders;
         private readonly List<ulong> subgridStateHashes = new List<ulong>();
 
         public override void Init(MyObjectBuilder_EntityBase objectBuilder)
         {
             projector = Entity as IMyProjector;
-            if (projector == null)
+            if (projector == null || projector.Closed)
                 return;
 
-            if (projector.Closed)
-                return;
+            var agent = new MultigridProjectorModAgent();
+            mgp = agent.Available ? (IMultigridProjectorApi) agent : new MultigridProjectorModShim(projector);
 
             Entity.NeedsUpdate |= MyEntityUpdateEnum.EACH_100TH_FRAME;
         }
 
         public override void Close()
         {
+            (mgp as IDisposable)?.Dispose();
+
+            mgp = null;
             projector = null;
         }
 
         public override void UpdateBeforeSimulation100()
         {
-            if (!mgpVersionLogged)
-            {
-                mgpVersionLogged = true;
-                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", Mgp.Available ? $"Plugin v{Mgp.Version}" : $"Plugin is not available");
-            }
-
-            if (!Mgp.Available)
-                return;
-
             if (projector == null || projector.Closed || projector.OwnerId == 0)
                 return;
 
-            var currentGridBuilders = Mgp.GetOriginalGridBuilders(projector.EntityId);
+            if (!mgpVersionLogged)
+            {
+                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", mgp is MultigridProjectorModAgent ? $"Plugin v{mgp.Version}" : $"Shim v{mgp.Version}");
+                mgpVersionLogged = true;
+            }
+
+            var currentGridBuilders = mgp.GetOriginalGridBuilders(projector.EntityId);
             if (currentGridBuilders != gridBuilders)
             {
                 gridBuilders = currentGridBuilders;
@@ -71,11 +72,11 @@ namespace MultigridProjector.ModApiTest
         private void LogAndChatSubgridStateChanges(long projectorEntityId)
         {
             var projectorName = $"{projector.BlockDefinition.SubtypeName} {projector.CustomName ?? projector.DisplayNameText ?? projector.DisplayName} [{projectorEntityId}]";
-            var scanNumber = Mgp.GetScanNumber(projectorEntityId);
-            var subgridCount = Mgp.GetSubgridCount(projectorEntityId);
+            var scanNumber = mgp.GetScanNumber(projectorEntityId);
+            var subgridCount = mgp.GetSubgridCount(projectorEntityId);
             for (var subgridIndex = 0; subgridIndex < subgridCount && subgridIndex < subgridStateHashes.Count; subgridIndex++)
             {
-                var currentStateHash = Mgp.GetStateHash(projectorEntityId, subgridIndex);
+                var currentStateHash = mgp.GetStateHash(projectorEntityId, subgridIndex);
                 if (currentStateHash != subgridStateHashes[subgridIndex])
                 {
                     subgridStateHashes[subgridIndex] = currentStateHash;
@@ -100,7 +101,7 @@ namespace MultigridProjector.ModApiTest
             MyLog.Default.WriteLineAndConsole(projectorName);
             MyLog.Default.WriteLineAndConsole($"Projecting grid: {projectingGridName}");
 
-            var scanNumber = Mgp.GetScanNumber(projectorEntityId);
+            var scanNumber = mgp.GetScanNumber(projectorEntityId);
             MyLog.Default.WriteLineAndConsole($"Scan number: {scanNumber}");
 
             if (gridBuilders == null || scanNumber == 0)
@@ -110,7 +111,7 @@ namespace MultigridProjector.ModApiTest
                 return;
             }
 
-            var subgridCount = Mgp.GetSubgridCount(projectorEntityId);
+            var subgridCount = mgp.GetSubgridCount(projectorEntityId);
             MyLog.Default.WriteLineAndConsole($"Blueprint loaded:");
             MyLog.Default.WriteLineAndConsole($"Subgrid count: {subgridCount}");
             MyLog.Default.WriteLineAndConsole($"Subgrids in blueprint: {gridBuilders.Count}");
@@ -123,16 +124,16 @@ namespace MultigridProjector.ModApiTest
                 MyLog.Default.WriteLineAndConsole($"Subgrid #{subgridIndex}");
                 MyLog.Default.WriteLineAndConsole("-------------------");
 
-                var previewGrid = Mgp.GetPreviewGrid(projectorEntityId, subgridIndex);
+                var previewGrid = mgp.GetPreviewGrid(projectorEntityId, subgridIndex);
                 MyLog.Default.WriteLineAndConsole($"Preview grid: {previewGrid.CustomName ?? previewGrid.DisplayName} [{previewGrid.EntityId}]");
 
-                var builtGrid = Mgp.GetBuiltGrid(projectorEntityId, subgridIndex);
+                var builtGrid = mgp.GetBuiltGrid(projectorEntityId, subgridIndex);
                 MyLog.Default.WriteLineAndConsole(builtGrid == null ? "No built grid for this subgrid" : $"Built grid: {builtGrid.CustomName ?? builtGrid.DisplayName} [{builtGrid.EntityId}]");
 
                 MyLog.Default.WriteLineAndConsole("");
 
                 MyLog.Default.WriteLineAndConsole($"Base connections:");
-                foreach (var pair in Mgp.GetBaseConnections(projectorEntityId, subgridIndex))
+                foreach (var pair in mgp.GetBaseConnections(projectorEntityId, subgridIndex))
                 {
                     MyLog.Default.WriteLineAndConsole($"  {pair.Key} => #{pair.Value.GridIndex} @ {pair.Value.Position}");
                 }
@@ -140,27 +141,27 @@ namespace MultigridProjector.ModApiTest
                 MyLog.Default.WriteLineAndConsole("");
 
                 MyLog.Default.WriteLineAndConsole($"Top connections:");
-                foreach (var pair in Mgp.GetTopConnections(projectorEntityId, subgridIndex))
+                foreach (var pair in mgp.GetTopConnections(projectorEntityId, subgridIndex))
                 {
                     MyLog.Default.WriteLineAndConsole($"  {pair.Key} => #{pair.Value.GridIndex} @ {pair.Value.Position}");
                 }
 
                 MyLog.Default.WriteLineAndConsole("");
 
-                var stateHash = Mgp.GetStateHash(projectorEntityId, subgridIndex);
+                var stateHash = mgp.GetStateHash(projectorEntityId, subgridIndex);
                 MyLog.Default.WriteLineAndConsole($"State hash: 0x{stateHash:x16}ul");
 
-                var isComplete = Mgp.IsSubgridComplete(projectorEntityId, subgridIndex);
+                var isComplete = mgp.IsSubgridComplete(projectorEntityId, subgridIndex);
                 MyLog.Default.WriteLineAndConsole($"Complete: {isComplete}");
 
                 // Force printing the initial hash once (if not zero)
                 subgridStateHashes.Add(0);
 
                 var blockStates = new Dictionary<Vector3I, BlockState>();
-                Mgp.GetBlockStates(blockStates, projectorEntityId, subgridIndex, new BoundingBoxI(Vector3I.MinValue, Vector3I.MaxValue), ~0);
+                mgp.GetBlockStates(blockStates, projectorEntityId, subgridIndex, new BoundingBoxI(Vector3I.MinValue, Vector3I.MaxValue), ~0);
 
                 if (blockStates.Count > 0)
-                    MyLog.Default.WriteLineAndConsole($"First block state: {Mgp.GetBlockState(projectorEntityId, subgridIndex, blockStates.Keys.First())}");
+                    MyLog.Default.WriteLineAndConsole($"First block state: {mgp.GetBlockState(projectorEntityId, subgridIndex, blockStates.Keys.First())}");
 
                 MyLog.Default.WriteLineAndConsole($"Block states:");
                 foreach (var pair in blockStates)
@@ -173,7 +174,7 @@ namespace MultigridProjector.ModApiTest
             MyLog.Default.WriteLineAndConsole($"YAML representation");
             MyLog.Default.WriteLineAndConsole("-------------------");
 
-            var yaml = Mgp.GetYaml(projectorEntityId);
+            var yaml = mgp.GetYaml(projectorEntityId);
             MyLog.Default.WriteLineAndConsole(yaml);
 
             MyLog.Default.WriteLineAndConsole("==================================================================");

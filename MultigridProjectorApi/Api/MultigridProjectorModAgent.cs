@@ -106,7 +106,7 @@ namespace MultigridProjector.Api
         {
             if (!Available)
                 return null;
-            
+
             var topPositions = new List<Vector3I>();
             var gridIndices = new List<int>();
             var basePositions = new List<Vector3I>();
