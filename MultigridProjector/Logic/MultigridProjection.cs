@@ -55,9 +55,11 @@ namespace MultigridProjector.Logic
         private static readonly ThreadLocal<bool> IsBuildingProjectedBlock = new ThreadLocal<bool>();
         public static bool IsBuildingProjection() => IsBuildingProjectedBlock.Value;
 
+        // Enables updating audio and visuals
+        // Defaults to true for the Client and Dedicated Server, configured by UI on Torch
         // FIXME: Hacked the Torch plugin's config value here,
         // it should be replaced with proper plugin config for all targets
-        public static bool ConfiguredSetPreviewBlockVisuals;
+        public static bool SetPreviewBlockVisuals = true;
 
         public bool TryGetSupportedSubgrid(int gridIndex, out Subgrid subgrid)
         {
@@ -133,9 +135,6 @@ namespace MultigridProjector.Logic
         // Controls when the plugin and Mod API can access projector information already
         internal bool IsValidForApi => Initialized && HasScanned;
 
-        // Enables updating audio and visuals
-        private readonly bool setPreviewBlockVisuals;
-
         public static void EnsureNoProjections()
         {
             int projectionCount;
@@ -167,8 +166,6 @@ namespace MultigridProjector.Logic
             Projector = projector;
             GridBuilders = gridBuilders;
             clipboard = projector.GetClipboard();
-
-            setPreviewBlockVisuals = !Sync.IsDedicated || ConfiguredSetPreviewBlockVisuals;
 
             latestKeepProjection = Projector.GetKeepProjection();
             latestShowOnlyBuildable = Projector.GetShowOnlyBuildable();
@@ -465,7 +462,7 @@ namespace MultigridProjector.Logic
 
         private void HidePreviewGrids()
         {
-            if (!setPreviewBlockVisuals)
+            if (!SetPreviewBlockVisuals)
                 return;
 
             foreach (var subgrid in subgrids)
@@ -575,7 +572,7 @@ namespace MultigridProjector.Logic
 
             UpdatePreviewBlockVisuals();
 
-            if (setPreviewBlockVisuals)
+            if (SetPreviewBlockVisuals)
             {
                 Projector.UpdateSounds();
                 Projector.SetEmissiveStateWorking();
@@ -679,7 +676,7 @@ namespace MultigridProjector.Logic
 
         private void UpdatePreviewBlockVisuals(bool force=false)
         {
-            if (!setPreviewBlockVisuals)
+            if (!SetPreviewBlockVisuals)
                 return;
 
             foreach (var subgrid in SupportedSubgrids)

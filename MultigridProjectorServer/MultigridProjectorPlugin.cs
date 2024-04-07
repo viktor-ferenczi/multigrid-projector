@@ -80,7 +80,7 @@ namespace MultigridProjectorServer
         private void OnPropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             // FIXME: Hacking the config there, replace with proper plugin config
-            MultigridProjection.ConfiguredSetPreviewBlockVisuals = Config.SetPreviewBlockVisuals;
+            MultigridProjection.SetPreviewBlockVisuals = Config.SetPreviewBlockVisuals;
         }
 
         private void SessionStateChanged(ITorchSession session, TorchSessionState newstate)
@@ -92,7 +92,7 @@ namespace MultigridProjectorServer
                 case TorchSessionState.Loaded:
 
                     // FIXME: Hacking the config there, replace with proper plugin config
-                    MultigridProjection.ConfiguredSetPreviewBlockVisuals = Config.SetPreviewBlockVisuals;
+                    MultigridProjection.SetPreviewBlockVisuals = Config.SetPreviewBlockVisuals;
 
                     mgpSession = new MultigridProjectorSession();
                     break;
