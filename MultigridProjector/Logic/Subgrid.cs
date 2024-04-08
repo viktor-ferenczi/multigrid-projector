@@ -551,20 +551,6 @@ namespace MultigridProjector.Logic
             if (PreviewGrid == null)
                 return;
 
-            if (!Supported)
-            {
-                if (!hidden)
-                {
-                    HidePreviewGrid(projector);
-
-                    using (BlocksLock.Write())
-                        Blocks.Clear();
-
-                    hidden = true;
-                }
-                return;
-            }
-
             using (BlocksLock.Read())
             {
                 if (!force && latestVisualUpdateStateHash == StateHash)
@@ -575,6 +561,14 @@ namespace MultigridProjector.Logic
                 foreach (var projectedBlock in Blocks.Values)
                     projectedBlock.UpdateVisual(projector, showOnlyBuildable);
             }
+        }
+
+        public void Hide(MyProjectorBase projector)
+        {
+            HidePreviewGrid(projector);
+
+            using (BlocksLock.Write())
+                Blocks.Clear();
         }
 
         public void HidePreviewGrid(MyProjectorBase projector)

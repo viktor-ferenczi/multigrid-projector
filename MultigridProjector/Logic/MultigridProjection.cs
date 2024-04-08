@@ -16,8 +16,6 @@ using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.EntityComponents;
-using Sandbox.Game.Gui;
-using Sandbox.Game.GUI;
 using Sandbox.Game.Multiplayer;
 using Sandbox.Game.SessionComponents;
 using Sandbox.Game.Weapons;
@@ -26,7 +24,6 @@ using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.Entities.Blocks;
 using VRage;
-using VRage.Audio;
 using VRage.Game;
 using VRage.Game.ObjectBuilders.Definitions.SessionComponents;
 using VRage.ModAPI;
@@ -43,6 +40,10 @@ namespace MultigridProjector.Logic
         private static readonly RwLockDictionary<long, MultigridProjection> Projections = new RwLockDictionary<long, MultigridProjection>();
         private static readonly HashSet<long> ProjectorsWithBlueprintLoaded = new HashSet<long>();
 
+        // Marks build calls to prevent building the default top block
+        private static readonly ThreadLocal<bool> IsBuildingProjectedBlock = new ThreadLocal<bool>();
+        public static bool IsBuildingProjection() => IsBuildingProjectedBlock.Value;
+
         internal readonly MyProjectorBase Projector;
         internal readonly List<MyObjectBuilder_CubeGrid> GridBuilders;
         private readonly MyProjectorClipboard clipboard;
@@ -51,9 +52,8 @@ namespace MultigridProjector.Logic
         private readonly List<Subgrid> subgrids = new List<Subgrid>();
         private readonly RwLock subgridsLock = new RwLock();
 
-        // Marks build calls to prevent building the default top block
-        private static readonly ThreadLocal<bool> IsBuildingProjectedBlock = new ThreadLocal<bool>();
-        public static bool IsBuildingProjection() => IsBuildingProjectedBlock.Value;
+        // Marks the first update of preview block visuals
+        private bool unsupportedGridsHidden;
 
         // Enables updating audio and visuals
         // Defaults to true for the Client and Dedicated Server, configured by UI on Torch
@@ -87,6 +87,7 @@ namespace MultigridProjector.Logic
 
         // Subgrids supported for welding from projection, skips grids connected via connector (ships, missiles)
         private IEnumerable<Subgrid> SupportedSubgrids => subgrids.Where(s => s.Supported);
+        private IEnumerable<Subgrid> UnsupportedSubgrids => subgrids.Where(s => !s.Supported);
 
         // Bidirectional mapping of corresponding base and top blocks by their grid index and min cube positions
         internal readonly Dictionary<BlockMinLocation, BlockMinLocation> BlueprintConnections = new Dictionary<BlockMinLocation, BlockMinLocation>();
@@ -568,6 +569,15 @@ namespace MultigridProjector.Logic
                     // Allow for requesting a remap once after the built blocks are cut down from the projector
                     remapRequested = false;
                 }
+            }
+
+            if (!unsupportedGridsHidden)
+            {
+                foreach (var subgrid in UnsupportedSubgrids)
+                {
+                    subgrid.Hide(Projector);
+                }
+                unsupportedGridsHidden = true;
             }
 
             UpdatePreviewBlockVisuals();
