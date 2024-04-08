@@ -25,6 +25,7 @@ copy /y "%API_SRC%\BlockLocation.cs" "%API_DST%\"
 copy /y "%API_SRC%\BlockState.cs" "%API_DST%\"
 copy /y "%API_SRC%\IMultigridProjectorApi.cs" "%API_DST%\"
 copy /y "%API_SRC%\MultigridProjectorModAgent.cs" "%API_DST%\"
+copy /y "%API_SRC%\MultigridProjectorModShim.cs" "%API_DST%\"
 
 del /f "%API_DST%\README.md"
 

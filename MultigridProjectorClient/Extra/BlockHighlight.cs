@@ -9,7 +9,11 @@ using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces.Terminal;
 using System.Collections.Generic;
 using System.Text;
+using MultigridProjector.Api;
+using MultigridProjector.Extensions;
+using Sandbox.Game.World;
 using VRage.Game;
+using VRage.Game.ModAPI.Ingame;
 using VRage.Utils;
 using VRageMath;
 using VRageRender;
@@ -19,7 +23,7 @@ namespace MultigridProjectorClient.Extra
     internal static class BlockHighlight
     {
         // Implement highlighting for blocks that have not been built or partially built
-        private static HashSet<MyProjectorBase> TargetProjectors = new HashSet<MyProjectorBase>();
+        private static readonly HashSet<MyProjectorBase> TargetProjectors = new HashSet<MyProjectorBase>();
         private static bool IsProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid != null;
         private static bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
         private static bool Enabled => Config.CurrentConfig.BlockHighlight;
@@ -36,11 +40,11 @@ namespace MultigridProjectorClient.Extra
                 "BlockHighlight",
                 MyStringId.GetOrCompute("Highlight Blocks"),
                 MyStringId.GetOrCompute("Highlight blocks based on their status:\n" +
-                    "Green - Can be built\n" +
-                    "Yellow - Not fully welded\n" +
-                    "Orange - Obstructed by entity\n" +
-                    "Red - Obstructed by other block\n" +
-                    "No Highlight - Built or unconnected"))
+                                        "Green - Can be built\n" +
+                                        "Yellow - Not fully welded\n" +
+                                        "Orange - Obstructed by entity\n" +
+                                        "Red - Obstructed by other block\n" +
+                                        "No Highlight - Built or unconnected"))
             {
                 Getter = (projector) => TargetProjectors.Contains(projector),
                 Setter = (projector, value) =>
@@ -59,6 +63,7 @@ namespace MultigridProjectorClient.Extra
             AddControl.AddControlAfter("ShowOnlyBuildable", highlightBlocks);
         }
 
+        // FIXME: Change it to a postfix patch to MySpaceProjector.CreateTerminalControls
         private static void CreateToolbarControls()
         {
             List<IMyTerminalAction> customActions = new List<IMyTerminalAction>();
@@ -106,35 +111,39 @@ namespace MultigridProjectorClient.Extra
             };
         }
 
-        public static bool IsHighlightBlocksEnabled(IMyProjector projector)
+        private static bool IsHighlightBlocksEnabled(IMyProjector projector)
         {
             if (projector is null)
                 return false;
-            
-            return TargetProjectors.Contains((MyProjectorBase)projector);
+
+            return TargetProjectors.Contains((MyProjectorBase) projector);
         }
 
-        public static void EnableHighlightBlocks(IMyProjector projector)
+        private static void EnableHighlightBlocks(IMyProjector projector)
         {
             if (projector is null)
                 return;
-            
-            TargetProjectors.Add((MyProjectorBase)projector);
+
+            TargetProjectors.Add((MyProjectorBase) projector);
+
+            EnableCheckHavokIntersections(projector, true);
         }
 
-        public static void DisableHighlightBlocks(IMyProjector projector)
+        private static void DisableHighlightBlocks(IMyProjector projector)
         {
             if (projector is null)
                 return;
-            
-            TargetProjectors.Remove((MyProjectorBase)projector);
+
+            TargetProjectors.Remove((MyProjectorBase) projector);
+
+            EnableCheckHavokIntersections(projector, false);
         }
 
-        public static void ToggleHighlightBlocks(IMyProjector projector)
+        private static void ToggleHighlightBlocks(IMyProjector projector)
         {
             if (projector is null)
                 return;
-            
+
             if (IsHighlightBlocksEnabled(projector))
             {
                 DisableHighlightBlocks(projector);
@@ -145,8 +154,24 @@ namespace MultigridProjectorClient.Extra
             }
         }
 
+        private static void EnableCheckHavokIntersections(IMyProjector projector, bool checkHavokIntersections)
+        {
+            if (!MultigridProjection.TryFindProjectionByProjector((MyProjectorBase) projector, out var projection))
+                return;
+
+            projection.CheckHavokIntersections = checkHavokIntersections;
+            projection.ShouldUpdateProjection();
+        }
+
         public static void HighlightLoop()
         {
+            if (!(MySession.Static?.CameraController?.Entity is IMyEntity camera))
+                return;
+
+            var cameraPosition = camera.WorldMatrix.Translation;
+
+            const double maxCameraDistanceSquared = 500 * 500; // m^2
+
             // Clean stale projectors
             TargetProjectors.RemoveWhere(block => block.CubeGrid?.Physics == null);
 
@@ -155,44 +180,53 @@ namespace MultigridProjectorClient.Extra
                 if (!MultigridProjection.TryFindProjectionByProjector(projector, out MultigridProjection projection))
                     continue;
 
+                if (!projector.IsProjecting())
+                    continue;
+
+                if ((projector.WorldMatrix.Translation - cameraPosition).LengthSquared() > maxCameraDistanceSquared)
+                    continue;
+
                 foreach (Subgrid subgrid in projection.GetSupportedSubgrids())
                 {
-                    HashSet<MySlimBlock> blocks = subgrid.PreviewGrid.GetBlocks();
-
-                    foreach (MySlimBlock block in blocks)
+                    using (subgrid.BlocksLock.Read())
                     {
-                        BuildCheckResult buildCheck = projector.CanBuild(block, true);
-
-                        Color highlightColor;
-                        if (buildCheck == BuildCheckResult.AlreadyBuilt)
+                        foreach (var projectedBlock in subgrid.Blocks.Values)
                         {
-                            MySlimBlock builtBlock = Construction.GetBuiltBlock(block);
+                            var color = Color.Black;
+                            switch (projectedBlock.BuildCheckResult)
+                            {
+                                case BuildCheckResult.OK:
+                                    color = Color.Green;
+                                    break;
+                                case BuildCheckResult.NotConnected:
+                                    continue;
+                                case BuildCheckResult.IntersectedWithGrid:
+                                    color = Color.Crimson;
+                                    break;
+                                case BuildCheckResult.IntersectedWithSomethingElse:
+                                    color = Color.DarkOrange;
+                                    break;
 
-                            if (builtBlock?.Integrity < block.Integrity)
-                                highlightColor = Color.Yellow;
-                            else
-                                continue;
+                                case BuildCheckResult.AlreadyBuilt:
+                                    if (projectedBlock.State == BlockState.BeingBuilt)
+                                    {
+                                        color = Color.Yellow;
+                                        break;
+                                    }
+                                    continue;
+                                case BuildCheckResult.NotFound:
+                                    continue;
+                                case BuildCheckResult.NotWeldable:
+                                    continue;
+                            }
+                            WireFrame(projectedBlock.Preview, color);
                         }
-
-                        else if (buildCheck == BuildCheckResult.OK)
-                            highlightColor = Color.Green;
-
-                        else if (buildCheck == BuildCheckResult.IntersectedWithSomethingElse)
-                            highlightColor = Color.DarkOrange;
-
-                        else if (buildCheck == BuildCheckResult.IntersectedWithGrid)
-                            highlightColor = Color.Crimson;
-
-                        else
-                            continue;
-
-                        WireFrame(block, highlightColor);
                     }
                 }
             }
         }
 
-        public static void WireFrame(MySlimBlock block, Color color, MyStringId? material = null)
+        private static void WireFrame(MySlimBlock block, Color color, MyStringId? material = null)
         {
             // Modified version of MyCubeBuilder.DrawSemiTransparentBox
 
@@ -204,13 +238,13 @@ namespace MultigridProjectorClient.Extra
 
             Vector3D minVector = minPos * gridSize - new Vector3(gridSize / 2f);
             Vector3D maxVector = maxPos * gridSize + new Vector3(gridSize / 2f);
-            BoundingBoxD localbox = new BoundingBoxD(minVector, maxVector);
+            BoundingBoxD localBox = new BoundingBoxD(minVector, maxVector);
 
             MatrixD worldMatrix = grid.WorldMatrix;
 
             MySimpleObjectDraw.DrawTransparentBox(
                 ref worldMatrix,
-                ref localbox,
+                ref localBox,
                 ref color,
                 MySimpleObjectRasterizer.Wireframe,
                 1,

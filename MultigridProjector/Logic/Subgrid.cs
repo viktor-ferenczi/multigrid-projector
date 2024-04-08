@@ -8,7 +8,6 @@ using MultigridProjector.Extensions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
-using Sandbox.Game.Multiplayer;
 using VRage.Game;
 using VRage.Game.Entity;
 using VRageMath;
@@ -67,9 +66,6 @@ namespace MultigridProjector.Logic
 
         // Block state hash of the last visual update
         private ulong latestVisualUpdateStateHash;
-
-        // Indicates whether an unsupported preview grid has already been hidden
-        private bool hidden;
 
         #region Initialization and disposal
 
@@ -232,6 +228,8 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public IEnumerable<(Vector3I, BlockState)> IterBlockStates(BoundingBoxI box, int mask)
         {
+            var fullBox = box.Min == Vector3I.MinValue && box.Max == Vector3I.MaxValue;
+
             using (BlocksLock.Read())
             {
                 foreach (var (position, projectedBlock) in Blocks)
@@ -240,7 +238,7 @@ namespace MultigridProjector.Logic
                     if (((int) blockState & mask) == 0)
                         continue;
 
-                    if (box.Contains(position) == ContainmentType.Contains)
+                    if (fullBox || box.Contains(position) == ContainmentType.Contains)
                         yield return (position, blockState);
                 }
             }
@@ -549,20 +547,6 @@ namespace MultigridProjector.Logic
             if (PreviewGrid == null)
                 return;
 
-            if (!Supported)
-            {
-                if (!hidden)
-                {
-                    HidePreviewGrid(projector);
-
-                    using (BlocksLock.Write())
-                        Blocks.Clear();
-
-                    hidden = true;
-                }
-                return;
-            }
-
             using (BlocksLock.Read())
             {
                 if (!force && latestVisualUpdateStateHash == StateHash)
@@ -573,6 +557,14 @@ namespace MultigridProjector.Logic
                 foreach (var projectedBlock in Blocks.Values)
                     projectedBlock.UpdateVisual(projector, showOnlyBuildable);
             }
+        }
+
+        public void Hide(MyProjectorBase projector)
+        {
+            HidePreviewGrid(projector);
+
+            using (BlocksLock.Write())
+                Blocks.Clear();
         }
 
         public void HidePreviewGrid(MyProjectorBase projector)
@@ -636,7 +628,7 @@ namespace MultigridProjector.Logic
 
         #region Update Work
 
-        public int UpdateBlockStatesBackgroundWork(MyProjectorBase projector)
+        public int UpdateBlockStatesBackgroundWork(MyProjectorBase projector, bool checkHavokIntersections)
         {
             if (!IsUpdateRequested)
                 return 0;
@@ -655,9 +647,9 @@ namespace MultigridProjector.Logic
             {
                 foreach (var projectedBlock in Blocks.Values)
                 {
-                    projectedBlock.DetectBlock(projector, builtGrid);
+                    projectedBlock.DetectBlock(projector, builtGrid, checkHavokIntersections);
                     stats.RegisterBlock(projectedBlock.Preview, projectedBlock.State);
-                    stateHash = unchecked((stateHash << 11) - stateHash) ^ (ulong) projectedBlock.State;
+                    stateHash = unchecked(stateHash * 389u + (ulong) projectedBlock.State);
                 }
             }
 
