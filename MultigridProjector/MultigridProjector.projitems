@@ -20,6 +20,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_OnBuildSuccess.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RecreateTop.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyShipToolBase_UpdateAfterSimulation10.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Arithmetic.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Comms.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\EnsureOriginal.cs" />

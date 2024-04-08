@@ -1,5 +1,6 @@
 using System.Linq;
 using System.Runtime.CompilerServices;
+using Sandbox.Common.ObjectBuilders;
 using VRage.Game;
 
 namespace MultigridProjector.Extensions
@@ -25,6 +26,7 @@ namespace MultigridProjector.Extensions
             // We need to keep the EntityId value to map mechanical connections.
             // Initial remapping and BuildInternal both avoid EntityID collisions.
 
+            // Remove nested blueprints from projectors, it still allows for repair projections and missile welders
             if(blockBuilder is MyObjectBuilder_ProjectorBase projectorBuilder)
                 RemoveNestedRepairBlueprints(projectorBuilder);
         }
