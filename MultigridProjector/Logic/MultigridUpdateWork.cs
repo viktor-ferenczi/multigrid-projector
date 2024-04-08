@@ -75,7 +75,7 @@ namespace MultigridProjector.Logic
             try
             {
                 var supportedSubgrids = projection.GetSupportedSubgrids();
-                UpdateBlockStatesAndCollectStatistics(supportedSubgrids);
+                UpdateBlockStatesAndCollectStatistics(supportedSubgrids, projection.CheckHavokIntersections);
                 FindBuiltMechanicalConnections(supportedSubgrids);
                 gridScanSucceeded = !ShouldStop;
             }
@@ -89,7 +89,7 @@ namespace MultigridProjector.Logic
             }
         }
 
-        private void UpdateBlockStatesAndCollectStatistics(Subgrid[] supportedSubgrids)
+        private void UpdateBlockStatesAndCollectStatistics(Subgrid[] supportedSubgrids, bool checkHavokIntersections)
         {
             SubgridsScanned = 0;
             BlocksScanned = 0;
@@ -98,7 +98,7 @@ namespace MultigridProjector.Logic
             {
                 if (ShouldStop) break;
 
-                var blockCount = subgrid.UpdateBlockStatesBackgroundWork(Projector);
+                var blockCount = subgrid.UpdateBlockStatesBackgroundWork(Projector, checkHavokIntersections);
 
                 BlocksScanned += blockCount;
                 if (blockCount > 0)

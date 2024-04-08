@@ -108,13 +108,6 @@ namespace MultigridProjector.Extensions
             RemainingBlocksFieldInfo.SetValue(projector, value);
         }
 
-        private static readonly MethodInfo CanBuildMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "CanBuild", new[] {typeof(MySlimBlock)}));
-
-        public static bool CanBuild(this MyProjectorBase projector, MySlimBlock cubeBlock)
-        {
-            return (bool) CanBuildMethodInfo.Invoke(projector, new object[] {cubeBlock});
-        }
-
         private static readonly MethodInfo UpdateSoundsMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "UpdateSounds"));
 
         public static void UpdateSounds(this MyProjectorBase projector)

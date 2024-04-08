@@ -37,6 +37,8 @@ namespace MultigridProjector.Logic
     // FIXME: Refactor this class
     public class MultigridProjection
     {
+        private const int UpdateCooldownTime = 2000; // ms
+
         private static readonly RwLockDictionary<long, MultigridProjection> Projections = new RwLockDictionary<long, MultigridProjection>();
         private static readonly HashSet<long> ProjectorsWithBlueprintLoaded = new HashSet<long>();
 
@@ -59,7 +61,14 @@ namespace MultigridProjector.Logic
         // Defaults to true for the Client and Dedicated Server, configured by UI on Torch
         // FIXME: Hacked the Torch plugin's config value here,
         // it should be replaced with proper plugin config for all targets
+        // ReSharper disable once MemberCanBePrivate.Global
+        // ReSharper disable once FieldCanBeMadeReadOnly.Global
+        // ReSharper disable once ConvertToConstant.Global
         public static bool SetPreviewBlockVisuals = true;
+
+        // Enables detecting block state with Havok intersection enabled,
+        // used only on client side if block highlighting is enabled for the projector
+        public bool CheckHavokIntersections;
 
         public bool TryGetSupportedSubgrid(int gridIndex, out Subgrid subgrid)
         {
@@ -99,6 +108,7 @@ namespace MultigridProjector.Logic
         internal readonly Dictionary<BlockMinLocation, MyAttachableTopBlockBase> PreviewTopBlocks = new Dictionary<BlockMinLocation, MyAttachableTopBlockBase>();
 
         // Locking GridBuilders only while remapping Entity IDs or depending on their consistency
+        // ReSharper disable once InconsistentlySynchronizedField
         internal int GridCount => GridBuilders.Count;
         internal List<MyCubeGrid> PreviewGrids => clipboard.PreviewGrids;
         internal bool Initialized { get; private set; }
@@ -595,6 +605,13 @@ namespace MultigridProjector.Logic
                 Projector.RaisePropertiesChanged();
             }
 
+            if (CheckHavokIntersections)
+            {
+                // Periodically rescan if block highlighting is enabled, it is required to see changes
+                // in block highlighting as colliding objects are moving, added or removed
+                ShouldUpdateProjection();
+            }
+
             if (!latestKeepProjection && IsBuildCompleted)
                 Projector.RequestRemoveProjection();
         }
@@ -816,7 +833,7 @@ namespace MultigridProjector.Logic
             ((IMyProjector) Projector).Enabled = false;
         }
 
-        private void ShouldUpdateProjection()
+        public void ShouldUpdateProjection()
         {
             Projector.SetShouldUpdateProjection(true);
             Projector.SetShouldUpdateTexts(true);
@@ -1235,7 +1252,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             if (IsUpdateRequested)
                 ForceUpdateProjection();
 
-            var shouldUpdateProjection = Projector.GetShouldUpdateProjection() && MySandboxGame.TotalGamePlayTimeInMilliseconds - Projector.GetLastUpdate() >= 2000;
+            var shouldUpdateProjection = Projector.GetShouldUpdateProjection() && MySandboxGame.TotalGamePlayTimeInMilliseconds - Projector.GetLastUpdate() >= UpdateCooldownTime;
             if (shouldUpdateProjection)
             {
                 foreach (var subgrid in SupportedSubgrids)
@@ -1676,9 +1693,8 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             clipboard.ResetGridOrientation();
 
-            var gridBuilders = clipboard.CopiedGrids;
-
 #if INCOMPLETE_UNTESTED
+            var gridBuilders = clipboard.CopiedGrids;
             if (!EnsureBuildableUnderLimits(gridBuilders))
                 return;
 #endif

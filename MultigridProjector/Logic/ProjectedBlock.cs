@@ -4,6 +4,7 @@ using MultigridProjector.Extensions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
+using Sandbox.ModAPI;
 using VRage.Game;
 using VRageMath;
 
@@ -16,6 +17,7 @@ namespace MultigridProjector.Logic
 
         // Welding state
         public BlockState State { get; private set; } = BlockState.Unknown;
+        public BuildCheckResult BuildCheckResult { get; private set; } = BuildCheckResult.NotFound;
 
         // Built block
         public MySlimBlock SlimBlock { get; private set; }
@@ -41,16 +43,18 @@ namespace MultigridProjector.Logic
         public void Clear()
         {
             SlimBlock = null;
+            BuildCheckResult = BuildCheckResult.NotFound;
             State = BlockState.Unknown;
             BuiltPosition = Vector3I.MinValue;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void DetectBlock(MyProjectorBase projector, MyCubeGrid builtGrid)
+        public void DetectBlock(MyProjectorBase projector, MyCubeGrid builtGrid, bool checkHavokIntersections)
         {
             if (builtGrid == null)
             {
                 SlimBlock = null;
+                BuildCheckResult = BuildCheckResult.NotConnected;
                 State = BlockState.NotBuildable;
                 BuiltPosition = Vector3I.MinValue;
                 return;
@@ -67,7 +71,8 @@ namespace MultigridProjector.Logic
             if (builtSlimBlock == null)
             {
                 SlimBlock = null;
-                State = projector.CanBuild(Preview) ? BlockState.Buildable : BlockState.NotBuildable;
+                BuildCheckResult = projector.CanBuild(Preview, checkHavokIntersections);
+                State = BuildCheckResult == BuildCheckResult.OK ? BlockState.Buildable : BlockState.NotBuildable;
                 return;
             }
 
@@ -75,12 +80,14 @@ namespace MultigridProjector.Logic
             if (builtSlimBlock.BlockDefinition.Id != Preview.BlockDefinition.Id)
             {
                 SlimBlock = null;
+                BuildCheckResult = BuildCheckResult.IntersectedWithGrid;
                 State = BlockState.Mismatch;
                 return;
             }
 
             // Register block, detect welding and grinding
             SlimBlock = builtSlimBlock;
+            BuildCheckResult = BuildCheckResult.AlreadyBuilt;
             State = SlimBlock.Integrity >= Preview.Integrity ? BlockState.FullyBuilt : BlockState.BeingBuilt;
         }
 
