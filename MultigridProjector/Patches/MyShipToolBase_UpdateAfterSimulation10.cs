@@ -17,7 +17,7 @@ namespace MultigridProjector.Patches
         private static bool UpdateAfterSimulation10Prefix(MyShipToolBase __instance)
         {
             // Prevent projected welders and grinders from functioning
-            return __instance.Physics != null;
+            return __instance?.CubeGrid?.Physics != null;
         }
     }
 }
