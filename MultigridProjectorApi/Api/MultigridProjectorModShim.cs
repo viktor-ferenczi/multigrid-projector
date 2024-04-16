@@ -272,7 +272,7 @@ namespace MultigridProjector.Api
                 return;
 
             // ReSharper disable once EqualExpressionComparison
-            if (projectionOffset == projector.ProjectionOffset && projectionRotation == projectionRotation)
+            if (projectionOffset == projector.ProjectionOffset && projectionRotation == projector.ProjectionRotation)
                 return;
 
             projectionOffset = projector.ProjectionOffset;
