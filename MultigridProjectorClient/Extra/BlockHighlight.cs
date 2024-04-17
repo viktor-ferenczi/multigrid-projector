@@ -20,7 +20,7 @@ using VRageRender;
 
 namespace MultigridProjectorClient.Extra
 {
-    internal static class BlockHighlight
+    static class BlockHighlight
     {
         // Implement highlighting for blocks that have not been built or partially built
         private static readonly HashSet<MyProjectorBase> TargetProjectors = new HashSet<MyProjectorBase>();
@@ -28,15 +28,9 @@ namespace MultigridProjectorClient.Extra
         private static bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
         private static bool Enabled => Config.CurrentConfig.BlockHighlight;
 
-        public static void Initialize()
+        public static IEnumerable<CustomControl> IterControls()
         {
-            CreateTerminalControls();
-            CreateToolbarControls();
-        }
-
-        private static void CreateTerminalControls()
-        {
-            MyTerminalControlCheckbox<MySpaceProjector> highlightBlocks = new MyTerminalControlCheckbox<MySpaceProjector>(
+            var control = new MyTerminalControlCheckbox<MySpaceProjector>(
                 "BlockHighlight",
                 MyStringId.GetOrCompute("Highlight Blocks"),
                 MyStringId.GetOrCompute("Highlight blocks based on their status:\n" +
@@ -60,16 +54,13 @@ namespace MultigridProjectorClient.Extra
                 SupportsMultipleBlocks = false
             };
 
-            AddControl.AddControlAfter("ShowOnlyBuildable", highlightBlocks);
+            yield return new CustomControl(ControlPlacement.After, "ShowOnlyBuildable", control);
         }
 
-        // FIXME: Change it to a postfix patch to MySpaceProjector.CreateTerminalControls
-        private static void CreateToolbarControls()
+        public static IEnumerable<IMyTerminalAction> IterActions()
         {
-            List<IMyTerminalAction> customActions = new List<IMyTerminalAction>();
-
             {
-                IMyTerminalAction action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("BlockHighlightToggle");
+                var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("BlockHighlightToggle");
                 action.Enabled = (terminalBlock) => Enabled && terminalBlock is IMyProjector;
                 action.Action = (terminalBlock) => ToggleHighlightBlocks(terminalBlock as IMyProjector);
                 action.ValidForGroups = true;
@@ -77,11 +68,11 @@ namespace MultigridProjectorClient.Extra
                 action.Name = new StringBuilder("Toggle block highlighting");
                 action.Writer = (b, s) => s.Append("Highlight");
                 action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
-                customActions.Add(action);
+                yield return action;
             }
 
             {
-                IMyTerminalAction action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("BlockHighlightEnable");
+                var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("BlockHighlightEnable");
                 action.Enabled = (terminalBlock) => Enabled && terminalBlock is IMyProjector;
                 action.Action = (terminalBlock) => EnableHighlightBlocks(terminalBlock as IMyProjector);
                 action.ValidForGroups = true;
@@ -89,11 +80,11 @@ namespace MultigridProjectorClient.Extra
                 action.Name = new StringBuilder("Enable block highlighting");
                 action.Writer = (b, s) => s.Append("Highlight");
                 action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
-                customActions.Add(action);
+                yield return action;
             }
 
             {
-                IMyTerminalAction action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("BlockHighlightDisable");
+                var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("BlockHighlightDisable");
                 action.Enabled = (terminalBlock) => Enabled && terminalBlock is IMyProjector;
                 action.Action = (terminalBlock) => DisableHighlightBlocks(terminalBlock as IMyProjector);
                 action.ValidForGroups = true;
@@ -101,14 +92,8 @@ namespace MultigridProjectorClient.Extra
                 action.Name = new StringBuilder("Disable block highlighting");
                 action.Writer = (b, s) => s.Append("Highlight");
                 action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
-                customActions.Add(action);
+                yield return action;
             }
-
-            MyAPIGateway.TerminalControls.CustomActionGetter += (block, actions) =>
-            {
-                if (block is IMyProjector)
-                    actions.AddRange(customActions);
-            };
         }
 
         private static bool IsHighlightBlocksEnabled(IMyProjector projector)

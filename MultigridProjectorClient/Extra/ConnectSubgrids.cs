@@ -19,7 +19,7 @@ using Sandbox.Game.Multiplayer;
 
 namespace MultigridProjectorClient.Extra
 {
-    internal static class ConnectSubgrids
+    static class ConnectSubgrids
     {
         public enum ConnectionType
         {

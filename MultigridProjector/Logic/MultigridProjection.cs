@@ -12,6 +12,7 @@ using Sandbox;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Engine.Multiplayer;
+using Sandbox.Engine.Utils;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
@@ -701,7 +702,7 @@ namespace MultigridProjector.Logic
             Projector.SetStatsDirty(true);
         }
 
-        private void UpdatePreviewBlockVisuals(bool force=false)
+        private void UpdatePreviewBlockVisuals(bool force = false)
         {
             if (!SetPreviewBlockVisuals)
                 return;

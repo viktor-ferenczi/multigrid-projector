@@ -23,20 +23,15 @@ using VRage.Utils;
 // ReSharper disable SuggestVarOrType_Elsewhere
 namespace MultigridProjectorClient.Extra
 {
-    internal static class CraftProjection
+    static class CraftProjection
     {
         private static bool Enabled => Config.CurrentConfig.CraftProjection;
         private static bool IsProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid != null;
         private static bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
 
-        public static void Initialize()
+        public static IEnumerable<CustomControl> IterControls()
         {
-            CreateTerminalControls();
-        }
-
-        private static void CreateTerminalControls()
-        {
-            MyTerminalControlButton<MySpaceProjector> assembleMissing = new MyTerminalControlButton<MySpaceProjector>(
+            var control = new MyTerminalControlButton<MySpaceProjector>(
                 "CraftProjection",
                 MyStringId.GetOrCompute("Assemble Projection"),
                 MyStringId.GetOrCompute("View and assemble the components needed to build the projection"),
@@ -47,7 +42,7 @@ namespace MultigridProjectorClient.Extra
                 SupportsMultipleBlocks = false
             };
 
-            AddControl.AddControlAfter("Blueprint", assembleMissing);
+            yield return new CustomControl(ControlPlacement.After, "Blueprint", control);
         }
 
         private static void MakeDialog(MySpaceProjector projector)
@@ -63,7 +58,7 @@ namespace MultigridProjectorClient.Extra
             Dictionary<MyDefinitionId, int> requiredComponents = new Dictionary<MyDefinitionId, int>(blueprintComponents);
             SubtractComponents(ref requiredComponents, inventoryComponents);
             ClampComponents(ref requiredComponents);
-            
+
             const string idPrefix = "MyObjectBuilder_";
 
             foreach (KeyValuePair<MyDefinitionId, int> component in blueprintComponents)
@@ -244,7 +239,7 @@ namespace MultigridProjectorClient.Extra
                         foreach (MyPhysicalInventoryItem item in items)
                         {
                             MyDefinitionId id = item.GetDefinitionId();
-                            int count = (int)item.Amount;
+                            int count = (int) item.Amount;
 
                             if (components.ContainsKey(id))
                             {
@@ -267,7 +262,7 @@ namespace MultigridProjectorClient.Extra
                 foreach (MyPhysicalInventoryItem item in items)
                 {
                     MyDefinitionId id = item.GetDefinitionId();
-                    int count = (int)item.Amount;
+                    int count = (int) item.Amount;
 
                     if (components.ContainsKey(id))
                     {
@@ -309,7 +304,7 @@ namespace MultigridProjectorClient.Extra
                 .Field("m_terminalTabs")
                 .GetValue<MyGuiControlTabControl>();
 
-            terminalTabs.SelectedPage = (int)MyTerminalPageEnum.Production;
+            terminalTabs.SelectedPage = (int) MyTerminalPageEnum.Production;
         }
     }
 }

@@ -1,12 +1,13 @@
-using Entities.Blocks;
+using System.Linq;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using MultigridProjectorClient.Utilities;
 using MultigridProjectorClient.Extra;
-using Sandbox.Game.Gui;
-using Sandbox.Game.World;
+using Sandbox.ModAPI;
+using Sandbox.ModAPI.Ingame;
 using VRage.Game;
 using VRage.Game.Components;
+using IMyProjector = Sandbox.ModAPI.IMyProjector;
 
 namespace MultigridProjectorClient
 {
@@ -22,25 +23,24 @@ namespace MultigridProjectorClient
 
             mgpSession = new MultigridProjectorSession();
 
-            Events.InvokeOnGameThread(InitializeDialogs, frames: 1);
+            ProjectorAligner.Initialize();
+
+            Events.InvokeOnGameThread(InitializeActions, frames: 1);
         }
 
-        private static void InitializeDialogs()
+        private void InitializeActions()
         {
-            if (!MyTerminalControlFactory.AreControlsCreated<MySpaceProjector>())
+            MyAPIGateway.TerminalControls.CustomActionGetter += (block, actions) =>
             {
-                // Prevent infinite loop since controls will not be created if they haven't been yet
-                if (MySession.Static.IsUnloading) 
-                    return; 
-
-                Events.InvokeOnGameThread(InitializeDialogs, frames: 1);
-                return;
-            }
-
-            ProjectorAligner.Initialize();
-            RepairProjection.Initialize();
-            BlockHighlight.Initialize();
-            CraftProjection.Initialize();
+                if (block is IMyProjector &&
+                    block.BlockDefinition.SubtypeId.Contains("Projector") &&
+                    !block.HasAction("BlockHighlightToggle"))
+                {
+                    // FIXME: Don't run it repeatedly! It causes a red "too many actions" error on screen.
+                    actions.AddRange(BlockHighlight.IterActions()
+                        .Concat(ProjectorAligner.IterActions()));
+                }
+            };
         }
 
         protected override void UnloadData()
