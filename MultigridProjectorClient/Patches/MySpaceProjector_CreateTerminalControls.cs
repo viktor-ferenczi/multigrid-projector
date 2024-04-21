@@ -5,6 +5,7 @@ using Entities.Blocks;
 using HarmonyLib;
 using MultigridProjectorClient.Extra;
 using MultigridProjectorClient.Utilities;
+using Sandbox.Engine.Utils;
 using Sandbox.Game.Gui;
 
 namespace MultigridProjectorClient.Patches
@@ -13,20 +14,12 @@ namespace MultigridProjectorClient.Patches
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     [HarmonyPatch(typeof(MySpaceProjector))]
-    public static class MySpaceProjectorPatch
+    public static class MySpaceProjector_CreateTerminalControls
     {
-        // ReSharper disable once UnusedMember.Local
-        [HarmonyPrefix]
-        [HarmonyPatch("CreateTerminalControls")]
-        private static bool CreateTerminalControlsPrefix()
-        {
-            return !MyTerminalControlFactory.AreControlsCreated<MySpaceProjector>();
-        }
-
         // ReSharper disable once UnusedMember.Local
         [HarmonyPostfix]
         [HarmonyPatch("CreateTerminalControls")]
-        private static void CreateTerminalControlsPostfix()
+        private static void Postfix()
         {
             var iterControls = BlockHighlight.IterControls()
                 .Concat(ProjectorAligner.IterControls())
@@ -35,6 +28,14 @@ namespace MultigridProjectorClient.Patches
 
             var controls = new List<ITerminalControl>();
             MyTerminalControlFactory.GetControls(typeof(MySpaceProjector), controls);
+
+            HashSet<string> currentControlIds = new HashSet<string>(controls.Select(c => c.Id));
+            HashSet<string> newControlIds = new HashSet<string>(iterControls.Select(c => c.Control.Id));
+
+            if (newControlIds.IsSubsetOf(currentControlIds))
+            {
+                return;
+            }
 
             foreach (var customControl in iterControls)
             {
