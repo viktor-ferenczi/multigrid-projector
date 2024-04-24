@@ -65,10 +65,6 @@ namespace MultigridProjectorServer
                 return;
             }
 
-#if DEBUG
-            Harmony.DEBUG = true;
-#endif
-
             Harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             _sessionManager = torch.Managers.GetManager<TorchSessionManager>();

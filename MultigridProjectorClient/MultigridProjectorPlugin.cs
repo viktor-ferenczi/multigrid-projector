@@ -34,10 +34,6 @@ namespace MultigridProjectorClient
                     return;
                 }
 
-                #if DEBUG
-                    Harmony.DEBUG = true;
-                #endif
-
                 Harmony.PatchAll(Assembly.GetExecutingAssembly());
             }
             catch (Exception e)
