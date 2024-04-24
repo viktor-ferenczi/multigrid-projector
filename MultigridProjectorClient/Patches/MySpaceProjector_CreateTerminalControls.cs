@@ -16,14 +16,6 @@ namespace MultigridProjectorClient.Patches
     public static class MySpaceProjector_CreateTerminalControls
     {
         // ReSharper disable once UnusedMember.Local
-        [HarmonyPrefix]
-        [HarmonyPatch("CreateTerminalControls")]
-        private static bool Prefix()
-        {
-            return !MyTerminalControlFactory.AreControlsCreated<MySpaceProjector>();
-        }
-
-        // ReSharper disable once UnusedMember.Local
         [HarmonyPostfix]
         [HarmonyPatch("CreateTerminalControls")]
         private static void Postfix()
@@ -35,6 +27,14 @@ namespace MultigridProjectorClient.Patches
 
             var controls = new List<ITerminalControl>();
             MyTerminalControlFactory.GetControls(typeof(MySpaceProjector), controls);
+
+            HashSet<string> currentControlIds = new HashSet<string>(controls.Select(c => c.Id));
+            HashSet<string> newControlIds = new HashSet<string>(iterControls.Select(c => c.Control.Id));
+
+            if (newControlIds.IsSubsetOf(currentControlIds))
+            {
+                return;
+            }
 
             foreach (var customControl in iterControls)
             {
