@@ -27,7 +27,7 @@ namespace MultigridProjector.Extensions
             // Initial remapping and BuildInternal both avoid EntityID collisions.
 
             // Remove nested blueprints from projectors, it still allows for repair projections and missile welders
-            if(blockBuilder is MyObjectBuilder_ProjectorBase projectorBuilder)
+            if (blockBuilder is MyObjectBuilder_ProjectorBase projectorBuilder)
                 RemoveNestedRepairBlueprints(projectorBuilder);
         }
 
@@ -50,6 +50,26 @@ namespace MultigridProjector.Extensions
                 nestedProjectorBuilder.ProjectedGrid = null;
                 nestedProjectorBuilder.ProjectedGrids = null;
             }
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static MyObjectBuilder_Toolbar GetToolbar(this MyObjectBuilder_TerminalBlock block)
+        {
+            switch (block)
+            {
+                case MyObjectBuilder_SensorBlock b:
+                    return b.Toolbar;
+                case MyObjectBuilder_ButtonPanel b:
+                    return b.Toolbar;
+                case MyObjectBuilder_EventControllerBlock b:
+                    return b.Toolbar;
+                case MyObjectBuilder_ShipController b:
+                    return b.Toolbar;
+                case MyObjectBuilder_TimerBlock b:
+                    return b.Toolbar;
+            }
+
+            return null;
         }
     }
 }

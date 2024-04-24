@@ -27,8 +27,8 @@ namespace MultigridProjectorClient.Patches
         private static void CreateControls()
         {
             var controls = BlockHighlight.IterControls()
-                .Concat(ProjectorAligner.IterControls())
                 .Concat(RepairProjection.IterControls())
+                .Concat(ProjectorAligner.IterControls())
                 .Concat(CraftProjection.IterControls())
                 .ToList();
 

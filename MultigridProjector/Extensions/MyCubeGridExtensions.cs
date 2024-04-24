@@ -6,7 +6,6 @@ using MultigridProjector.Utilities;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.GameSystems;
-using VRage.Game;
 using VRageMath;
 
 namespace MultigridProjector.Extensions
@@ -36,7 +35,7 @@ namespace MultigridProjector.Extensions
         {
             return (List<MyBlockGroup>)BlockGroupsInfo.GetValue(grid);
         }
-        
+
         private static readonly MethodInfo AddGroupInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyCubeGrid), "AddGroup", new []{typeof(MyBlockGroup), typeof(bool)}));
         public static void AddGroup(this MyCubeGrid obj, MyBlockGroup group, bool unionSameNameGroups = true)
         {
