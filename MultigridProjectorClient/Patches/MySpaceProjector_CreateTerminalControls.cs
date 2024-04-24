@@ -13,12 +13,12 @@ namespace MultigridProjectorClient.Patches
     [SuppressMessage("ReSharper", "UnusedMember.Global")]
     [SuppressMessage("ReSharper", "InconsistentNaming")]
     [HarmonyPatch(typeof(MySpaceProjector))]
-    public static class MySpaceProjectorPatch
+    public static class MySpaceProjector_CreateTerminalControls
     {
         // ReSharper disable once UnusedMember.Local
         [HarmonyPrefix]
         [HarmonyPatch("CreateTerminalControls")]
-        private static bool CreateTerminalControlsPrefix()
+        private static bool Prefix()
         {
             return !MyTerminalControlFactory.AreControlsCreated<MySpaceProjector>();
         }
@@ -26,7 +26,7 @@ namespace MultigridProjectorClient.Patches
         // ReSharper disable once UnusedMember.Local
         [HarmonyPostfix]
         [HarmonyPatch("CreateTerminalControls")]
-        private static void CreateTerminalControlsPostfix()
+        private static void Postfix()
         {
             var iterControls = BlockHighlight.IterControls()
                 .Concat(ProjectorAligner.IterControls())

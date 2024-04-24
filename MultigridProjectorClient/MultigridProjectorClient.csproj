@@ -92,7 +92,7 @@
   <ItemGroup>
     <Compile Include="Extra\CraftProjection.cs" />
     <Compile Include="Menus\CraftDialog.cs" />
-    <Compile Include="Patches\MySpaceProjectorPatch.cs" />
+    <Compile Include="Patches\MySpaceProjector_CreateTerminalControls.cs" />
     <Compile Include="Utilities\ActionIcons.cs" />
     <Compile Include="Extra\ConnectSubgrids.cs" />
     <Compile Include="Extra\RepairProjection.cs" />
