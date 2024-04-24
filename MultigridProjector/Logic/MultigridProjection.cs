@@ -701,7 +701,7 @@ namespace MultigridProjector.Logic
             Projector.SetStatsDirty(true);
         }
 
-        private void UpdatePreviewBlockVisuals(bool force=false)
+        private void UpdatePreviewBlockVisuals(bool force = false)
         {
             if (!SetPreviewBlockVisuals)
                 return;

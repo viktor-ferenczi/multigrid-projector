@@ -17,20 +17,15 @@ using MultigridProjector.Utilities;
 // ReSharper disable SuggestVarOrType_Elsewhere
 namespace MultigridProjectorClient.Extra
 {
-    internal static class RepairProjection
+    static class RepairProjection
     {
         private static bool Enabled => Config.CurrentConfig.RepairProjection;
         private static bool IsWorkingButNotProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid == null;
         private static bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
 
-        public static void Initialize()
+        public static IEnumerable<CustomControl> IterControls()
         {
-            CreateTerminalControls();
-        }
-
-        private static void CreateTerminalControls()
-        {
-            MyTerminalControlButton<MySpaceProjector> loadRepairProjection = new MyTerminalControlButton<MySpaceProjector>(
+            var control = new MyTerminalControlButton<MySpaceProjector>(
                 "RepairProjection",
                 MyStringId.GetOrCompute("Load Repair Projection"),
                 MyStringId.GetOrCompute("Loads the projector's own grid as a repair projection."),
@@ -41,7 +36,7 @@ namespace MultigridProjectorClient.Extra
                 SupportsMultipleBlocks = false
             };
 
-            AddControl.AddControlAfter("Remove", loadRepairProjection);
+            yield return new CustomControl(ControlPlacement.After, "Remove", control);
         }
 
         private static void LoadMechanicalGroup(MyProjectorBase projector)

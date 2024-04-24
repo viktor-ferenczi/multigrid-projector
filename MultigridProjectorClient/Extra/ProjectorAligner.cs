@@ -82,7 +82,7 @@ namespace MultigridProjectorClient.Extra
         }
     }
 
-    internal class ProjectorAligner : IDisposable
+    class ProjectorAligner : IDisposable
     {
         private static readonly MyStringId[][] OffsetControls =
         {
@@ -123,15 +123,12 @@ namespace MultigridProjectorClient.Extra
 
         public static void Initialize()
         {
-            CreateTerminalControls();
-            CreateToolbarControls();
-
             Instance = new ProjectorAligner();
         }
 
-        private static void CreateTerminalControls()
+        public static IEnumerable<CustomControl> IterControls()
         {
-            MyTerminalControlButton<MySpaceProjector> alignProjection = new MyTerminalControlButton<MySpaceProjector>(
+            var control = new MyTerminalControlButton<MySpaceProjector>(
                 "ProjectorAligner",
                 MyStringId.GetOrCompute("Align Projection"),
                 MyStringId.GetOrCompute("Manually align the projection using keys familiar from block placement."),
@@ -142,33 +139,23 @@ namespace MultigridProjectorClient.Extra
                 SupportsMultipleBlocks = false
             };
 
-            AddControl.AddControlAfter("Blueprint", alignProjection);
+            yield return new CustomControl(ControlPlacement.After, "Blueprint", control);
         }
 
-        private static void CreateToolbarControls()
+        public static IEnumerable<IMyTerminalAction> IterActions()
         {
-            List<IMyTerminalAction> customActions = new List<IMyTerminalAction>();
-
-            {
-                IMyTerminalAction action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ProjectorAlignerStart");
-                action.Enabled = (terminalBlock) => Enabled && terminalBlock is IMyProjector;
-                action.Action = (terminalBlock) => Instance?.Assign(terminalBlock as IMyProjector);
-                action.ValidForGroups = true;
-                action.Icon = ActionIcons.MOVING_OBJECT_TOGGLE;
-                action.Name = new StringBuilder("Start manual projection alignment");
-                action.Writer = (b, s) => s.Append("Align");
-                action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
-                customActions.Add(action);
-            }
-
-            MyAPIGateway.TerminalControls.CustomActionGetter += (block, actions) =>
-            {
-                if (block is IMyProjector)
-                    actions.AddRange(customActions);
-            };
+            var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ProjectorAlignerStart");
+            action.Enabled = (terminalBlock) => Enabled && terminalBlock is IMyProjector;
+            action.Action = (terminalBlock) => Instance?.Assign(terminalBlock as IMyProjector);
+            action.ValidForGroups = true;
+            action.Icon = ActionIcons.MOVING_OBJECT_TOGGLE;
+            action.Name = new StringBuilder("Start manual projection alignment");
+            action.Writer = (b, s) => s.Append("Align");
+            action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
+            yield return action;
         }
 
-        public static void ShowDialog(MyProjectorBase projector)
+        private static void ShowDialog(MyProjectorBase projector)
         {
             if (Config.CurrentConfig.ShowDialogs)
             {
@@ -178,7 +165,7 @@ namespace MultigridProjectorClient.Extra
             }
             else
             {
-                MyGuiScreenTerminal instance = (MyGuiScreenTerminal)Reflection.GetValue(typeof(MyGuiScreenTerminal), "m_instance");
+                MyGuiScreenTerminal instance = (MyGuiScreenTerminal) Reflection.GetValue(typeof(MyGuiScreenTerminal), "m_instance");
                 instance.DataUnloading += (_) => Instance?.Assign(projector);
             }
 
@@ -230,7 +217,7 @@ namespace MultigridProjectorClient.Extra
                 projector.ProjectionRotation == rotation)
                 return;
 
-            var isConsoleBlock = ((MyProjectorBase)projector).AllowScaling;
+            var isConsoleBlock = ((MyProjectorBase) projector).AllowScaling;
             projector.ProjectionOffset = offset;
             projector.ProjectionRotation = isConsoleBlock ? 90 * rotation : rotation;
             projector.UpdateOffsetAndRotation();
@@ -241,11 +228,11 @@ namespace MultigridProjectorClient.Extra
             // Caller guarantees that the projector is working and projecting
             Debug.Assert(IsProjecting(projector));
 
-            Base6Directions.Direction direction = (Base6Directions.Direction)directionIndex;
+            Base6Directions.Direction direction = (Base6Directions.Direction) directionIndex;
             Vector3D directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
             Base6Directions.Direction closestDirectionOnProjector = projector.WorldMatrix.GetClosestDirection(directionVector);
 
-            Vector3I step = Base6Directions.IntDirections[(int)closestDirectionOnProjector];
+            Vector3I step = Base6Directions.IntDirections[(int) closestDirectionOnProjector];
             Vector3I movedOffset = Vector3I.Max(MinOffset, Vector3I.Min(MaxOffset, offset - step));
 
             offset = Vector3I.Max(MinOffset, Vector3I.Min(MaxOffset, movedOffset));
@@ -256,7 +243,7 @@ namespace MultigridProjectorClient.Extra
             // Caller guarantees that the projector is working and projecting
             Debug.Assert(IsProjecting(projector));
 
-            Base6Directions.Direction direction = (Base6Directions.Direction)directionIndex;
+            Base6Directions.Direction direction = (Base6Directions.Direction) directionIndex;
             Vector3D directionVector = MyAPIGateway.Session.LocalHumanPlayer.Character.WorldMatrix.GetDirectionVector(direction);
             Base6Directions.Direction closestProjectorDirection = projector.WorldMatrix.GetClosestDirection(directionVector);
             Vector3 projectorRotationAxis = Base6Directions.GetVector(closestProjectorDirection);
