@@ -20,28 +20,35 @@ namespace MultigridProjectorClient.Patches
         [HarmonyPatch("CreateTerminalControls")]
         private static void Postfix()
         {
-            var iterControls = BlockHighlight.IterControls()
+            CreateControls();
+            CreateActions();
+        }
+
+        private static void CreateControls()
+        {
+            var controls = BlockHighlight.IterControls()
                 .Concat(ProjectorAligner.IterControls())
                 .Concat(RepairProjection.IterControls())
-                .Concat(CraftProjection.IterControls());
+                .Concat(CraftProjection.IterControls())
+                .ToList();
 
-            var controls = new List<ITerminalControl>();
-            MyTerminalControlFactory.GetControls(typeof(MySpaceProjector), controls);
+            var existingControls = new List<ITerminalControl>();
+            MyTerminalControlFactory.GetControls(typeof(MySpaceProjector), existingControls);
 
-            HashSet<string> currentControlIds = new HashSet<string>(controls.Select(c => c.Id));
-            HashSet<string> newControlIds = new HashSet<string>(iterControls.Select(c => c.Control.Id));
+            var existingControlIds = new HashSet<string>(existingControls.Select(c => c.Id));
+            var controlIds = new HashSet<string>(controls.Select(c => c.Control.Id));
 
-            if (newControlIds.IsSubsetOf(currentControlIds))
+            if (controlIds.IsSubsetOf(existingControlIds))
             {
                 return;
             }
 
-            foreach (var customControl in iterControls)
+            foreach (var customControl in controls)
             {
                 var terminalControl = (MyTerminalControl<MySpaceProjector>) customControl.Control;
 
                 var referenceId = customControl.ReferenceId;
-                var i = controls.FindIndex(control => control.Id == referenceId);
+                var i = existingControls.FindIndex(control => control.Id == referenceId);
 
                 switch (customControl.Placement)
                 {
@@ -60,6 +67,29 @@ namespace MultigridProjectorClient.Patches
                         }
                         break;
                 }
+            }
+        }
+
+        private static void CreateActions()
+        {
+            var actions = BlockHighlight.IterActions()
+                .Concat(ProjectorAligner.IterActions())
+                .ToList();
+
+            var existingActions = new List<ITerminalAction>();
+            MyTerminalControlFactory.GetActions(typeof(MySpaceProjector), existingActions);
+
+            var existingActionIds = new HashSet<string>(existingActions.Select(a => a.Id));
+            var actionIds = new HashSet<string>(actions.Select(a => a.Id));
+
+            if (actionIds.IsSubsetOf(existingActionIds))
+            {
+                return;
+            }
+
+            foreach (var action in actions)
+            {
+                MyTerminalControlFactory.AddAction((MyTerminalAction<MySpaceProjector>) action);
             }
         }
     }
