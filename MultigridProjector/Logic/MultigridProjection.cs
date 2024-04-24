@@ -1301,7 +1301,14 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
             // Sanity check: The latest known block states must allow for welding the block, ignore the build request if the block is unconfirmed
             if (!subgrid.HasBuildableBlockAtPosition(previewCubeBlockPosition))
+            {
+                // This update prevents cases when the projection is not buildable after loading it,
+                // because the update worker does not start to scan the grids on server side,
+                // while it happens on client side. The player sees the correct state, but cannot build.
+                // This clause can be reached only on server side and only in this case.
+                ShouldUpdateProjection();
                 return;
+            }
 
             // Can the player build this block?
             // LEGAL: DO NOT REMOVE THIS CHECK!
