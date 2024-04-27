@@ -17,7 +17,9 @@ Multigrid Projector for the Space Engineers game.
 
 After enabling the plugin it will be active for all single player worlds you load and in case of multiplayer if the server or the other client you connect to also has the plugin loaded. Do not add the plugin as a mod to the worlds themselves, it is not required and will not load anyway.
 
-*Enjoy!*
+Please consider supporting my work on [Patreon](https://www.patreon.com/semods) or one time via [PayPal](https://www.paypal.com/paypalme/vferenczi/).
+
+*Thank you and enjoy!*
 
 ## Server plugins
 
@@ -69,23 +71,15 @@ You need to do this only once per working copy.
 You may also want to save this file for later reuse.
 
 ## Want to know more?
-- [SE Mods Discord](https://discord.gg/PYPFPGf3Ca)
-- [YouTube Channel](https://www.youtube.com/channel/UCc5ar3cW9qoOgdBb1FM_rxQ)
-- [Patreon](https://www.patreon.com/semods)
+
+- [SE Mods Discord](https://discord.gg/PYPFPGf3Ca) FAQ, Troubleshooting, Support, Bug Reports, Discussion
+- [Plugin Loader Discord](https://discord.gg/6ETGRU3CzR) Everything about plugins
 - [Torch plugin](https://torchapi.com/plugins/view/?guid=d9359ba0-9a69-41c3-971d-eb5170adb97e)
 - [Dedicated Server plugin](https://github.com/viktor-ferenczi/multigrid-projector/releases)
 - [Test world (Rings)](https://steamcommunity.com/sharedfiles/filedetails/?id=2420963329)
 - [Source code](https://github.com/viktor-ferenczi/multigrid-projector)
-- [Bug reports](https://discord.gg/x3Z8Ug5YkQ)
 - [Mod API](https://github.com/viktor-ferenczi/multigrid-projector/tree/main/ModApiTest)
 - [PB API](https://github.com/viktor-ferenczi/multigrid-projector/tree/main/IngameApiTest)
-
-Please support me if you would like to receive regular updates to this client plugin as new game versions are released.
-
-Please vote on the bug ticket to get multigrid welding into the vanilla game, eventually:
-https://support.keenswh.com/spaceengineers/pc/topic/multigrid-support-for-projectors
-
-Thank you and enjoy!
 
 ## Credits
 
