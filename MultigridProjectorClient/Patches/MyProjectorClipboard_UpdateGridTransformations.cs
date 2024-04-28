@@ -5,7 +5,7 @@ using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorClient.Patches
 {
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyProjectorClipboard))]

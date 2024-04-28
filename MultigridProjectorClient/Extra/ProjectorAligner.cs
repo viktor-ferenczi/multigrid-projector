@@ -14,9 +14,7 @@ using Sandbox.ModAPI.Interfaces.Terminal;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Text;
-using MultigridProjector.Extensions;
 using VRage.Game;
 using VRage.Input;
 using VRage.Utils;
@@ -130,18 +128,6 @@ namespace MultigridProjectorClient.Extra
 
         public static IEnumerable<CustomControl> IterControls()
         {
-            var autoAlignProjection = new MyTerminalControlButton<MySpaceProjector>(
-                "AutoAlignProjection",
-                MyStringId.GetOrCompute("Auto-align Projection"),
-                MyStringId.GetOrCompute("Automatically align the projection (name of repair projector must match)"),
-                AutoAlignRepairProjection)
-            {
-                Visible = (_) => Enabled,
-                Enabled = IsProjecting,
-                SupportsMultipleBlocks = false
-            };
-            yield return new CustomControl(ControlPlacement.After, "Blueprint", autoAlignProjection);
-
             var alignProjection = new MyTerminalControlButton<MySpaceProjector>(
                 "ProjectorAligner",
                 MyStringId.GetOrCompute("Align Projection"),
@@ -157,42 +143,15 @@ namespace MultigridProjectorClient.Extra
 
         public static IEnumerable<IMyTerminalAction> IterActions()
         {
-            {
-                var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("AutoAlignProjection");
-                action.Enabled = (terminalBlock) => Enabled && terminalBlock is IMyProjector;
-                action.Action = (terminalBlock) => AutoAlignRepairProjection(terminalBlock as IMyProjector);
-                action.ValidForGroups = true;
-                action.Icon = ActionIcons.MOVING_OBJECT_TOGGLE;
-                action.Name = new StringBuilder("Automatically align projection");
-                action.Writer = (b, s) => s.Append("Auto");
-                action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
-                yield return action;
-            }
-
-            {
-                var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ProjectorAlignerStart");
-                action.Enabled = (terminalBlock) => Enabled && terminalBlock is IMyProjector;
-                action.Action = (terminalBlock) => Instance?.Assign(terminalBlock as IMyProjector);
-                action.ValidForGroups = true;
-                action.Icon = ActionIcons.MOVING_OBJECT_TOGGLE;
-                action.Name = new StringBuilder("Start manual projection alignment");
-                action.Writer = (b, s) => s.Append("Align");
-                action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
-                yield return action;
-            }
-        }
-
-        private static void AutoAlignRepairProjection(IMyProjector projector)
-        {
-            var projectorBase = (MyProjectorBase) projector;
-            if (!projectorBase.IsProjecting())
-                return;
-
-            var firstGrid = projectorBase.GetOriginalGridBuilders()?.FirstOrDefault();
-            if (firstGrid == null)
-                return;
-
-            RepairProjection.AlignToRepairProjector(projector, firstGrid);
+            var action = MyAPIGateway.TerminalControls.CreateAction<IMyProjector>("ProjectorAlignerStart");
+            action.Enabled = (terminalBlock) => Enabled && terminalBlock is IMyProjector;
+            action.Action = (terminalBlock) => Instance?.Assign(terminalBlock as IMyProjector);
+            action.ValidForGroups = true;
+            action.Icon = ActionIcons.MOVING_OBJECT_TOGGLE;
+            action.Name = new StringBuilder("Start manual projection alignment");
+            action.Writer = (b, s) => s.Append("Align");
+            action.InvalidToolbarTypes = new List<MyToolbarType> { MyToolbarType.None, MyToolbarType.Character, MyToolbarType.Spectator };
+            yield return action;
         }
 
         private static void ShowDialog(MyProjectorBase projector)
