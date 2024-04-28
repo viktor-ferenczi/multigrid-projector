@@ -93,6 +93,7 @@
     <Compile Include="Extra\CraftProjection.cs" />
     <Compile Include="Extra\ToolbarFix.cs" />
     <Compile Include="Menus\CraftDialog.cs" />
+    <Compile Include="Patches\MyGuiBlueprintScreen_Reworked_CreateBlueprintFromClipboard.cs" />
     <Compile Include="Patches\MySpaceProjector_CreateTerminalControls.cs" />
     <Compile Include="Utilities\ActionIcons.cs" />
     <Compile Include="Extra\ConnectSubgrids.cs" />
@@ -116,7 +117,7 @@
     <Compile Include="Patches\MyProjectorBase_InitializeClipboard.cs" />
     <Compile Include="Patches\MyProjectorBase_OnBlockAdded.cs" />
     <Compile Include="Patches\MyProjectorBase_OnBlockRemoved.cs" />
-    <Compile Include="Patches\MyProjectorBase_Remap.cs" />
+    <Compile Include="Patches\MyProjectorBase_SetNewBlueprint.cs" />
     <Compile Include="Patches\MyProjectorBase_RemoveProjection.cs" />
     <Compile Include="Patches\MyProjectorBase_UpdateAfterSimulation.cs" />
     <Compile Include="Patches\MyProjectorBase_UpdateProjection.cs" />

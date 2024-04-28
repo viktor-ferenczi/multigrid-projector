@@ -2,11 +2,10 @@ using System;
 using HarmonyLib;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
-using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using VRage.Game;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorClient.Patches
 {
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyProjectorBase))]

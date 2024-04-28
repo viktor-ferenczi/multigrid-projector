@@ -39,8 +39,8 @@ namespace MultigridProjector.Logic
     {
         private const int UpdateCooldownTime = 2000; // ms
 
+        // Active multigrid projections by the Projector block's EntityId
         private static readonly RwLockDictionary<long, MultigridProjection> Projections = new RwLockDictionary<long, MultigridProjection>();
-        private static readonly HashSet<long> ProjectorsWithBlueprintLoaded = new HashSet<long>();
 
         // Marks build calls to prevent building the default top block
         private static readonly ThreadLocal<bool> IsBuildingProjectedBlock = new ThreadLocal<bool>();
@@ -207,8 +207,6 @@ namespace MultigridProjector.Logic
 
             ForceUpdateProjection();
 
-            AutoAlignBlueprint();
-
             MultigridProjectorApiProvider.RegisterProgrammableBlockApi();
         }
 
@@ -374,18 +372,6 @@ namespace MultigridProjector.Logic
         {
             updateWork = new MultigridUpdateWork(this);
             updateWork.OnUpdateWorkCompleted += OnUpdateWorkCompletedWithErrorHandler;
-        }
-
-        private void AutoAlignBlueprint()
-        {
-            // This condition will be True only on the client which loaded the blueprint
-            if (!ProjectorsWithBlueprintLoaded.Contains(Projector.EntityId))
-                return;
-
-            ProjectorsWithBlueprintLoaded.Remove(Projector.EntityId);
-
-            if (Projector.AlignToRepairProjector(GridBuilders[0]))
-                PluginLog.Debug($"Aligned repair projection loaded into {Projector.GetDebugName()}");
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -1859,6 +1845,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             var builderCubeBlock = (MyObjectBuilder_ProjectorBase) blockBuilder;
             lock (gridBuilders)
                 builderCubeBlock.ProjectedGrids = gridBuilders.Clone();
+
             MyEntities.RemapObjectBuilderCollection(builderCubeBlock.ProjectedGrids);
         }
 
@@ -1925,12 +1912,40 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return false;
 
             // Ensure compatible grid size between the projector and the first subgrid to be built
-            var compatibleGridSize = gridBuilders[0].GridSizeEnum == projector.CubeGrid.GridSizeEnum;
+            var firstGridBuilder = gridBuilders.First();
+            var compatibleGridSize = firstGridBuilder.GridSizeEnum == projector.CubeGrid.GridSizeEnum;
             if (!compatibleGridSize)
                 return true;
 
-            // Sign up for repair projection auto alignment
-            ProjectorsWithBlueprintLoaded.Add(projector.EntityId);
+            // Auto-align the blueprint to any repair projector
+            if (firstGridBuilder.AlignToRepairProjector(projector))
+            {
+                // The blueprint is aligned to a repair projector therefore no offset is required
+                var projectorInterface = (IMyProjector) projector;
+                projectorInterface.ProjectionOffset = Vector3I.Zero;
+
+                // The orientation of the first block is ignored from the preview grid's spatial orientation.
+                // However, we still have the orientation of that block and can use it to compensate by
+                // setting the rotation of the projection accordingly.
+                var projectorBuilder = firstGridBuilder.CubeBlocks.First();
+                var orientation = (Quaternion) projectorBuilder.Orientation;
+                if (orientation == Quaternion.Zero)
+                {
+                    projectorInterface.ProjectionRotation = Vector3I.Zero;
+                }
+                else
+                {
+                    orientation = Quaternion.Inverse(orientation);
+                    var blockOrientation = new MyBlockOrientation(ref orientation);
+                    OrientationAlgebra.ProjectionRotationFromForwardAndUp(blockOrientation.Forward, blockOrientation.Up, out var rotation);
+                    projectorInterface.ProjectionRotation = rotation;
+                }
+
+                // This must come before loading the grid builders, otherwise the wrong orientation may
+                // show up in multiplayer for a while which may cause unwanted welding of "random" blocks
+                // if this happens in the field of a Build & Repair (nanobots, programmable matter) block.
+                projectorInterface.UpdateOffsetAndRotation();
+            }
 
             // Prepare the blueprint for being projected for welding
             gridBuilders.PrepareForProjection();
@@ -1941,6 +1956,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             // Notify the server and all clients (including this one) to create the projection,
             // our data model will be created by SetNewBlueprint the same way at all locations
             projector.SendNewBlueprint(gridBuilders);
+
             return false;
         }
 

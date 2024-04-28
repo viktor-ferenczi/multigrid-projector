@@ -8,7 +8,7 @@ using Sandbox.Game.Weapons;
 using SpaceEngineers.Game.Entities.Blocks;
 using VRageMath;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorClient.Patches
 {
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyShipWelder))]
