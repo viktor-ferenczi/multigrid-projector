@@ -5,7 +5,6 @@ using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using VRage.Game;
-using VRageMath;
 
 namespace MultigridProjector.Extensions
 {
@@ -76,6 +75,7 @@ namespace MultigridProjector.Extensions
             return null;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static string FormatBlockName(MyObjectBuilder_TerminalBlock terminalBlockBuilder)
         {
             if (terminalBlockBuilder.CustomName != null)
