@@ -1945,6 +1945,11 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 // show up in multiplayer for a while which may cause unwanted welding of "random" blocks
                 // if this happens in the field of a Build & Repair (nanobots, programmable matter) block.
                 projectorInterface.UpdateOffsetAndRotation();
+
+                // Keep the repair projection even if it is completely built. In that case the player
+                // would not have a chance to enable it before the projector disabled itself, therefore
+                // the projector would not be active for repair.
+                projector.SetValue("KeepProjection", true);
             }
 
             // Prepare the blueprint for being projected for welding
