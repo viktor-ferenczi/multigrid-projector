@@ -98,7 +98,7 @@ namespace MultigridProjector.Extensions
             // Select the repair projector (must be unambiguous)
             // 1. The projector which is the very first block is expected to be a repair one
             // 2. Projector with the exact same name if the name is unique
-            // 3. Projector with "Repair" in its name (case-insensitive)
+            // 3. The first projector with "Repair" in its name (case-insensitive)
             // In case of ambiguity do not align.
             var projectorBuilder = gridBuilder.CubeBlocks.First() as MyObjectBuilder_Projector;
             if (projectorBuilder == null && projector != null)
@@ -115,14 +115,8 @@ namespace MultigridProjector.Extensions
             }
             if (projectorBuilder == null)
             {
-                var projectorBuildersWithRepairInName = projectorBuilders
-                    .Where(b => FormatBlockName(b).ToLower().Contains("repair"))
-                    .ToList();
-
-                if (projectorBuildersWithRepairInName.Count == 1)
-                {
-                    projectorBuilder = projectorBuildersWithRepairInName.First();
-                }
+                projectorBuilder = projectorBuilders
+                    .FirstOrDefault(b => FormatBlockName(b).ToLower().Contains("repair"));
             }
             if (projectorBuilder == null)
             {
