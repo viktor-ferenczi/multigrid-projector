@@ -25,7 +25,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyMechanicalConnectionBlockBase))]
     [HarmonyPatch("RecreateTop")]
-    [EnsureOriginal("322f8da0")]
+    [EnsureOriginal("322f8da0", "88379421")]
     // ReSharper disable once InconsistentNaming
     public static class MyMechanicalConnectionBlockBase_RecreateTop
     {
