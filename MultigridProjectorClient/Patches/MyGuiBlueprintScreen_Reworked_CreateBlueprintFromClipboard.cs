@@ -7,6 +7,8 @@ using Sandbox.Game.Gui;
 
 namespace MultigridProjectorClient.Patches
 {
+    // This is called when the player makes a new blueprint (Ctrl-B) or
+    // when an existing blueprint is replaced by the clipboard contents
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyGuiBlueprintScreen_Reworked))]
     [HarmonyPatch("CreateBlueprintFromClipboard")]
