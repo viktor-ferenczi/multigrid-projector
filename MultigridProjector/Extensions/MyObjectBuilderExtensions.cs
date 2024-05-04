@@ -132,12 +132,6 @@ namespace MultigridProjector.Extensions
                 gridBuilder.CubeBlocks.Insert(0, projectorBuilder);
             }
 
-            if (projector == null)
-            {
-                // This is the case when a new blueprint is made (Ctrl-B) or an existing one is replaced in Blueprints
-                projector = MyEntities.GetEntityById(gridBuilder.EntityId) as MyProjectorBase;
-            }
-
             // Signal to the caller that the blueprint is aligned to a repair projector,
             // so it can zero out the offset and set the rotation of the projection
             return true;
