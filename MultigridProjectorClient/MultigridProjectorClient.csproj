@@ -93,7 +93,7 @@
     <Compile Include="Extra\CraftProjection.cs" />
     <Compile Include="Extra\ToolbarFix.cs" />
     <Compile Include="Menus\CraftDialog.cs" />
-    <Compile Include="Patches\MyGuiBlueprintScreen_Reworked_CreateBlueprintFromClipboard.cs" />
+    <Compile Include="Patches\MyGuiBlueprintScreenPatches.cs" />
     <Compile Include="Patches\MySpaceProjector_CreateTerminalControls.cs" />
     <Compile Include="Utilities\ActionIcons.cs" />
     <Compile Include="Extra\ConnectSubgrids.cs" />

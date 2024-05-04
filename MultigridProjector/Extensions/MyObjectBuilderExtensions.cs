@@ -139,6 +139,14 @@ namespace MultigridProjector.Extensions
             return true;
         }
 
+        public static void CensorWorldPosition(this MyObjectBuilder_CubeGrid gridBuilder)
+        {
+            if (gridBuilder?.PositionAndOrientation == null)
+                return;
+
+            gridBuilder.PositionAndOrientation = MyPositionAndOrientation.Default;
+        }
+
         public static void CensorWorldPosition(this IReadOnlyCollection<MyObjectBuilder_CubeGrid> gridBuilders)
         {
             if (gridBuilders == null || gridBuilders.Count == 0)
