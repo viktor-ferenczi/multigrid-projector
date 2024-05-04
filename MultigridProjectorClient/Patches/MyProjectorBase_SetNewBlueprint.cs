@@ -2,20 +2,20 @@ using System;
 using System.Reflection;
 using HarmonyLib;
 using MultigridProjector.Extensions;
-using Sandbox.Game.Multiplayer;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
+using Sandbox.Game.Multiplayer;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorClient.Patches
 {
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyProjectorBase))]
     [HarmonyPatch("Remap")]
     [EnsureOriginal("bce65541")]
     // ReSharper disable once InconsistentNaming
-    public static class MyProjectorBase_Remap
+    public static class MyProjectorBase_SetNewBlueprint
     {
-        private static readonly MethodInfo SetNewBlueprintInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint"));
+        private static readonly MethodInfo SetNewBlueprintMethod = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyProjectorBase), "SetNewBlueprint"));
 
         [ClientOnly]
         // ReSharper disable once InconsistentNaming
@@ -27,14 +27,14 @@ namespace MultigridProjector.Patches
             {
                 if (!Sync.IsServer)
                     return false;
-                
+
                 projector.RemapObjectBuilders();
 
                 // Call patched SetNewBlueprint
                 var gridBuilders = projector.GetOriginalGridBuilders();
                 if (gridBuilders != null && gridBuilders.Count > 0)
                 {
-                    SetNewBlueprintInfo.Invoke(projector, new object[] {gridBuilders});
+                    SetNewBlueprintMethod.Invoke(projector, new object[] { gridBuilders });
                 }
                 else
                 {

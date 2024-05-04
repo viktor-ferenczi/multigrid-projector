@@ -159,7 +159,7 @@ https://github.com/viktor-ferenczi/multigrid-projector
 
             public override int GetHashCode()
             {
-                return (((((GridIndex * 397) ^ Position.X) * 397) ^ Position.Y) * 397) ^ Position.Z;
+                return ((GridIndex * 397 ^ Position.X) * 397 ^ Position.Y) * 397 ^ Position.Z;
             }
         }
 

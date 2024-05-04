@@ -15,7 +15,9 @@ Multigrid Projector for the Space Engineers game.
 5. Enable the Multigrid Projector plugin
 6. Click on Save, then Restart (below the plugin list)
 
-After enabling the plugin it will be active for all single player worlds you load and in case of multiplayer if the server or the other client you connect to also has the plugin loaded. Do not add the plugin as a mod to the worlds themselves, it is not required and will not load anyway.
+After enabling the plugin it will be active for all single player worlds you load.
+In case of multiplayer full functionality is supported if the server also has the
+MGP plugin installed, but most of the multigrid welding will still work if not.
 
 Please consider supporting my work on [Patreon](https://www.patreon.com/semods) or one time via [PayPal](https://www.paypal.com/paypalme/vferenczi/).
 

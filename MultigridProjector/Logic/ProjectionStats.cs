@@ -17,11 +17,8 @@ namespace MultigridProjector.Logic
 
         public readonly Dictionary<MyCubeBlockDefinition, int> RemainingBlocksPerType = new Dictionary<MyCubeBlockDefinition, int>();
 
-        public bool Valid => TotalBlocks > 0;
         public bool IsBuildCompleted => Valid && RemainingBlocks == 0;
-        public int BuiltBlocks => TotalBlocks - RemainingBlocks;
-        public int BuiltArmorBlocks => TotalArmorBlocks - RemainingArmorBlocks;
-        public bool BuiltOnlyArmorBlocks => Valid && BuiltBlocks == BuiltArmorBlocks;
+        private bool Valid => TotalBlocks > 0;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void Clear()

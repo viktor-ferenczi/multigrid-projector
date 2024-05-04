@@ -4,7 +4,7 @@ using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 
-namespace MultigridProjector.Patches
+namespace MultigridProjectorClient.Patches
 {
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyMechanicalConnectionBlockBase))]

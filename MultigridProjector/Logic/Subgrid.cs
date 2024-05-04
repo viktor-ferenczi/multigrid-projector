@@ -67,6 +67,9 @@ namespace MultigridProjector.Logic
         // Block state hash of the last visual update
         private ulong latestVisualUpdateStateHash;
 
+        // Event to fire when a functional block is built (added)
+        public event Action<Subgrid, MyTerminalBlock> OnTerminalBlockAdded;
+
         #region Initialization and disposal
 
         public Subgrid(MultigridProjection projection, int index)
@@ -100,7 +103,7 @@ namespace MultigridProjector.Logic
                     continue;
                 }
 
-                blocks.Add(previewBlock.Position, new ProjectedBlock(previewBlock, blockBuilders[previewBlock.Min]));
+                blocks[previewBlock.Position] = new ProjectedBlock(previewBlock, blockBuilders[previewBlock.Min]);
             }
 
             Blocks = blocks;
@@ -177,14 +180,14 @@ namespace MultigridProjector.Logic
         #region Accessors
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool TryGetProjectedBlock(Vector3I previewPosition, out ProjectedBlock projectedBlock)
+        public bool TryGetProjectedBlock(in Vector3I previewPosition, out ProjectedBlock projectedBlock)
         {
             using (BlocksLock.Read())
                 return Blocks.TryGetValue(previewPosition, out projectedBlock);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetBlockBuilder(Vector3I previewPosition, out MyObjectBuilder_CubeBlock blockBuilder)
+        public bool TryGetBlockBuilder(in Vector3I previewPosition, out MyObjectBuilder_CubeBlock blockBuilder)
         {
             if (!TryGetProjectedBlock(previewPosition, out var projectedBlock))
             {
@@ -197,7 +200,7 @@ namespace MultigridProjector.Logic
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool TryGetBlockState(Vector3I previewPosition, out BlockState blockState)
+        public bool TryGetBlockState(in Vector3I previewPosition, out BlockState blockState)
         {
             if (!TryGetProjectedBlock(previewPosition, out var projectedBlock))
             {
@@ -210,7 +213,7 @@ namespace MultigridProjector.Logic
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public bool HasBuildableBlockAtPosition(Vector3I position)
+        public bool HasBuildableBlockAtPosition(in Vector3I position)
         {
             using (BuiltGridLock.Read())
                 if (!HasBuilt)
@@ -265,6 +268,24 @@ namespace MultigridProjector.Logic
             // Apply the block's own orientation on the grid
             previewBlock.Orientation.GetQuaternion(out var previewBlockOrientation);
             orientationQuaternion *= previewBlockOrientation;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3I PreviewToBuiltBlockPosition(Vector3I position)
+        {
+            if (BuiltGrid == null)
+                return default;
+
+            return BuiltGrid.WorldToGridInteger(PreviewGrid.GridIntegerToWorld(position));
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Vector3I BuiltToPreviewBlockPosition(Vector3I position)
+        {
+            if (BuiltGrid == null)
+                return default;
+
+            return PreviewGrid.WorldToGridInteger(BuiltGrid.GridIntegerToWorld(position));
         }
 
         #endregion
@@ -459,8 +480,11 @@ namespace MultigridProjector.Logic
 
             if (slimBlock.FatBlock is MyTerminalBlock terminalBlock)
             {
-                AddBlockToGroups(terminalBlock);
+                AddBlockToGroups(terminalBlock); // FIXME: This should not be called on multiplayer clients if MGP is available on server side!
                 terminalBlock.CheckConnectionChanged += OnCheckConnectionChanged;
+
+                // FIXME: This should not be called on multiplayer clients if MGP is available on server side!
+                OnTerminalBlockAdded?.Invoke(this, terminalBlock);
             }
 
             switch (slimBlock.FatBlock)

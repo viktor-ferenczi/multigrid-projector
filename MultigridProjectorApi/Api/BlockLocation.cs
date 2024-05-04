@@ -15,7 +15,7 @@ namespace MultigridProjector.Api
 
         public override int GetHashCode()
         {
-            return (((((GridIndex * 397) ^ Position.X) * 397) ^ Position.Y) * 397) ^ Position.Z;
+            return ((GridIndex * 397 ^ Position.X) * 397 ^ Position.Y) * 397 ^ Position.Z;
         }
     }
 }

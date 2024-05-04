@@ -1,0 +1,17 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Vanilla Space Engineers" type="RunExe" factoryName=".NET Executable">
+    <option name="EXE_PATH" value="$PROJECT_DIR$/../../../Program Files (x86)/Steam/steamapps/common/SpaceEngineers/Bin64/SpaceEngineers.exe" />
+    <option name="PROGRAM_PARAMETERS" value="-skipintro" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../../Program Files (x86)/Steam/steamapps/common/SpaceEngineers/Bin64" />
+    <option name="PASS_PARENT_ENVS" value="1" />
+    <option name="USE_EXTERNAL_CONSOLE" value="0" />
+    <option name="USE_MONO" value="0" />
+    <option name="RUNTIME_ARGUMENTS" value="" />
+    <option name="RUNTIME_TYPE" value="netfw" />
+    <method v="2">
+      <option name="Build" default="false" projectName="MultigridProjectorClient" projectPath="$PROJECT_DIR$/MultigridProjectorClient/MultigridProjectorClient.csproj" />
+      <option name="Build" default="false" projectName="IngameApiTest" projectPath="$PROJECT_DIR$/IngameApiTest/IngameApiTest.csproj" />
+      <option name="Build" default="false" projectName="ModApiTest" projectPath="$PROJECT_DIR$/ModApiTest/ModApiTest.csproj" />
+    </method>
+  </configuration>
+</component>

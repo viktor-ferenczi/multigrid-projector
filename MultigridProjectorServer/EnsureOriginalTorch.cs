@@ -70,7 +70,7 @@ namespace MultigridProjectorServer
             {
                 var actualDigest = HashMethodBody(methodInfo).ToString("x8");
                 if (!ensureOriginal._allowedHexDigests.Contains(actualDigest))
-                    return $"Body of patched method {declaringType.Name}.{methodName} has changed: actual {actualDigest}, expected one of {ensureOriginal.AllowedHexDigestsAsText}\"";
+                    return $"Body of patched method {declaringType.Name}.{methodName} has changed: actual {actualDigest}, expected {ensureOriginal.AllowedHexDigestsAsText}\"";
             }
             catch (TargetInvocationException e)
             {

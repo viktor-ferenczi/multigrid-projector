@@ -1,15 +1,11 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using HarmonyLib;
 using MultigridProjector.Utilities;
-using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
-using Sandbox.ModAPI.Ingame;
-using Sandbox.ModAPI.Interfaces;
 using VRage.Game;
 using VRage.Sync;
 using VRageMath;
@@ -285,42 +281,6 @@ namespace MultigridProjector.Extensions
             // Consistent remapping of all grids to keep sub-grid relations intact
             lock (gridBuilders)
                 MyEntities.RemapObjectBuilderCollection(gridBuilders);
-        }
-
-        public static bool AlignToRepairProjector(this MyProjectorBase projector, MyObjectBuilder_CubeGrid gridBuilder)
-        {
-            var projectorBuilder = gridBuilder
-                .CubeBlocks
-                .OfType<MyObjectBuilder_Projector>()
-                .FirstOrDefault(b =>
-                    b.SubtypeId == projector.BlockDefinition.Id.SubtypeId &&
-                    (Vector3I) b.Min == projector.Min &&
-                    (MyBlockOrientation) b.BlockOrientation == projector.Orientation &&
-                    (b.CustomName ?? b.Name) == projector.GetSafeName());
-
-            if (projectorBuilder == null)
-                return false;
-
-            projector.Orientation.GetQuaternion(out var gridToProjectorQuaternion);
-            var projectorToGridQuaternion = Quaternion.Inverse(gridToProjectorQuaternion);
-            if (!OrientationAlgebra.ProjectionRotationFromForwardAndUp(Base6Directions.GetDirection(projectorToGridQuaternion.Forward), Base6Directions.GetDirection(projectorToGridQuaternion.Up), out var projectionRotation))
-                return false;
-
-            var anchorBlock = projector.CubeGrid.CubeBlocks.FirstOrDefault();
-            if (anchorBlock == null)
-                return false;
-
-            var offsetInsideGrid = projector.Position - anchorBlock.Position;
-            var projectionOffset = new Vector3I(Vector3.Round(projectorToGridQuaternion * offsetInsideGrid));
-            projectionOffset = Vector3I.Clamp(projectionOffset, new Vector3I(-50), new Vector3I(50));
-
-            var p = (IMyProjector) projector;
-            p.SetValueBool("KeepProjection", true);
-            p.ProjectionOffset = projectionOffset;
-            p.ProjectionRotation = projectionRotation;
-            p.UpdateOffsetAndRotation();
-
-            return true;
         }
     }
 }
