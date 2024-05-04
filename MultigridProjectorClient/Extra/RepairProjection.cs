@@ -1,9 +1,7 @@
 ﻿using Sandbox.Game.Entities.Blocks;
-using Sandbox.ModAPI;
 using System.Collections.Generic;
 using System.Linq;
 using VRage.Game;
-using VRageMath;
 using MultigridProjectorClient.Utilities;
 using Sandbox.ModAPI.Interfaces;
 using Entities.Blocks;

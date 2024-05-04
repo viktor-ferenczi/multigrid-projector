@@ -2,6 +2,7 @@
 using Sandbox.Game.Screens.Helpers;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using MultigridProjector.Extensions;
 using Sandbox.Common.ObjectBuilders;
 using VRage.Game;
@@ -25,6 +26,7 @@ namespace MultigridProjector.Logic
                 Position = position;
             }
 
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             public override int GetHashCode()
             {
                 return ((GridIndex * 397 ^ Position.X) * 397 ^ Position.Y) * 397 ^ Position.Z;

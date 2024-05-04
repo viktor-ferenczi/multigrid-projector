@@ -2107,6 +2107,8 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             ForceUpdateProjection();
         }
 
+        // Rider mis-detects this method as unused
+        // ReSharper disable once UnusedMember.Global
         public void FixToolbars()
         {
             toolbarFixer.FixToolbars(this);

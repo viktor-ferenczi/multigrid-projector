@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using VRageMath;
 
 namespace MultigridProjector.Logic
@@ -13,10 +14,7 @@ namespace MultigridProjector.Logic
             MinPosition = minPosition;
         }
 
-        public bool Equals(in BlockMinLocation other) =>
-            GridIndex == other.GridIndex &&
-            MinPosition == other.MinPosition;
-
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
             return ((GridIndex * 397 ^ MinPosition.X) * 397 ^ MinPosition.Y) * 397 ^ MinPosition.Z;

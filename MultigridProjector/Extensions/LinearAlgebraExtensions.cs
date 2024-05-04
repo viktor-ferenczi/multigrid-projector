@@ -19,12 +19,5 @@ namespace MultigridProjector.Extensions
         {
             return $"{v.X}, {v.Y}, {v.Z}";
         }
-
-        public static bool IsIdentity(this MatrixI matrix)
-        {
-            return matrix.Translation == Vector3I.Zero &&
-                   matrix.Forward == Base6Directions.Direction.Forward &&
-                   matrix.Up == Base6Directions.Direction.Up;
-        }
     }
 }

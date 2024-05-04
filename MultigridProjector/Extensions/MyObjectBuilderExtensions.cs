@@ -3,7 +3,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
-using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
 using VRage;
 using VRage.Game;
