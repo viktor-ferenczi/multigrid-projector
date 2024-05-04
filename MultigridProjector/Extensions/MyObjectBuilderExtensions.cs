@@ -138,17 +138,8 @@ namespace MultigridProjector.Extensions
                 projector = MyEntities.GetEntityById(gridBuilder.EntityId) as MyProjectorBase;
             }
 
-            // Store the original projector's orientation in the blueprint,
-            // so it can be used to set the proper rotation of projection on
-            // loading this blueprint into a repair projector later
-            if (projector != null)
-            {
-                projector.Orientation.GetQuaternion(out var projectorOrientation);
-                projectorBuilder.Orientation = projectorOrientation;
-            }
-
             // Signal to the caller that the blueprint is aligned to a repair projector,
-            // so it can zero out the offset and rotation of the projection if needed
+            // so it can zero out the offset and set the rotation of the projection
             return true;
         }
     }

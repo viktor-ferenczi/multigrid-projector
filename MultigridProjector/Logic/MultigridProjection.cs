@@ -1866,6 +1866,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         }
 
         [ClientOnly]
+        // ReSharper disable once UnusedMember.Global
         public static bool InitFromObjectBuilder(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridBuilders)
         {
             if (gridBuilders == null)
@@ -1918,28 +1919,21 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return true;
 
             // Auto-align the blueprint to any repair projector
-            if (firstGridBuilder.AlignToRepairProjector(projector))
+            if (firstGridBuilder.AlignToRepairProjector(projector) &&
+                firstGridBuilder.CubeBlocks.First() is MyObjectBuilder_Projector projectorBuilder)
             {
                 // The blueprint is aligned to a repair projector therefore no offset is required
                 var projectorInterface = (IMyProjector) projector;
                 projectorInterface.ProjectionOffset = Vector3I.Zero;
 
-                // The orientation of the first block is ignored from the preview grid's spatial orientation.
-                // However, we still have the orientation of that block and can use it to compensate by
-                // setting the rotation of the projection accordingly.
-                var projectorBuilder = firstGridBuilder.CubeBlocks.First();
-                var orientation = (Quaternion) projectorBuilder.Orientation;
-                if (orientation == Quaternion.Zero)
-                {
-                    projectorInterface.ProjectionRotation = Vector3I.Zero;
-                }
-                else
-                {
-                    orientation = Quaternion.Inverse(orientation);
-                    var blockOrientation = new MyBlockOrientation(ref orientation);
-                    OrientationAlgebra.ProjectionRotationFromForwardAndUp(blockOrientation.Forward, blockOrientation.Up, out var rotation);
-                    projectorInterface.ProjectionRotation = rotation;
-                }
+                // Cancel out the projector's block orientation in the blueprint, so the projector you
+                // build on will determine the orientation of the main grid in the projection
+                var projectorOrientationInBlueprint = (MyBlockOrientation)projectorBuilder.BlockOrientation;
+                projectorOrientationInBlueprint.GetQuaternion(out var projectorOrientationQuaternion);
+                var projectionOrientationQuaternion = Quaternion.Inverse(projectorOrientationQuaternion);
+                var projectionOrientation = new MyBlockOrientation(ref projectionOrientationQuaternion);
+                OrientationAlgebra.ProjectionRotationFromForwardAndUp(projectionOrientation.Forward, projectionOrientation.Up, out var projectionRotation);
+                projectorInterface.ProjectionRotation = projectionRotation;
 
                 // This must come before loading the grid builders, otherwise the wrong orientation may
                 // show up in multiplayer for a while which may cause unwanted welding of "random" blocks
