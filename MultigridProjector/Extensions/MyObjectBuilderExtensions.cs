@@ -1,10 +1,13 @@
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
+using VRage;
 using VRage.Game;
+using VRageMath;
 
 namespace MultigridProjector.Extensions
 {
@@ -135,6 +138,27 @@ namespace MultigridProjector.Extensions
             // Signal to the caller that the blueprint is aligned to a repair projector,
             // so it can zero out the offset and set the rotation of the projection
             return true;
+        }
+
+        public static void CensorWorldPosition(this IReadOnlyCollection<MyObjectBuilder_CubeGrid> gridBuilders)
+        {
+            if (gridBuilders == null || gridBuilders.Count == 0)
+                return;
+
+            var maybeMainGridPO = gridBuilders.First().PositionAndOrientation;
+            if (!maybeMainGridPO.HasValue)
+                return;
+
+            var mainGridPosition = (Vector3D) maybeMainGridPO.Value.Position;
+
+            foreach (var gridBuilder in gridBuilders)
+            {
+                if (!gridBuilder.PositionAndOrientation.HasValue)
+                    continue;
+
+                var gridPO = gridBuilder.PositionAndOrientation.Value;
+                gridBuilder.PositionAndOrientation = new MyPositionAndOrientation(gridPO.Position - mainGridPosition, gridPO.Forward, gridPO.Up);
+            }
         }
     }
 }

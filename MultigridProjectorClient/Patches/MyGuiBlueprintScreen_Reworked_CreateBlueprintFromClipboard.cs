@@ -24,6 +24,7 @@ namespace MultigridProjectorClient.Patches
                 return true;
 
             gridBuilders.First().AlignToRepairProjector(null);
+            gridBuilders.CensorWorldPosition();
 
             return true;
         }
