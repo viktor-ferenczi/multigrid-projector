@@ -83,8 +83,15 @@ namespace MultigridProjector.Extensions
             if (terminalBlockBuilder.CustomName != null)
                 return terminalBlockBuilder.CustomName;
 
-            var defaultName = MyDefinitionManager.Static?.TryGetDefinition<MyCubeBlockDefinition>(terminalBlockBuilder.SubtypeId, out var blockDefinition) == true ? blockDefinition.DisplayNameText : terminalBlockBuilder.SubtypeId.ToString();
-            return terminalBlockBuilder.NumberInGrid > 1 ? $"{defaultName} {terminalBlockBuilder.NumberInGrid}" : defaultName;
+            MyCubeBlockDefinition blockDefinition;
+            var defaultName =
+                MyDefinitionManager.Static?.TryGetDefinition(terminalBlockBuilder.SubtypeId,
+                    out blockDefinition) == true
+                    ? blockDefinition.DisplayNameText
+                    : terminalBlockBuilder.SubtypeId.ToString();
+            return terminalBlockBuilder.NumberInGrid > 1
+                ? $"{defaultName} {terminalBlockBuilder.NumberInGrid}"
+                : defaultName;
         }
 
         public static bool AlignToRepairProjector(this MyObjectBuilder_CubeGrid gridBuilder, MyProjectorBase projector)
