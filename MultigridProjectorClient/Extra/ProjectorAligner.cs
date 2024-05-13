@@ -25,7 +25,7 @@ namespace MultigridProjectorClient.Extra
 {
     [HarmonyPatch(typeof(MyGuiScreenGamePlay))]
     [HarmonyPatch("HandleUnhandledInput")]
-    [EnsureOriginal("5bf3b399")]
+    [EnsureOriginal("35ef0974")]
     // ReSharper disable once UnusedType.Global
     public static class MyGuiScreenGamePlay_HandleUnhandledInput
     {
