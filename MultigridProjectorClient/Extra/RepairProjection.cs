@@ -27,7 +27,7 @@ namespace MultigridProjectorClient.Extra
                 MyStringId.GetOrCompute("Loads the projector's own grid as a repair projection."),
                 LoadMechanicalGroup)
             {
-                Visible = (projector) => Enabled && IsWorking(projector),
+                Visible = (projector) => Enabled && !projector.AllowScaling && IsWorking(projector),
                 Enabled = IsWorkingButNotProjecting,
                 SupportsMultipleBlocks = false
             };
