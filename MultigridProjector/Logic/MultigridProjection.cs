@@ -1923,7 +1923,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 firstGridBuilder.CubeBlocks.First() is MyObjectBuilder_Projector projectorBuilder)
             {
                 // The blueprint is aligned to a repair projector therefore no offset is required
-                var projectorInterface = (IMyProjector) projector;
+                IMyProjector projectorInterface = projector;
                 projectorInterface.ProjectionOffset = Vector3I.Zero;
 
                 // Cancel out the projector's block orientation in the blueprint, so the projector you
