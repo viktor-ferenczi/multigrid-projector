@@ -191,8 +191,10 @@ namespace MultigridProjector.Logic
                 MapPreviewBlocks();
                 CreateSubgrids();
                 MarkSupportedSubgrids();
-                toolbarFixer = new ToolbarFixer(SupportedSubgrids);
-                controllerFixer = new ControllerFixer(SupportedSubgrids);
+                
+                var supportedSubgrids = SupportedSubgrids.ToList();
+                toolbarFixer = new ToolbarFixer(supportedSubgrids);
+                controllerFixer = new ControllerFixer(supportedSubgrids);
             }
 
             ListenOnSubgridEvents();

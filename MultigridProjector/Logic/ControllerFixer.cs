@@ -34,7 +34,7 @@ namespace MultigridProjector.Logic
 
         private Dictionary<Location, HashSet<Location>> mappings = new Dictionary<Location, HashSet<Location>>();
 
-        public ControllerFixer(IEnumerable<Subgrid> supportedSubgrids)
+        public ControllerFixer(List<Subgrid> supportedSubgrids)
         {
             // Store locations of all terminal blocks
             var blockLocationsByEntityId = new Dictionary<long, Location>(1024);
