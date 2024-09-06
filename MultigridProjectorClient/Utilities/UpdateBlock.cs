@@ -17,6 +17,13 @@ using VRage.ObjectBuilders;
 using Sandbox.Game.GameSystems;
 using MultigridProjector.Extensions;
 using System.Linq;
+using IMyEventControllerBlock = Sandbox.ModAPI.Ingame.IMyEventControllerBlock;
+using SpaceEngineers.Game.EntityComponents.Blocks;
+using VRage.Sync;
+using Sandbox.Graphics.GUI;
+using VRage.ObjectBuilder;
+using MultigridProjector.Logic;
+using VRage.Game.Entity;
 
 namespace MultigridProjectorClient.Utilities
 {
@@ -196,25 +203,116 @@ namespace MultigridProjectorClient.Utilities
     {
         public static void CopyProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
         {
-            CopyTerminalProperties(sourceBlock, destinationBlock);
-            UpdateToolbar.CopyToolbars(sourceBlock, destinationBlock);
-
-            if (sourceBlock is MyProjectorBase sourceProjectorBase &&
-                destinationBlock is MyProjectorBase destinationProjectorBase)
+            // Special Cases
+            if (sourceBlock is MyEventControllerBlock sourceEventControllerBlock &&
+                destinationBlock is MyEventControllerBlock destinationEventControllerBlock)
             {
-                CopyBlueprints(sourceProjectorBase, destinationProjectorBase);
-            }
+                CopyTerminalProperties(sourceBlock, destinationBlock, new HashSet<string> { "SearchBox" });
+                UpdateToolbar.CopyToolbars(sourceBlock, destinationBlock);
+                CopyEvents(sourceEventControllerBlock, destinationEventControllerBlock);
+                Events.InvokeOnGameThread(() => CopyPowerState(sourceBlock, destinationBlock));
 
-            else if (sourceBlock is IMyProgrammableBlock sourceProgrammableBlock &&
-                destinationBlock is IMyProgrammableBlock destinationProgrammableBlock &&
-                MySession.Static.IsSettingsExperimental())
+            }
+            else
             {
-                CopyScripts(sourceProgrammableBlock, destinationProgrammableBlock);
-            }
+                // Copy over terminal properties
+                CopyTerminalProperties(sourceBlock, destinationBlock);
+                UpdateToolbar.CopyToolbars(sourceBlock, destinationBlock);
 
-            // Copying power must be done in the next frame as disabling a block will prevent properties being modified
-            // so we need to wait for all the changes to process
-            Events.InvokeOnGameThread(() => CopyPowerState(sourceBlock, destinationBlock));
+                // Copy over special properties if applicable
+                if (sourceBlock is MyProjectorBase sourceProjectorBase &&
+                    destinationBlock is MyProjectorBase destinationProjectorBase)
+                {
+                    CopyBlueprints(sourceProjectorBase, destinationProjectorBase);
+                }
+
+                else if (sourceBlock is IMyProgrammableBlock sourceProgrammableBlock &&
+                    destinationBlock is IMyProgrammableBlock destinationProgrammableBlock &&
+                    MySession.Static.IsSettingsExperimental())
+                {
+                    CopyScripts(sourceProgrammableBlock, destinationProgrammableBlock);
+                }
+
+                // Copying power must be done in the next frame as disabling a block will prevent properties being modified
+                // so we need to wait for all the changes to process
+                Events.InvokeOnGameThread(() => CopyPowerState(sourceBlock, destinationBlock));
+            }
+        }
+
+        // TODO: Refactor into multiple functions
+        // Reduce the delays between actions (left this high for debugging)
+        // Consider if such a niche method should be part of the projection
+        // See if this can be moved out of the special cases
+        private static void CopyEvents(MyEventControllerBlock sourceBlock, MyEventControllerBlock destinationBlock)
+        {
+
+            Events.InvokeOnGameThread(() =>
+            {
+                long eventId = ((Sandbox.ModAPI.IMyEventControllerBlock)sourceBlock).SelectedEvent.UniqueSelectionId;
+                Delegate SelectEvent = Reflection.GetMethod(typeof(MyEventControllerBlock), destinationBlock, "SelectEvent");
+                SelectEvent.DynamicInvoke(eventId);
+            }, 100);
+
+            Events.InvokeOnGameThread(() =>
+            {
+                ((IMyEventControllerBlock)destinationBlock).Threshold = ((IMyEventControllerBlock)sourceBlock).Threshold;
+                ((IMyEventControllerBlock)destinationBlock).IsLowerOrEqualCondition = ((IMyEventControllerBlock)sourceBlock).IsLowerOrEqualCondition;
+                ((IMyEventControllerBlock)destinationBlock).IsAndModeEnabled = ((IMyEventControllerBlock)sourceBlock).IsAndModeEnabled;
+
+                if (sourceBlock.Components.TryGet<MyEventAngleChanged>(out var sourceComp) &&
+                    destinationBlock.Components.TryGet<MyEventAngleChanged>(out var destinationComp))
+                {
+                    Sync<float, SyncDirection.BothWays> sourceAngle = (Sync<float, SyncDirection.BothWays>)Reflection.GetValue(sourceComp, "m_angle");
+                    Sync<float, SyncDirection.BothWays> destinationAngle = (Sync<float, SyncDirection.BothWays>)Reflection.GetValue(destinationComp, "m_angle");
+                    
+                    destinationAngle.Value = sourceAngle.Value;
+                }
+                else
+                {
+                    PluginLog.Error($"Could not find angle for block: {sourceBlock.DisplayName}");
+                }
+            }, 200);
+
+            Events.InvokeOnGameThread(() =>
+            {
+                MultigridProjection.TryFindProjectionByProjector(sourceBlock.CubeGrid.Projector, out MultigridProjection projection);
+                var (foundIds, missingIds) = projection.GetSelectedBlockIdsFromEventController(destinationBlock);
+
+                // SelectAvailableBlocks and SelectButton expect MyGuiControlListbox.Item
+                List<MyGuiControlListbox.Item> foundBlocks = new List<MyGuiControlListbox.Item>();
+                foreach (long blockId in foundIds)
+                {
+                    foundBlocks.Add(new MyGuiControlListbox.Item(userData: blockId));
+                }
+
+                List<MyCubeBlock> missingBlocks = new List<MyCubeBlock>();
+                foreach (long blockId in missingIds)
+                {
+                    missingBlocks.Add((MyCubeBlock)MyEntities.GetEntityById(blockId));
+                }
+
+
+                if (foundBlocks.Count > 0)
+                {
+                    Delegate SelectAvailableBlocks = Reflection.GetMethod(typeof(MyEventControllerBlock), destinationBlock, "SelectAvailableBlocks");
+                    SelectAvailableBlocks.DynamicInvoke(foundBlocks);
+
+                    Delegate SelectButton = Reflection.GetMethod(typeof(MyEventControllerBlock), destinationBlock, "SelectButton");
+                    SelectButton.DynamicInvoke();
+                }
+
+                if (missingBlocks.Count > 0)
+                {
+                    StringBuilder message = new StringBuilder("The following blocks could not be found:\n");
+
+                    foreach (var block in missingBlocks)
+                    {
+                        message.AppendLine($"{block.DisplayName}");
+                    }
+
+                    MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", message.ToString());
+                }
+            }, 300);
         }
 
         private static void CopyPowerState(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
@@ -225,7 +323,7 @@ namespace MultigridProjectorClient.Utilities
             destinationBlock.SetValue("OnOff", sourceBlock.GetValue<bool>("OnOff"));
         }
 
-        private static void CopyTerminalProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
+        private static void CopyTerminalProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock, HashSet<string> exclude = null)
         {
             List<ITerminalProperty> properties = new List<ITerminalProperty>();
             sourceBlock.GetProperties(properties);
@@ -234,6 +332,10 @@ namespace MultigridProjectorClient.Utilities
             {
                 // Disabling a block messes with setting properties and must be done last (in a separate function)
                 if (property.Id == "OnOff")
+                    continue;
+
+                // Allow skipping properties for compatibility reasons
+                if (!(exclude is null) && exclude.Contains(property.Id))
                     continue;
 
                 string propertyType = property.TypeName;
