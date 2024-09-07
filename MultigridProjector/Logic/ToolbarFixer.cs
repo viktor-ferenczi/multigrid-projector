@@ -2,46 +2,23 @@
 using Sandbox.Game.Screens.Helpers;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using MultigridProjector.Extensions;
 using Sandbox.Common.ObjectBuilders;
 using VRage.Game;
-using VRageMath;
 
 namespace MultigridProjector.Logic
 {
     public class ToolbarFixer
     {
-        private readonly struct Location
-        {
-            public readonly int GridIndex;
-            public readonly Vector3I Position;
-
-            public Location(int gridIndex, Vector3I position)
-            {
-                // Subgrid index
-                GridIndex = gridIndex;
-
-                // Block position inside the subgrid in blueprint block coordinates
-                Position = position;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public override int GetHashCode()
-            {
-                return ((GridIndex * 397 ^ Position.X) * 397 ^ Position.Y) * 397 ^ Position.Z;
-            }
-        }
-
-        private class AssignedSlot
+        private readonly struct AssignedSlot
         {
             // Location of the block with the toolbar inside the blueprint
-            public readonly Location ToolbarLocation;
+            public readonly FastBlockLocation ToolbarLocation;
 
             // Index of the slot where the block has an action assigned
             public readonly int SlotIndex;
 
-            public AssignedSlot(Location toolbarLocation, int slotIndex)
+            public AssignedSlot(FastBlockLocation toolbarLocation, int slotIndex)
             {
                 ToolbarLocation = toolbarLocation;
                 SlotIndex = slotIndex;
@@ -58,7 +35,7 @@ namespace MultigridProjector.Logic
 
             // Location of the terminal block referenced by the toolbar slot (if any)
             // inside the subgrid in blueprint block coordinates
-            public Location? BlockLocation;
+            public FastBlockLocation? BlockLocation;
 
             public SlotConfig(int slotIndex, MyObjectBuilder_ToolbarItem itemBuilder)
             {
@@ -70,10 +47,10 @@ namespace MultigridProjector.Logic
 
         private class ToolbarConfig
         {
-            public readonly Location ToolbarLocation;
+            public readonly FastBlockLocation ToolbarLocation;
             public readonly IReadOnlyDictionary<int, SlotConfig> SlotConfigs;
 
-            public ToolbarConfig(Location toolbarLocation, IEnumerable<SlotConfig> iterSlotConfigs)
+            public ToolbarConfig(FastBlockLocation toolbarLocation, IEnumerable<SlotConfig> iterSlotConfigs)
             {
                 ToolbarLocation = toolbarLocation;
                 SlotConfigs = iterSlotConfigs.ToDictionary(slotConfig => slotConfig.SlotIndex);
@@ -81,15 +58,15 @@ namespace MultigridProjector.Logic
         }
 
         // Toolbars in the blueprint
-        private readonly Dictionary<Location, ToolbarConfig> toolbarConfigByToolbarLocation = new Dictionary<Location, ToolbarConfig>();
+        private readonly Dictionary<FastBlockLocation, ToolbarConfig> toolbarConfigByToolbarLocation = new Dictionary<FastBlockLocation, ToolbarConfig>();
 
         // Mapping from terminal block positions to toolbar slots they have assigned actions defined
-        private readonly Dictionary<Location, List<AssignedSlot>> assignedSlotsByBlockLocation = new Dictionary<Location, List<AssignedSlot>>();
+        private readonly Dictionary<FastBlockLocation, List<AssignedSlot>> assignedSlotsByBlockLocation = new Dictionary<FastBlockLocation, List<AssignedSlot>>();
 
         public ToolbarFixer(IEnumerable<Subgrid> supportedSubgrids)
         {
             // Collect all blocks may be relevant by ID and all the toolbars
-            var blockLocationsByEntityId = new Dictionary<long, Location>(1024);
+            var blockLocationsByEntityId = new Dictionary<long, FastBlockLocation>(1024);
             foreach (var subgrid in supportedSubgrids)
             {
                 foreach (var (position, projectedBlock) in subgrid.Blocks)
@@ -97,7 +74,7 @@ namespace MultigridProjector.Logic
                     if (!(projectedBlock.Builder is MyObjectBuilder_TerminalBlock terminalBlockBuilder))
                         continue;
 
-                    var location = new Location(subgrid.Index, position);
+                    var location = new FastBlockLocation(subgrid.Index, position);
                     blockLocationsByEntityId[terminalBlockBuilder.EntityId] = location;
 
                     var toolbarBuilder = terminalBlockBuilder.GetToolbar();
@@ -137,7 +114,7 @@ namespace MultigridProjector.Logic
             if (toolbar == null)
                 return;
 
-            var toolbarLocation = new Location(toolbarSubgrid.Index, toolbarSubgrid.BuiltToPreviewBlockPosition(toolbarBlock.Position));
+            var toolbarLocation = new FastBlockLocation(toolbarSubgrid.Index, toolbarSubgrid.BuiltToPreviewBlockPosition(toolbarBlock.Position));
             if (!toolbarConfigByToolbarLocation.TryGetValue(toolbarLocation, out var toolbarConfig))
                 return;
 
@@ -181,7 +158,7 @@ namespace MultigridProjector.Logic
 
         public void AssignBlockToToolbars(MultigridProjection projection, Subgrid blockSubgrid, MyTerminalBlock terminalBlock)
         {
-            var blockLocation = new Location(blockSubgrid.Index, blockSubgrid.BuiltToPreviewBlockPosition(terminalBlock.Position));
+            var blockLocation = new FastBlockLocation(blockSubgrid.Index, blockSubgrid.BuiltToPreviewBlockPosition(terminalBlock.Position));
             if (!assignedSlotsByBlockLocation.TryGetValue(blockLocation, out var assignedSlots))
                 return;
 
