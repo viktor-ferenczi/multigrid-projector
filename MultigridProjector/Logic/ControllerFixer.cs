@@ -1,43 +1,20 @@
 using Sandbox.Game.Entities.Cube;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using Sandbox.Common.ObjectBuilders;
 using VRage.Game;
-using VRageMath;
 using SpaceEngineers.Game.Entities.Blocks;
 
 namespace MultigridProjector.Logic
 {
     public class ControllerFixer
     {
-        private readonly struct Location
-        {
-            public readonly int GridIndex;
-            public readonly Vector3I Position;
-
-            public Location(int gridIndex, Vector3I position)
-            {
-                // Subgrid index
-                GridIndex = gridIndex;
-
-                // Block position inside the subgrid in blueprint block coordinates
-                Position = position;
-            }
-
-            [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            public override int GetHashCode()
-            {
-                return ((GridIndex * 397 ^ Position.X) * 397 ^ Position.Y) * 397 ^ Position.Z;
-            }
-        }
-
-        private Dictionary<Location, HashSet<Location>> mappings = new Dictionary<Location, HashSet<Location>>();
+        private readonly Dictionary<FastBlockLocation, HashSet<FastBlockLocation>> mappings = new Dictionary<FastBlockLocation, HashSet<FastBlockLocation>>();
 
         public ControllerFixer(List<Subgrid> supportedSubgrids)
         {
             // Store locations of all terminal blocks
-            var blockLocationsByEntityId = new Dictionary<long, Location>(1024);
+            var blockLocationsByEntityId = new Dictionary<long, FastBlockLocation>(1024);
             foreach (var subgrid in supportedSubgrids)
             {
                 foreach (var (position, projectedBlock) in subgrid.Blocks)
@@ -45,7 +22,7 @@ namespace MultigridProjector.Logic
                     if (!(projectedBlock.Builder is MyObjectBuilder_TerminalBlock terminalBlockBuilder))
                         continue;
 
-                    var location = new Location(subgrid.Index, position);
+                    var location = new FastBlockLocation(subgrid.Index, position);
                     blockLocationsByEntityId[terminalBlockBuilder.EntityId] = location;
                 }
             }
@@ -58,15 +35,15 @@ namespace MultigridProjector.Logic
                     if (!(projectedBlock.Builder is MyObjectBuilder_EventControllerBlock eventControllerBuilder))
                         continue;
 
-                    HashSet<Location> selectedBlocks = new HashSet<Location>();
+                    HashSet<FastBlockLocation> selectedBlocks = new HashSet<FastBlockLocation>();
                     foreach (long blockId in eventControllerBuilder.SelectedBlocks)
                     {
-                        if (blockLocationsByEntityId.TryGetValue(blockId, out Location blockLocation))
+                        if (blockLocationsByEntityId.TryGetValue(blockId, out FastBlockLocation blockLocation))
                         {
                             selectedBlocks.Add(blockLocation);
                         }
                     }
-                    var location = new Location(subgrid.Index, position);
+                    var location = new FastBlockLocation(subgrid.Index, position);
                     mappings.Add(location, selectedBlocks);
                 }
             }
@@ -74,7 +51,7 @@ namespace MultigridProjector.Logic
 
         public (HashSet<long>, HashSet<long>) GetSelectedBlockIds(MultigridProjection projection, Subgrid controllerSubgrid, MyEventControllerBlock builtController)
         {
-            var controllerLocation = new Location(controllerSubgrid.Index, controllerSubgrid.BuiltToPreviewBlockPosition(builtController.Position));
+            var controllerLocation = new FastBlockLocation(controllerSubgrid.Index, controllerSubgrid.BuiltToPreviewBlockPosition(builtController.Position));
             if (!mappings.TryGetValue(controllerLocation, out var selectedBlockLocations))
                 return (null, null);
 
