@@ -9,7 +9,6 @@
     <option name="RUNTIME_ARGUMENTS" value="" />
     <option name="RUNTIME_TYPE" value="netfw" />
     <method v="2">
-      <option name="Build" default="false" projectName="MultigridProjectorClient" projectPath="$PROJECT_DIR$/MultigridProjectorClient/MultigridProjectorClient.csproj" />
       <option name="Build" default="false" projectName="IngameApiTest" projectPath="$PROJECT_DIR$/IngameApiTest/IngameApiTest.csproj" />
       <option name="Build" default="false" projectName="ModApiTest" projectPath="$PROJECT_DIR$/ModApiTest/ModApiTest.csproj" />
     </method>

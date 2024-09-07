@@ -14,6 +14,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logic\ProjectedBlock.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\BlockMinLocation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\MultigridProjectorApiProvider.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Logic\FastBlockLocation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\ToolbarFixer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\VisualState.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyCubeGrid_TestPlacementAreaCube.cs" />

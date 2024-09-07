@@ -84,9 +84,7 @@ namespace MultigridProjector.Extensions
                 return terminalBlockBuilder.CustomName;
 
             string defaultName;
-            MyCubeBlockDefinition blockDefinition = null;
-
-            if (MyDefinitionManager.Static?.TryGetDefinition(terminalBlockBuilder.SubtypeId, out blockDefinition) ?? false)
+            if (MyDefinitionManager.Static?.TryGetDefinition(terminalBlockBuilder.SubtypeId, out MyCubeBlockDefinition blockDefinition) ?? false)
             {
                 defaultName = blockDefinition.DisplayNameText;
             }
@@ -102,42 +100,9 @@ namespace MultigridProjector.Extensions
 
         public static bool AlignToRepairProjector(this MyObjectBuilder_CubeGrid gridBuilder, MyProjectorBase projector)
         {
-            // Find all projectors
-            var projectorBuilders = gridBuilder
-                .CubeBlocks
-                .OfType<MyObjectBuilder_Projector>()
-                .ToList();
-            if (projectorBuilders.Count == 0)
-                return false;
-
-            // Select the repair projector (must be unambiguous)
-            // 1. The projector which is the very first block is expected to be a repair one
-            // 2. Projector with the exact same name if the name is unique
-            // 3. The first projector with "Repair" in its name (case-insensitive)
-            // In case of ambiguity do not align.
-            var projectorBuilder = gridBuilder.CubeBlocks.First() as MyObjectBuilder_Projector;
-            if (projectorBuilder == null && projector != null)
-            {
-                var projectorName = projector.CustomName.ToString();
-                var projectorBuildersWithSameName = projectorBuilders
-                    .Where(b => FormatBlockName(b) == projectorName)
-                    .ToList();
-
-                if (projectorBuildersWithSameName.Count == 1)
-                {
-                    projectorBuilder = projectorBuildersWithSameName.First();
-                }
-            }
+            var projectorBuilder = FindMatchingProjectorInBlueprint(gridBuilder, projector);
             if (projectorBuilder == null)
-            {
-                projectorBuilder = projectorBuilders
-                    .FirstOrDefault(b => FormatBlockName(b).ToLower().Contains("repair"));
-            }
-            if (projectorBuilder == null)
-            {
-                // The projector to use is ambiguous, so don't align
                 return false;
-            }
 
             // The preview grid is relative to the first block's position and orientation,
             // therefore aligning the blueprint means promoting the projector to be the first block
@@ -150,6 +115,56 @@ namespace MultigridProjector.Extensions
             // Signal to the caller that the blueprint is aligned to a repair projector,
             // so it can zero out the offset and set the rotation of the projection
             return true;
+        }
+        private static MyObjectBuilder_Projector FindMatchingProjectorInBlueprint(MyObjectBuilder_CubeGrid gridBuilder, MyProjectorBase projector)
+        {
+            // Find all projectors in the blueprint
+            var projectorBuilders = gridBuilder
+                .CubeBlocks
+                .OfType<MyObjectBuilder_Projector>()
+                .ToList();
+            if (projectorBuilders.Count == 0)
+                return null;
+
+            // Select the repair projector (must be unambiguous)
+            MyObjectBuilder_Projector projectorBuilder; 
+            if (projector != null)
+            {
+                var existingProjectorBuilder = (MyObjectBuilder_TerminalBlock) projector.GetObjectBuilderCubeBlock();
+                var existingProjectorName = FormatBlockName(existingProjectorBuilder);
+                var projectorBuildersWithSameName = projectorBuilders
+                    .Where(b => FormatBlockName(b) == existingProjectorName)
+                    .ToList();
+
+                // 1. Projector in the blueprint with the exact same name, position and orientation as the existing projector
+                // (Load Repair Projection was used or original repair projector)
+                projectorBuilder = projectorBuildersWithSameName
+                    .FirstOrDefault(b => 
+                        b.Min == existingProjectorBuilder.Min &&
+                        b.BlockOrientation == existingProjectorBuilder.BlockOrientation);
+                if (projectorBuilder != null)
+                    return projectorBuilder;
+
+                // 2. Projector in the blueprint with the exact same name as the existing projector,
+                // but only if the name is unique in the blueprint (repair projector rebuilt by hand)
+                if (projectorBuildersWithSameName.Count == 1)
+                {
+                    return projectorBuildersWithSameName.First();
+                }
+            }
+            
+            // 3. The projector in the blueprint which is the very first block (standardized blueprints which always load with default alignment)
+            projectorBuilder = gridBuilder.CubeBlocks.FirstOrDefault() as MyObjectBuilder_Projector;
+            if (projectorBuilder != null)
+            {
+                return projectorBuilder;
+            }
+            
+            // 4. The first projector in the blueprint with "Repair" in its name, case-insensitive (best guess for any random blueprint)
+            projectorBuilder = projectorBuilders
+                .FirstOrDefault(b => FormatBlockName(b).ToLower().Contains("repair"));
+            
+            return projectorBuilder;
         }
 
         public static void CensorWorldPosition(this MyObjectBuilder_CubeGrid gridBuilder)
