@@ -57,6 +57,8 @@ namespace MultigridProjector.Logic
                 SlotConfigs = iterSlotConfigs.ToDictionary(slotConfig => slotConfig.SlotIndex);
             }
         }
+        
+        // IMPORTANT: All block locations in the maps below are in the blueprint. NEVER use them to index built blocks!
 
         // Toolbars in the blueprint by the location of blocks having the toolbars
         private readonly Dictionary<FastBlockLocation, ToolbarConfig> toolbarConfigByToolbarLocation = new Dictionary<FastBlockLocation, ToolbarConfig>(32);
@@ -64,7 +66,7 @@ namespace MultigridProjector.Logic
         // Mapping from terminal block locations to toolbar slots they have assigned actions defined
         private readonly Dictionary<FastBlockLocation, List<AssignedSlot>> assignedSlotsByBlockLocation = new Dictionary<FastBlockLocation, List<AssignedSlot>>(32);
 
-        // Mapping of event controller locations to the set of locations of their assigned jobs, also the reverse mapping 
+        // Mapping of event controller locations to the set of locations of their assigned jobs and its reverse mapping 
         private readonly Dictionary<FastBlockLocation, HashSet<FastBlockLocation>> selectedBlockLocationsByEventControllerLocation = new Dictionary<FastBlockLocation, HashSet<FastBlockLocation>>(32);
         private readonly Dictionary<FastBlockLocation, HashSet<FastBlockLocation>> eventControllerLocationsBySelectedBlockLocation = new Dictionary<FastBlockLocation, HashSet<FastBlockLocation>>(32);
 
@@ -103,7 +105,7 @@ namespace MultigridProjector.Logic
                 }
             }
 
-            // Map the blocks to toolbar slots
+            // Map the blocks to toolbar slots (reverse mapping)
             foreach (var toolbarConfig in toolbarConfigByToolbarLocation.Values)
             {
                 foreach (var slotConfig in toolbarConfig.SlotConfigs.Values)
