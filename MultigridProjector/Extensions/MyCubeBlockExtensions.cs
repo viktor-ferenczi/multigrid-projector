@@ -10,6 +10,7 @@ using System.Linq;
 using Sandbox.Game.Screens.Helpers;
 using SpaceEngineers.Game.Entities.Blocks;
 using VRage.Game;
+using VRage.ObjectBuilder;
 using VRageMath;
 
 namespace MultigridProjector.Extensions
@@ -103,6 +104,14 @@ namespace MultigridProjector.Extensions
             }
 
             return null;
+        }
+
+        private static readonly FieldInfo SelectedBlockIdsFieldInfo = AccessTools.Field(typeof(MyEventControllerBlock), "m_selectedBlockIds");
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static MySerializableList<long> GetSelectedBlockIds(this MyEventControllerBlock block)
+        {
+            return SelectedBlockIdsFieldInfo.GetValue(block) as MySerializableList<long>;
         }
     }
 }
