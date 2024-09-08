@@ -301,16 +301,15 @@ namespace MultigridProjectorClient.Utilities
             if (!projection.TryGetSelectedBlockIdsFromEventController(previewBlock, out var selectedBlockIds))
                 return;
 
-            // SelectAvailableBlocks and SelectButton expect MyGuiControlListbox.Item
-            var selectedBlocks = selectedBlockIds.Select(blockId => new MyGuiControlListbox.Item(userData: blockId)).ToList();
-            if (!selectedBlocks.Any())
+            // No need to select blocks if there were none selected (an empty list is the default)
+            if (!selectedBlockIds.Any())
                 return;
-            
-            var selectAvailableBlocks = Reflection.GetMethod(typeof(MyEventControllerBlock), builtBlock, "SelectAvailableBlocks");
-            selectAvailableBlocks.DynamicInvoke(selectedBlocks);
 
-            var selectButton = Reflection.GetMethod(typeof(MyEventControllerBlock), builtBlock, "SelectButton");
-            selectButton.DynamicInvoke();
+            // Do exactly what the UI does, so the changes are synced to the server
+            // SelectAvailableBlocks and SelectButton expect MyGuiControlListbox.Item
+            var listItems = selectedBlockIds.Select(blockId => new MyGuiControlListbox.Item(userData: blockId)).ToList();
+            builtBlock.SelectAvailableBlocks(listItems);
+            builtBlock.SelectButton();
         }
 
         private static void CopyPowerState(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
