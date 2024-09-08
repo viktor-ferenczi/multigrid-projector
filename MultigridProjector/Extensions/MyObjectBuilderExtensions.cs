@@ -72,6 +72,9 @@ namespace MultigridProjector.Extensions
                     return b.Toolbar;
                 case MyObjectBuilder_TimerBlock b:
                     return b.Toolbar;
+                case MyObjectBuilder_AirVent b:
+                    // FIXME: Not handled, MyAirVent does not have a properly serialized toolbar
+                    break;
             }
 
             return null;
