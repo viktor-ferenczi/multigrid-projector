@@ -64,7 +64,16 @@ namespace MultigridProjector.Logic
 
         // Enables detecting block state with Havok intersection enabled,
         // used only on client side if block highlighting is enabled for the projector
+        // ReSharper disable once UnassignedField.Global
         public bool CheckHavokIntersections;
+
+        public bool TryGetProjectedBlock(FastBlockLocation blockLocation, out Subgrid subgrid, out ProjectedBlock projectedBlock)
+        {
+            subgrid = null;
+            projectedBlock = null;
+            return TryGetSupportedSubgrid(blockLocation.GridIndex, out subgrid) &&
+                   subgrid.TryGetProjectedBlock(blockLocation.Position, out projectedBlock);
+        }
 
         public bool TryGetSupportedSubgrid(int gridIndex, out Subgrid subgrid)
         {
@@ -141,9 +150,6 @@ namespace MultigridProjector.Logic
         // Mapping of toolbar slots to the respective blocks by location instead of EntityId
         private readonly ToolbarFixer toolbarFixer;
 
-        // Mapping of Event Controller selections to the respective blocks by location instead of EntityId
-        private readonly ControllerFixer controllerFixer;
-
         public static void EnsureNoProjections()
         {
             int projectionCount;
@@ -191,10 +197,7 @@ namespace MultigridProjector.Logic
                 MapPreviewBlocks();
                 CreateSubgrids();
                 MarkSupportedSubgrids();
-                
-                var supportedSubgrids = SupportedSubgrids.ToList();
-                toolbarFixer = new ToolbarFixer(supportedSubgrids);
-                controllerFixer = new ControllerFixer(supportedSubgrids);
+                toolbarFixer = new ToolbarFixer(SupportedSubgrids);
             }
 
             ListenOnSubgridEvents();
@@ -265,6 +268,11 @@ namespace MultigridProjector.Logic
 
             toolbarFixer.ConfigureToolbar(this, subgrid, terminalBlock);
             toolbarFixer.AssignBlockToToolbars(this, subgrid, terminalBlock);
+
+            toolbarFixer.ConfigureEventController(this, subgrid, terminalBlock);
+            toolbarFixer.AssignBlockToEventControllers(this, subgrid, terminalBlock);
+
+            // FIXME: Do we need to sync any changes made to the toolbars or selected blocks of event controllers in multiplayer?
         }
 
         private void MapBlueprintBlocks()
@@ -1455,7 +1463,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             if (!checkHavokIntersections)
                 return BuildCheckResult.OK;
 
-            var gridPlacementSettings = new MyGridPlacementSettings { SnapMode = SnapMode.OneFreeAxis };
+            var gridPlacementSettings = new MyGridPlacementSettings {SnapMode = SnapMode.OneFreeAxis};
             if (MyCubeGrid.TestPlacementAreaCube(builtGrid, ref gridPlacementSettings, min, max, previewBlock.Orientation, previewBlock.BlockDefinition, ignoredEntity: builtGrid, isProjected: true))
                 return BuildCheckResult.OK;
 
@@ -1929,7 +1937,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
                 // Cancel out the projector's block orientation in the blueprint, so the projector you
                 // build on will determine the orientation of the main grid in the projection
-                var projectorOrientationInBlueprint = (MyBlockOrientation)projectorBuilder.BlockOrientation;
+                var projectorOrientationInBlueprint = (MyBlockOrientation) projectorBuilder.BlockOrientation;
                 projectorOrientationInBlueprint.GetQuaternion(out var projectorOrientationQuaternion);
                 var projectionOrientationQuaternion = Quaternion.Inverse(projectorOrientationQuaternion);
                 var projectionOrientation = new MyBlockOrientation(ref projectionOrientationQuaternion);
@@ -2111,9 +2119,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
         // Rider mis-detects this method as unused
         // ReSharper disable once UnusedMember.Global
-        public void FixToolbars()
+        public void FixToolbarsAndEventControllers()
         {
-            toolbarFixer.FixToolbars(this);
+            toolbarFixer.FixToolbarsAndEventControllers(this);
         }
         
         [ServerOnly]
@@ -2129,12 +2137,11 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             return result;
         }
 
-        public (HashSet<long>, HashSet<long>) GetSelectedBlockIdsFromEventController(MyEventControllerBlock builtController)
+        // Rider mis-detects this method as unused
+        // ReSharper disable once UnusedMember.Global
+        public bool TryGetSelectedBlockIdsFromEventController(MyEventControllerBlock eventControllerBlock, out HashSet<long> selectedBlockIds)
         {
-            if (!this.TryFindSubgridByBuiltGrid(builtController.CubeGrid, out Subgrid subgrid))
-                return (null, null);
-
-            return controllerFixer.GetSelectedBlockIds(this, subgrid, builtController);
+            return toolbarFixer.TryGetSelectedBlockIdsFromEventController(this, eventControllerBlock, out selectedBlockIds);
         }
     }
 }
