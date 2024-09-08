@@ -314,7 +314,7 @@ namespace MultigridProjectorClient.Utilities
                 projection.Projector?.EntityId != sourceProjection.Projector?.EntityId)
                 return;
 
-            if (!projection.TryGetSelectedBlockIdsFromEventController(previewBlock, out var selectedBlockIds))
+            if (!projection.ToolbarFixer.TryGetSelectedBlockIdsFromEventController(projection, previewBlock, out var selectedBlockIds))
                 return;
 
             // No need to select blocks if there were none selected (an empty list is the default)

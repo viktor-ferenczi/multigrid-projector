@@ -278,7 +278,7 @@ namespace MultigridProjector.Logic
                 }
             }
 
-            foreach (var (eventControllerLocation, selectedBlockLocations) in selectedBlockLocationsByEventControllerLocation)
+            foreach (var eventControllerLocation in selectedBlockLocationsByEventControllerLocation.Keys)
             {
                 if (projection.TryGetProjectedBlock(eventControllerLocation, out var subgrid, out var projectedBlock) &&
                     projectedBlock.SlimBlock?.FatBlock is MyEventControllerBlock eventControllerBlock)

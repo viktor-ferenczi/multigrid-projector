@@ -148,7 +148,7 @@ namespace MultigridProjector.Logic
         internal bool IsValidForApi => Initialized && HasScanned;
 
         // Mapping of toolbar slots to the respective blocks by location instead of EntityId
-        private readonly ToolbarFixer toolbarFixer;
+        public readonly ToolbarFixer ToolbarFixer;
 
         public static void EnsureNoProjections()
         {
@@ -197,7 +197,7 @@ namespace MultigridProjector.Logic
                 MapPreviewBlocks();
                 CreateSubgrids();
                 MarkSupportedSubgrids();
-                toolbarFixer = new ToolbarFixer(SupportedSubgrids);
+                ToolbarFixer = new ToolbarFixer(SupportedSubgrids);
             }
 
             ListenOnSubgridEvents();
@@ -266,11 +266,11 @@ namespace MultigridProjector.Logic
             if (terminalBlock.BlockDefinition.Id != projectedBlock.Preview.BlockDefinition.Id)
                 return;
 
-            toolbarFixer.ConfigureToolbar(this, subgrid, terminalBlock);
-            toolbarFixer.AssignBlockToToolbars(this, subgrid, terminalBlock);
+            ToolbarFixer.ConfigureToolbar(this, subgrid, terminalBlock);
+            ToolbarFixer.AssignBlockToToolbars(this, subgrid, terminalBlock);
 
-            toolbarFixer.ConfigureEventController(this, subgrid, terminalBlock);
-            toolbarFixer.AssignBlockToEventControllers(this, subgrid, terminalBlock);
+            ToolbarFixer.ConfigureEventController(this, subgrid, terminalBlock);
+            ToolbarFixer.AssignBlockToEventControllers(this, subgrid, terminalBlock);
 
             // FIXME: Do we need to sync any changes made to the toolbars or selected blocks of event controllers in multiplayer?
         }
@@ -2117,12 +2117,6 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             ForceUpdateProjection();
         }
 
-        // Rider mis-detects this method as unused
-        // ReSharper disable once UnusedMember.Global
-        public void FixToolbarsAndEventControllers()
-        {
-            toolbarFixer.FixToolbarsAndEventControllers(this);
-        }
         
         [ServerOnly]
         public static bool ShouldAllowBuildingDefaultTopBlock(MyMechanicalConnectionBlockBase baseBlock)
@@ -2137,11 +2131,5 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             return result;
         }
 
-        // Rider mis-detects this method as unused
-        // ReSharper disable once UnusedMember.Global
-        public bool TryGetSelectedBlockIdsFromEventController(MyEventControllerBlock eventControllerBlock, out HashSet<long> selectedBlockIds)
-        {
-            return toolbarFixer.TryGetSelectedBlockIdsFromEventController(this, eventControllerBlock, out selectedBlockIds);
-        }
     }
 }
