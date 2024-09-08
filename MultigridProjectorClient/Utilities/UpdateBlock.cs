@@ -38,6 +38,13 @@ namespace MultigridProjectorClient.Utilities
             if (shouldBlockBuiltOnServer)
             {
                 RestoreToolbars(projection, subgrid, destinationBlock);
+
+                if (sourceBlock is MyEventControllerBlock sourceEventControllerBlock1 &&
+                    destinationBlock is MyEventControllerBlock destinationEventControllerBlock1)
+                {
+                    CopyEvents(sourceEventControllerBlock1, destinationEventControllerBlock1);
+                }
+
                 return;
             }
 
