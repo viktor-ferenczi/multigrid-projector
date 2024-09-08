@@ -27,8 +27,8 @@ namespace MultigridProjectorClient.Utilities
 {
     internal static class UpdateToolbar
     {
-        private const string UNKNOWN_TEXT = "UNKNOWN ACTION";
-        private const string PLACEHOLDER_TEXT = "ACTION ENTITY NOT FOUND";
+        private const string UnknownText = "UNKNOWN ACTION";
+        private const string PlaceholderText = "ACTION ENTITY NOT FOUND";
 
         private static MyToolbarItem CreateTerminalToolbarItem(MyObjectBuilder_ToolbarItemTerminalBlock builder)
         {
@@ -156,8 +156,8 @@ namespace MultigridProjectorClient.Utilities
                     // Make a placeholder if the entity the toolbar is attached to could not be found
                     if (newToolbarItem == null)
                     {
-                        newToolbarItem = CreateDummyToolbarItem(PLACEHOLDER_TEXT, destinationBlock.EntityId);
-                        SetItemAtIndexWithDummyGroup(destinationToolbar, i, newToolbarItem, PLACEHOLDER_TEXT, destinationBlock);
+                        newToolbarItem = CreateDummyToolbarItem(PlaceholderText, destinationBlock.EntityId);
+                        SetItemAtIndexWithDummyGroup(destinationToolbar, i, newToolbarItem, PlaceholderText, destinationBlock);
                         continue;
                     }
 
@@ -188,8 +188,8 @@ namespace MultigridProjectorClient.Utilities
 
                 // If the toolbar item is of an unknown type make a dummy item as an error message
                 {
-                    MyToolbarItem newToolbarItem = CreateDummyToolbarItem(UNKNOWN_TEXT, destinationBlock.EntityId);
-                    SetItemAtIndexWithDummyGroup(destinationToolbar, i, newToolbarItem, UNKNOWN_TEXT, destinationBlock);
+                    MyToolbarItem newToolbarItem = CreateDummyToolbarItem(UnknownText, destinationBlock.EntityId);
+                    SetItemAtIndexWithDummyGroup(destinationToolbar, i, newToolbarItem, UnknownText, destinationBlock);
 
                     PluginLog.Error($"Cannot process toolbar item: {toolbarItem}");
                 }
@@ -199,11 +199,12 @@ namespace MultigridProjectorClient.Utilities
 
     internal static class UpdateBlock
     {
+        // Allocate this only once
         private static readonly HashSet<string> ExcludedEventControllerProperties = new HashSet<string> {"SearchBox"};
 
         public static void CopyProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
         {
-            // Special Cases
+            // Special case event controllers
             if (sourceBlock is MyEventControllerBlock sourceEventControllerBlock &&
                 destinationBlock is MyEventControllerBlock destinationEventControllerBlock)
             {
@@ -213,36 +214,38 @@ namespace MultigridProjectorClient.Utilities
 
                 // Events in Event Controllers are not stored as properties, so copy those as well
                 CopyEvents(sourceEventControllerBlock, destinationEventControllerBlock);
-            }
-            else
-            {
-                // Copy over terminal properties
-                CopyTerminalProperties(sourceBlock, destinationBlock);
-                UpdateToolbar.CopyToolbars(sourceBlock, destinationBlock);
-
-                // Copy over special properties if applicable
-                if (sourceBlock is MyProjectorBase sourceProjectorBase &&
-                    destinationBlock is MyProjectorBase destinationProjectorBase)
-                {
-                    CopyBlueprints(sourceProjectorBase, destinationProjectorBase);
-                }
-
-                else if (sourceBlock is IMyProgrammableBlock sourceProgrammableBlock &&
-                         destinationBlock is IMyProgrammableBlock destinationProgrammableBlock &&
-                         MySession.Static.IsSettingsExperimental())
-                {
-                    CopyScripts(sourceProgrammableBlock, destinationProgrammableBlock);
-                }
 
                 // Copying power must be done in the next frame as disabling a block will prevent properties being modified
                 // so we need to wait for all the changes to process
+                Events.InvokeOnGameThread(() => CopyPowerState(sourceBlock, destinationBlock));
+
+                return;
             }
 
+            // Copy over terminal properties
+            CopyTerminalProperties(sourceBlock, destinationBlock);
+            UpdateToolbar.CopyToolbars(sourceBlock, destinationBlock);
+
+            // Copy over special properties if applicable
+            if (sourceBlock is MyProjectorBase sourceProjectorBase &&
+                destinationBlock is MyProjectorBase destinationProjectorBase)
+            {
+                CopyBlueprints(sourceProjectorBase, destinationProjectorBase);
+            }
+
+            else if (sourceBlock is IMyProgrammableBlock sourceProgrammableBlock &&
+                     destinationBlock is IMyProgrammableBlock destinationProgrammableBlock &&
+                     MySession.Static.IsSettingsExperimental())
+            {
+                CopyScripts(sourceProgrammableBlock, destinationProgrammableBlock);
+            }
+
+            // Copying power must be done in the next frame as disabling a block will prevent properties being modified
+            // so we need to wait for all the changes to process
             Events.InvokeOnGameThread(() => CopyPowerState(sourceBlock, destinationBlock));
         }
 
-        // TODO: Refactor into multiple functions
-        // Reduce the delays between actions (left this high for debugging)
+        // FIXME: Reduce the delays between actions (left this high for debugging)
         // Consider if such a niche method should be part of the projection
         // See if this can be moved out of the special cases
         private static void CopyEvents(MyEventControllerBlock sourceBlock, MyEventControllerBlock destinationBlock)
@@ -258,9 +261,9 @@ namespace MultigridProjectorClient.Utilities
 
             Events.InvokeOnGameThread(() => { CopyEventControllerBlockSelection(sourceBlock, destinationBlock); }, 300);
         }
+
         private static void CopyEventControllerCondition(MyEventControllerBlock sourceBlock, MyEventControllerBlock destinationBlock)
         {
-
             ((IMyEventControllerBlock) destinationBlock).Threshold = ((IMyEventControllerBlock) sourceBlock).Threshold;
             ((IMyEventControllerBlock) destinationBlock).IsLowerOrEqualCondition = ((IMyEventControllerBlock) sourceBlock).IsLowerOrEqualCondition;
             ((IMyEventControllerBlock) destinationBlock).IsAndModeEnabled = ((IMyEventControllerBlock) sourceBlock).IsAndModeEnabled;
@@ -278,6 +281,7 @@ namespace MultigridProjectorClient.Utilities
                 PluginLog.Error($"Could not find angle for block: {sourceBlock.DisplayName}");
             }
         }
+
         private static void CopyEventControllerBlockSelection(MyEventControllerBlock sourceBlock, MyEventControllerBlock destinationBlock)
         {
 
