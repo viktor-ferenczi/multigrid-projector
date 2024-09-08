@@ -262,14 +262,14 @@ namespace MultigridProjectorClient.Utilities
             Events.InvokeOnGameThread(() => { CopyEventControllerBlockSelection(sourceBlock, destinationBlock); }, 300);
         }
 
-        private static void CopyEventControllerCondition(MyEventControllerBlock sourceBlock, MyEventControllerBlock destinationBlock)
+        private static void CopyEventControllerCondition(MyEventControllerBlock previewBlock, MyEventControllerBlock builtBlock)
         {
-            ((IMyEventControllerBlock) destinationBlock).Threshold = ((IMyEventControllerBlock) sourceBlock).Threshold;
-            ((IMyEventControllerBlock) destinationBlock).IsLowerOrEqualCondition = ((IMyEventControllerBlock) sourceBlock).IsLowerOrEqualCondition;
-            ((IMyEventControllerBlock) destinationBlock).IsAndModeEnabled = ((IMyEventControllerBlock) sourceBlock).IsAndModeEnabled;
+            ((IMyEventControllerBlock) builtBlock).Threshold = ((IMyEventControllerBlock) previewBlock).Threshold;
+            ((IMyEventControllerBlock) builtBlock).IsLowerOrEqualCondition = ((IMyEventControllerBlock) previewBlock).IsLowerOrEqualCondition;
+            ((IMyEventControllerBlock) builtBlock).IsAndModeEnabled = ((IMyEventControllerBlock) previewBlock).IsAndModeEnabled;
 
-            if (sourceBlock.Components.TryGet<MyEventAngleChanged>(out var sourceComp) &&
-                destinationBlock.Components.TryGet<MyEventAngleChanged>(out var destinationComp))
+            if (previewBlock.Components.TryGet<MyEventAngleChanged>(out var sourceComp) &&
+                builtBlock.Components.TryGet<MyEventAngleChanged>(out var destinationComp))
             {
                 Sync<float, SyncDirection.BothWays> sourceAngle = (Sync<float, SyncDirection.BothWays>) Reflection.GetValue(sourceComp, "m_angle");
                 Sync<float, SyncDirection.BothWays> destinationAngle = (Sync<float, SyncDirection.BothWays>) Reflection.GetValue(destinationComp, "m_angle");
@@ -278,32 +278,39 @@ namespace MultigridProjectorClient.Utilities
             }
             else
             {
-                PluginLog.Error($"Could not find angle for block: {sourceBlock.DisplayName}");
+                PluginLog.Error($"Could not find angle for block: {previewBlock.DisplayName}");
             }
         }
 
-        private static void CopyEventControllerBlockSelection(MyEventControllerBlock sourceBlock, MyEventControllerBlock destinationBlock)
+        private static void CopyEventControllerBlockSelection(MyEventControllerBlock previewBlock, MyEventControllerBlock builtBlock)
         {
-
-            MultigridProjection.TryFindProjectionByProjector(sourceBlock.CubeGrid.Projector, out MultigridProjection projection);
-            if (!projection.TryGetSelectedBlockIdsFromEventController(destinationBlock, out var foundIds))
+            // Sanity checks, only for debugging
+            if (previewBlock.CubeGrid?.IsPreview != true)
+                return;
+            if (builtBlock.CubeGrid?.IsPreview != false)
+                return;
+            
+            // FIXME: Awkward way to verify that the preview block corresponds to the built block.
+            // It would be much cleaner to pass only the block location of the event controller to restore
+            // the source blocks for from the corresponding projection (preview block).
+            if (!MultigridProjection.TryFindProjectionByProjector(previewBlock.CubeGrid.Projector, out var sourceProjection) ||
+                !MultigridProjection.TryFindProjectionByBuiltGrid(builtBlock.CubeGrid, out var projection, out _) ||
+                projection.Projector?.EntityId != sourceProjection.Projector?.EntityId)
+                return;
+            
+            if (!projection.TryGetSelectedBlockIdsFromEventController(previewBlock, out var selectedBlockIds))
                 return;
 
             // SelectAvailableBlocks and SelectButton expect MyGuiControlListbox.Item
-            List<MyGuiControlListbox.Item> foundBlocks = new List<MyGuiControlListbox.Item>();
-            foreach (long blockId in foundIds)
-            {
-                foundBlocks.Add(new MyGuiControlListbox.Item(userData: blockId));
-            }
+            var selectedBlocks = selectedBlockIds.Select(blockId => new MyGuiControlListbox.Item(userData: blockId)).ToList();
+            if (!selectedBlocks.Any())
+                return;
+            
+            var selectAvailableBlocks = Reflection.GetMethod(typeof(MyEventControllerBlock), builtBlock, "SelectAvailableBlocks");
+            selectAvailableBlocks.DynamicInvoke(selectedBlocks);
 
-            if (foundBlocks.Count > 0)
-            {
-                Delegate selectAvailableBlocks = Reflection.GetMethod(typeof(MyEventControllerBlock), destinationBlock, "SelectAvailableBlocks");
-                selectAvailableBlocks.DynamicInvoke(foundBlocks);
-
-                Delegate selectButton = Reflection.GetMethod(typeof(MyEventControllerBlock), destinationBlock, "SelectButton");
-                selectButton.DynamicInvoke();
-            }
+            var selectButton = Reflection.GetMethod(typeof(MyEventControllerBlock), builtBlock, "SelectButton");
+            selectButton.DynamicInvoke();
         }
 
         private static void CopyPowerState(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
