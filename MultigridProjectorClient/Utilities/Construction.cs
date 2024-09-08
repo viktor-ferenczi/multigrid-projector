@@ -59,48 +59,47 @@ namespace MultigridProjectorClient.Utilities
 
             // Specify the author of the block. This is of the private type Author and therefore must be made at runtime.
             object authorData = Activator.CreateInstance(
-                Reflection.GetType(cubeBuilder, "Author"),
-                new object[] {
-                    MySession.Static.LocalCharacterEntityId,
-                    MySession.Static.LocalPlayerId
-                });
+                Reflection.GetType(cubeBuilder, "Author"), 
+                MySession.Static.LocalCharacterEntityId, 
+                MySession.Static.LocalPlayerId);
 
             // Create the data to be used in the multiplayer request. This is of the private type GridSpawnRequestData and therefore must be made at runtime.
             object requestData = Activator.CreateInstance(
-                Reflection.GetType(cubeBuilder, "GridSpawnRequestData"),
-                new object[] {
-                    authorData,
-                    (DefinitionIdBlit)blockDefinition.Id,
-                    position,
-                    MySession.Static.CreativeToolsEnabled(Sync.MyId),
-                    false,
-                    visuals
-                });
+                Reflection.GetType(cubeBuilder, "GridSpawnRequestData"), 
+                authorData, 
+                (DefinitionIdBlit) blockDefinition.Id, 
+                position, 
+                MySession.Static.CreativeToolsEnabled(Sync.MyId), 
+                false, 
+                visuals);
 
             // Get the method that is (indirectly) passed into the multiplayer request
-            Delegate RequestGridSpawn = Reflection.GetMethod(typeof(MyCubeBuilder), "RequestGridSpawn");
+            Delegate requestGridSpawn = Reflection.GetMethod(typeof(MyCubeBuilder), "RequestGridSpawn");
 
             // Create the lambda that is passed to the multiplayer request and returns the RequestGridSpawn method when called.
             // The game requires that it takes a parameter despite it not being used in any way.
             // As the return type is only known at runtime it must also be compiled it at runtime.
-            LambdaExpression lambda = Expression.Lambda(
-                Expression.Constant(RequestGridSpawn),
+            var lambda = Expression.Lambda(
+                Expression.Constant(requestGridSpawn),
                 Expression.Parameter(typeof(IMyEventOwner), "s"));
 
-            Delegate RequestGridSpawnWrapper = lambda.Compile();
+            var requestGridSpawnWrapper = lambda.Compile();
 
             // Get the RaiseStaticEvent function that is used for multiplayer communication.
             // This is a generic method so after finding it we need to create one for the GridSpawnRequestData type
-            Delegate RaiseStaticEvent = Reflection.GetGenericMethod(
+            var raiseStaticEvent = Reflection.GetGenericMethod(
                 typeof(Sandbox.Engine.Multiplayer.MyMultiplayer),
                 (m) => m.Name == "RaiseStaticEvent" && m.IsGenericMethodDefinition && m.GetParameters().Length == 4,
-                new Type[] { Reflection.GetType(cubeBuilder, "GridSpawnRequestData") });
+                new Type[]
+                {
+                    Reflection.GetType(cubeBuilder, "GridSpawnRequestData")
+                });
 
             // Invoke the method with the wrapper function, request data, and default optional parameters
-            RaiseStaticEvent.DynamicInvoke(RequestGridSpawnWrapper, requestData, default(EndpointId), null);
+            raiseStaticEvent.DynamicInvoke(requestGridSpawnWrapper, requestData, default(EndpointId), null);
 
             // Call everything subscribed to the OnBlockAdded event
-            Delegate eventDelegate = (Delegate)Reflection.GetValue(cubeBuilder, "OnBlockAdded");
+            Delegate eventDelegate = (Delegate) Reflection.GetValue(cubeBuilder, "OnBlockAdded");
 
             if (eventDelegate == null)
                 return;
@@ -132,7 +131,7 @@ namespace MultigridProjectorClient.Utilities
             subgrid.GetBlockOrientationQuaternion(block, out var previewQuaternion);
 
             // Define where the block should be placed
-            HashSet<MyCubeGrid.MyBlockLocation> blockLocations = new HashSet<MyCubeGrid.MyBlockLocation>
+            var blockLocations = new HashSet<MyCubeGrid.MyBlockLocation>
             {
                 new MyCubeGrid.MyBlockLocation(
                     block.BlockDefinition.Id,
@@ -206,6 +205,7 @@ namespace MultigridProjectorClient.Utilities
             return MyCubeGrid.TestBlockPlacementArea(blockDefinition, new MyBlockOrientation(), worldMatrix, ref settings, localBox, dynamicMode);
         }
 
+        // Returns true if building of the block should be handled by the server, false if it is handled by the client
         public static bool WeldBlock(MyProjectorBase projector, MySlimBlock cubeBlock, long owner, ref long builtBy)
         {
             // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
@@ -216,27 +216,30 @@ namespace MultigridProjectorClient.Utilities
             if (Comms.ServerHasPlugin)
             {
                 // Deliver the subgrid index via the builtBy field, the owner will be used instead in BuildInternal
-                builtBy = subgrid.Index; 
+                builtBy = subgrid.Index;
                 return true;
             }
 
-            // Weld the main grid (first subgrid) normally on vanilla servers, but mechanical connection blocks
-            // still need to be handled, because the vanilla servers cannot build them properly (the subparts vanish)
+            // Fall back to building only the main grid (first subgrid) on vanilla server if the client welding feature is disabled
             var isMainGrid = subgrid.Index == 0;
+            if (!Config.CurrentConfig.ClientWelding)
+            {
+                return isMainGrid;
+            }
+
+            // Weld the main grid (first subgrid) normally on vanilla servers, but mechanical connection blocks
+            // still need to be handled here, because the vanilla servers cannot build them properly (the subparts vanish)
             var previewBlock = cubeBlock.FatBlock;
             var isMechanicalConnection = previewBlock is IMyMechanicalConnectionBlock || previewBlock is IMyAttachableTopBlock;
-            if (isMainGrid && (!isMechanicalConnection || !Config.CurrentConfig.ClientWelding))
+            if (isMainGrid && !isMechanicalConnection)
                 return true;
-            
-            if (!Config.CurrentConfig.ClientWelding)
-                return false;
 
             // Make sure there is enough space to actually place the block
             if (projector.CanBuild(cubeBlock, true) != BuildCheckResult.OK)
                 return false;
 
             // Sanity checks for DLC and if the block can be welded
-            ulong steamId = MySession.Static.Players.TryGetSteamId(owner);
+            var steamId = MySession.Static.Players.TryGetSteamId(owner);
             if (!projector.AllowWelding || !MySession.Static.GetComponent<MySessionComponentDLC>().HasDefinitionDLC(cubeBlock.BlockDefinition, steamId))
                 return false;
 
@@ -247,50 +250,54 @@ namespace MultigridProjectorClient.Utilities
             if (previewBlock == null)
                 return false;
 
-            void OnPreviewPlace(MyCubeBlock builtBlock)
-            {
-                if (builtBlock is MyTerminalBlock block)
-                    UpdateBlock.CopyProperties((MyTerminalBlock)previewBlock, block);
+            // FIXME: Use previewBlock.IsBuilt
+            Events.OnNextFatBlockAdded(
+                subgrid.BuiltGrid,
+                builtBlock => OnPreviewPlace(builtBlock, previewBlock),
+                builtBlock => VerifyBuiltBlock(cubeBlock, builtBlock.SlimBlock)
+            );
 
-                // We need to wait for the basepart to replicate for the block to be fully placed
-                if (builtBlock is MyMechanicalConnectionBlockBase builtBase)
+            return false;
+        }
+
+        private static void OnPreviewPlace(MyCubeBlock builtBlock, MyCubeBlock previewBlock)
+        {
+            if (builtBlock is MyTerminalBlock block)
+                UpdateBlock.CopyProperties((MyTerminalBlock) previewBlock, block);
+
+            // We need to wait for the basepart to replicate for the block to be fully placed
+            if (builtBlock is MyMechanicalConnectionBlockBase builtBase)
+            {
+                Events.OnNextAttachedChanged(builtBase, (_) =>
                 {
-                    Events.OnNextAttachedChanged(builtBase, (_) =>
+                    if (Config.CurrentConfig.ConnectSubgrids)
                     {
-                        if (Config.CurrentConfig.ConnectSubgrids)
+                        UpdateTopParts((MyMechanicalConnectionBlockBase) previewBlock, builtBase);
+                    }
+                    else
+                    {
+                        MyAttachableTopBlockBase previewTop = GetTopPart((MyMechanicalConnectionBlockBase) previewBlock);
+                        MyAttachableTopBlockBase builtTop = GetTopPart((MyMechanicalConnectionBlockBase) builtBlock);
+
+                        ConnectionType connection = AnalyzeConnection(
+                            (MyMechanicalConnectionBlockBaseDefinition) previewBlock.BlockDefinition,
+                            previewTop?.BlockDefinition);
+
+                        if (connection == ConnectionType.Default)
                         {
-                            UpdateTopParts((MyMechanicalConnectionBlockBase)previewBlock, builtBase);
+                            SkinTopParts(previewTop, builtTop);
                         }
                         else
                         {
-                            MyAttachableTopBlockBase previewTop = GetTopPart((MyMechanicalConnectionBlockBase)previewBlock);
-                            MyAttachableTopBlockBase builtTop = GetTopPart((MyMechanicalConnectionBlockBase)builtBlock);
-
-                            ConnectionType connection = AnalyzeConnection(
-                                (MyMechanicalConnectionBlockBaseDefinition)previewBlock.BlockDefinition,
-                                previewTop?.BlockDefinition);
-
-                            if (connection == ConnectionType.Default)
-                            {
-                                SkinTopParts(previewTop, builtTop);
-                            }
-                            else
-                            {
-                                builtTop.CubeGrid.SkinBlocks(builtTop.Min, builtTop.Max, new Vector3(255, 0, 0), MyStringHash.GetOrCompute("Weldless"), false);
-                            }
+                            builtTop.CubeGrid.SkinBlocks(builtTop.Min, builtTop.Max, new Vector3(255, 0, 0), MyStringHash.GetOrCompute("Weldless"), false);
                         }
+                    }
 
-                    }, (_) => builtBase.TopBlock != null);
-                }
-
-                if (builtBlock is MyAttachableTopBlockBase @base && Config.CurrentConfig.ConnectSubgrids)
-                    UpdateBaseParts((MyAttachableTopBlockBase)previewBlock, @base);
+                }, _ => builtBase.TopBlock != null);
             }
 
-            // FIXME: Use previewBlock.IsBuilt
-            Events.OnNextFatBlockAdded(subgrid.BuiltGrid, OnPreviewPlace, (builtBlock) => VerifyBuiltBlock(cubeBlock, builtBlock.SlimBlock));
-
-            return false;
+            if (builtBlock is MyAttachableTopBlockBase @base && Config.CurrentConfig.ConnectSubgrids)
+                UpdateBaseParts((MyAttachableTopBlockBase) previewBlock, @base);
         }
     }
 }
