@@ -209,31 +209,27 @@ namespace MultigridProjectorClient.Utilities
         public static bool WeldBlock(MyProjectorBase projector, MySlimBlock cubeBlock, long owner, ref long builtBy)
         {
             // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
-            if (!TryGetSubgrid(cubeBlock, out Subgrid subgrid, out MultigridProjection _))
+            if (!TryGetSubgrid(cubeBlock, out var subgrid, out _))
                 return true;
 
-            int gridIndex = subgrid.Index;
-
-            MyCubeBlock previewBlock = cubeBlock.FatBlock;
-
-            // Weld blocks normally if supported
-            // This means either the server plugin is present or we are welding the initial grid supported by vanilla servers
-            // Blocks with subparts will not weld correctly on vanilla servers without the plugin (the subparts vanish)
-            bool hasSubpart = previewBlock is IMyMechanicalConnectionBlock || previewBlock is IMyAttachableTopBlock;
-
-            // The first subgrid with index 0 is the main grid with the projector on it, therefore it is always Supported
-            if (Comms.ServerHasPlugin || gridIndex == 0 && (!hasSubpart || !Config.CurrentConfig.ClientWelding))
+            // Let the server side MGP to handle building if it is available
+            if (Comms.ServerHasPlugin)
             {
-                if (Comms.ServerHasPlugin)
-                    builtBy = gridIndex; // Deliver the subgrid index via the builtBy field, the owner will be used instead in BuildInternal
-
+                // Deliver the subgrid index via the builtBy field, the owner will be used instead in BuildInternal
+                builtBy = subgrid.Index; 
                 return true;
             }
+
+            // Weld the main grid (first subgrid) normally on vanilla servers, but mechanical connection blocks
+            // still need to be handled, because the vanilla servers cannot build them properly (the subparts vanish)
+            var isMainGrid = subgrid.Index == 0;
+            var previewBlock = cubeBlock.FatBlock;
+            var isMechanicalConnection = previewBlock is IMyMechanicalConnectionBlock || previewBlock is IMyAttachableTopBlock;
+            if (isMainGrid && (!isMechanicalConnection || !Config.CurrentConfig.ClientWelding))
+                return true;
             
             if (!Config.CurrentConfig.ClientWelding)
-            {
                 return false;
-            }
 
             // Make sure there is enough space to actually place the block
             if (projector.CanBuild(cubeBlock, true) != BuildCheckResult.OK)
