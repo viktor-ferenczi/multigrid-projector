@@ -68,7 +68,10 @@ namespace MultigridProjectorClient.Utilities
             MyObjectBuilder_ToolbarItemTerminalGroup data = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemTerminalGroup>();
             data.GroupName = text;
             data._Action = "";
-            data.Parameters = new List<MyObjectBuilder_ToolbarItemActionParameter> {MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemActionParameter>()};
+            data.Parameters = new List<MyObjectBuilder_ToolbarItemActionParameter>
+            {
+                MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemActionParameter>()
+            };
 
             // This is used internally to find which grid the block group is on.
             // It needs to be set to the block we want to assign the toolbar to.
@@ -81,7 +84,10 @@ namespace MultigridProjectorClient.Utilities
         {
             MyBlockGroup dummyGroup = (MyBlockGroup) Activator.CreateInstance(typeof(MyBlockGroup), true);
             dummyGroup.Name = new StringBuilder(name);
-            Reflection.SetValue(dummyGroup, "Blocks", new HashSet<MyTerminalBlock> {dummyBlock});
+            Reflection.SetValue(dummyGroup, "Blocks", new HashSet<MyTerminalBlock>
+            {
+                dummyBlock
+            });
 
             MyGridTerminalSystem terminalSystem = dummyBlock.CubeGrid.GridSystems.TerminalSystem;
             terminalSystem.AddUpdateGroup(dummyGroup, true);
@@ -133,6 +139,7 @@ namespace MultigridProjectorClient.Utilities
             return null;
         }
 
+        // FIXME: Use `ToolbarFixer` instead to restore toolbar slots from the preview
         public static void CopyToolbars(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
         {
             MyToolbar sourceToolbar = GetToolbar(sourceBlock);
@@ -200,10 +207,21 @@ namespace MultigridProjectorClient.Utilities
     internal static class UpdateBlock
     {
         // Allocate this only once
-        private static readonly HashSet<string> ExcludedEventControllerProperties = new HashSet<string> {"SearchBox"};
-
-        public static void CopyProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
+        private static readonly HashSet<string> ExcludedEventControllerProperties = new HashSet<string>
         {
+            "SearchBox"
+        };
+
+        public static void CopyProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock, bool shouldBlockBuiltOnServer = false)
+        {
+            // Blocks build on server side, we just fix the toolbars and envent controllers,
+            // since they may point from the main grid to subgrids
+            if (shouldBlockBuiltOnServer)
+            {
+                UpdateToolbar.CopyToolbars(sourceBlock, destinationBlock);
+                return;
+            }
+
             // Special case event controllers
             if (sourceBlock is MyEventControllerBlock sourceEventControllerBlock &&
                 destinationBlock is MyEventControllerBlock destinationEventControllerBlock)
@@ -245,9 +263,7 @@ namespace MultigridProjectorClient.Utilities
             Events.InvokeOnGameThread(() => CopyPowerState(sourceBlock, destinationBlock));
         }
 
-        // FIXME: Reduce the delays between actions (left this high for debugging)
-        // Consider if such a niche method should be part of the projection
-        // See if this can be moved out of the special cases
+        // FIXME: Use `ToolbarFixer` instead to restore event controller settings from the preview
         private static void CopyEvents(MyEventControllerBlock sourceBlock, MyEventControllerBlock destinationBlock)
         {
             Events.InvokeOnGameThread(() =>
@@ -255,11 +271,11 @@ namespace MultigridProjectorClient.Utilities
                 long eventId = ((Sandbox.ModAPI.IMyEventControllerBlock) sourceBlock).SelectedEvent.UniqueSelectionId;
                 Delegate selectEvent = Reflection.GetMethod(typeof(MyEventControllerBlock), destinationBlock, "SelectEvent");
                 selectEvent.DynamicInvoke(eventId);
-            }, 100);
+            }, 30);
 
-            Events.InvokeOnGameThread(() => { CopyEventControllerCondition(sourceBlock, destinationBlock); }, 200);
+            Events.InvokeOnGameThread(() => { CopyEventControllerCondition(sourceBlock, destinationBlock); }, 60);
 
-            Events.InvokeOnGameThread(() => { CopyEventControllerBlockSelection(sourceBlock, destinationBlock); }, 300);
+            Events.InvokeOnGameThread(() => { CopyEventControllerBlockSelection(sourceBlock, destinationBlock); }, 90);
         }
 
         private static void CopyEventControllerCondition(MyEventControllerBlock previewBlock, MyEventControllerBlock builtBlock)
@@ -289,7 +305,7 @@ namespace MultigridProjectorClient.Utilities
                 return;
             if (builtBlock.CubeGrid?.IsPreview != false)
                 return;
-            
+
             // FIXME: Awkward way to verify that the preview block corresponds to the built block.
             // It would be much cleaner to pass only the block location of the event controller to restore
             // the source blocks for from the corresponding projection (preview block).
@@ -297,7 +313,7 @@ namespace MultigridProjectorClient.Utilities
                 !MultigridProjection.TryFindProjectionByBuiltGrid(builtBlock.CubeGrid, out var projection, out _) ||
                 projection.Projector?.EntityId != sourceProjection.Projector?.EntityId)
                 return;
-            
+
             if (!projection.TryGetSelectedBlockIdsFromEventController(previewBlock, out var selectedBlockIds))
                 return;
 

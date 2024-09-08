@@ -228,42 +228,48 @@ namespace MultigridProjectorClient.Utilities
             }
 
             // Weld the main grid (first subgrid) normally on vanilla servers, but mechanical connection blocks
-            // still need to be handled here, because the vanilla servers cannot build them properly (the subparts vanish)
+            // still need to be handled here, because the vanilla server cannot start subgrids
             var previewBlock = cubeBlock.FatBlock;
             var isMechanicalConnection = previewBlock is IMyMechanicalConnectionBlock || previewBlock is IMyAttachableTopBlock;
-            if (isMainGrid && !isMechanicalConnection)
-                return true;
+            var shouldBlockBuiltOnServer = isMainGrid && !isMechanicalConnection;
+            
+            if (!shouldBlockBuiltOnServer)
+            {
+                // Attempt to initiate building of the block on client side
+                // by simulating the player placing the block
+                
+                // Make sure there is enough space to actually place the block
+                if (projector.CanBuild(cubeBlock, true) != BuildCheckResult.OK)
+                    return false;
 
-            // Make sure there is enough space to actually place the block
-            if (projector.CanBuild(cubeBlock, true) != BuildCheckResult.OK)
-                return false;
+                // Sanity checks for DLC and if the block can be welded
+                var steamId = MySession.Static.Players.TryGetSteamId(owner);
+                if (!projector.AllowWelding || !MySession.Static.GetComponent<MySessionComponentDLC>().HasDefinitionDLC(cubeBlock.BlockDefinition, steamId))
+                    return false;
 
-            // Sanity checks for DLC and if the block can be welded
-            var steamId = MySession.Static.Players.TryGetSteamId(owner);
-            if (!projector.AllowWelding || !MySession.Static.GetComponent<MySessionComponentDLC>().HasDefinitionDLC(cubeBlock.BlockDefinition, steamId))
-                return false;
-
-            // Place the block
-            PlacePreviewBlock(subgrid, cubeBlock.Position);
+                // Place the block
+                PlacePreviewBlock(subgrid, cubeBlock.Position);
+            }
 
             // Register an event to update the block (if applicable)
-            if (previewBlock == null)
-                return false;
+            if (previewBlock != null)
+            {
+                // FIXME: Use previewBlock.IsBuilt
+                // FIXME: Depend on MGP's grid scan mechanism instead
+                Events.OnNextFatBlockAdded(
+                    subgrid.BuiltGrid,
+                    builtBlock => OnPreviewPlace(builtBlock, previewBlock, shouldBlockBuiltOnServer),
+                    builtBlock => VerifyBuiltBlock(cubeBlock, builtBlock.SlimBlock)
+                );
+            }
 
-            // FIXME: Use previewBlock.IsBuilt
-            Events.OnNextFatBlockAdded(
-                subgrid.BuiltGrid,
-                builtBlock => OnPreviewPlace(builtBlock, previewBlock),
-                builtBlock => VerifyBuiltBlock(cubeBlock, builtBlock.SlimBlock)
-            );
-
-            return false;
+            return shouldBlockBuiltOnServer;
         }
 
-        private static void OnPreviewPlace(MyCubeBlock builtBlock, MyCubeBlock previewBlock)
+        private static void OnPreviewPlace(MyCubeBlock builtBlock, MyCubeBlock previewBlock, bool shouldBlockBuiltOnServer)
         {
             if (builtBlock is MyTerminalBlock block)
-                UpdateBlock.CopyProperties((MyTerminalBlock) previewBlock, block);
+                UpdateBlock.CopyProperties((MyTerminalBlock) previewBlock, block, shouldBlockBuiltOnServer);
 
             // We need to wait for the basepart to replicate for the block to be fully placed
             if (builtBlock is MyMechanicalConnectionBlockBase builtBase)
