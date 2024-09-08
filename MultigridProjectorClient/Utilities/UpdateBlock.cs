@@ -282,7 +282,8 @@ namespace MultigridProjectorClient.Utilities
         {
 
             MultigridProjection.TryFindProjectionByProjector(sourceBlock.CubeGrid.Projector, out MultigridProjection projection);
-            var (foundIds, missingIds) = projection.GetSelectedBlockIdsFromEventController(destinationBlock);
+            if (!projection.TryGetSelectedBlockIdsFromEventController(destinationBlock, out var foundIds))
+                return;
 
             // SelectAvailableBlocks and SelectButton expect MyGuiControlListbox.Item
             List<MyGuiControlListbox.Item> foundBlocks = new List<MyGuiControlListbox.Item>();
@@ -291,13 +292,6 @@ namespace MultigridProjectorClient.Utilities
                 foundBlocks.Add(new MyGuiControlListbox.Item(userData: blockId));
             }
 
-            List<MyCubeBlock> missingBlocks = new List<MyCubeBlock>();
-            foreach (long blockId in missingIds)
-            {
-                missingBlocks.Add((MyCubeBlock) MyEntities.GetEntityById(blockId));
-            }
-
-
             if (foundBlocks.Count > 0)
             {
                 Delegate selectAvailableBlocks = Reflection.GetMethod(typeof(MyEventControllerBlock), destinationBlock, "SelectAvailableBlocks");
@@ -305,18 +299,6 @@ namespace MultigridProjectorClient.Utilities
 
                 Delegate selectButton = Reflection.GetMethod(typeof(MyEventControllerBlock), destinationBlock, "SelectButton");
                 selectButton.DynamicInvoke();
-            }
-
-            if (missingBlocks.Count > 0)
-            {
-                StringBuilder message = new StringBuilder("The following blocks could not be found:\n");
-
-                foreach (var block in missingBlocks)
-                {
-                    message.AppendLine($"{block.DisplayName}");
-                }
-
-                MyAPIGateway.Utilities.ShowMessage("Multigrid Projector", message.ToString());
             }
         }
 

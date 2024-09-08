@@ -10,7 +10,6 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)Extensions\MyMotorStatorExtensions.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)logic\ControllerFixer.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\MultigridProjectorSession.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\ProjectedBlock.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\BlockMinLocation.cs" />
