@@ -95,7 +95,8 @@ namespace MultigridProjectorClient.Utilities
             projection.ToolbarFixer.AssignBlockToToolbars(projection, subgrid, terminalBlock);
         }
 
-        // FIXME: Use `ToolbarFixer` instead to restore event controller settings from the preview
+        // FIXME: Use ToolbarFixer instead to restore event controller settings from the preview, make sure
+        // the event controller code in ToolbarFixer does proper syncing and works both on server and client  
         private static void CopyEvents(MyEventControllerBlock sourceBlock, MyEventControllerBlock destinationBlock)
         {
             Events.InvokeOnGameThread(() =>
