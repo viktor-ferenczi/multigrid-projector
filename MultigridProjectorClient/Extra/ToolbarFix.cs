@@ -44,7 +44,7 @@ namespace MultigridProjectorClient.Extra
                     callback: result =>
                     {
                         if (result == MyGuiScreenMessageBox.ResultEnum.YES)
-                            projection.FixToolbarsAndEventControllers();
+                            projection.ToolbarFixer.FixToolbarsAndEventControllers(projection);
                     }));
         }
     }
