@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Linq;
 using MultigridProjector.Extensions;
 using Sandbox.Common.ObjectBuilders;
+using Sandbox.Graphics.GUI;
 using SpaceEngineers.Game.Entities.Blocks;
 using VRage.Game;
+using VRage.ObjectBuilder;
 
 namespace MultigridProjector.Logic
 {
@@ -69,7 +71,7 @@ namespace MultigridProjector.Logic
         // Mapping of event controller locations to the set of locations of their assigned jobs and its reverse mapping 
         private readonly Dictionary<FastBlockLocation, HashSet<FastBlockLocation>> selectedBlockLocationsByEventControllerLocation = new Dictionary<FastBlockLocation, HashSet<FastBlockLocation>>(32);
         private readonly Dictionary<FastBlockLocation, HashSet<FastBlockLocation>> eventControllerLocationsBySelectedBlockLocation = new Dictionary<FastBlockLocation, HashSet<FastBlockLocation>>(32);
-
+        
         public ToolbarFixer(IEnumerable<Subgrid> supportedSubgrids)
         {
             // Collect all blocks may be relevant by ID and all the toolbars
@@ -130,12 +132,12 @@ namespace MultigridProjector.Logic
                 if (selectedBlocksCount == 0)
                     continue;
 
-                var selectedBlocks = new HashSet<FastBlockLocation>(selectedBlocksCount);
+                var selectedBlockLocations = new HashSet<FastBlockLocation>(selectedBlocksCount);
                 foreach (var blockEntityId in eventControllerBuilder.SelectedBlocks)
                 {
                     if (terminalBlockLocationsByEntityId.TryGetValue(blockEntityId, out var selectedBlockLocation))
                     {
-                        selectedBlocks.Add(selectedBlockLocation);
+                        selectedBlockLocations.Add(selectedBlockLocation);
                         var eventControllerLocations =
                             eventControllerLocationsBySelectedBlockLocation.TryGetValue(selectedBlockLocation, out var v)
                                 ? v
@@ -143,7 +145,7 @@ namespace MultigridProjector.Logic
                         eventControllerLocations.Add(eventControllerLocation);
                     }
                 }
-                selectedBlockLocationsByEventControllerLocation.Add(eventControllerLocation, selectedBlocks);
+                selectedBlockLocationsByEventControllerLocation.Add(eventControllerLocation, selectedBlockLocations);
             }
         }
 
@@ -224,30 +226,28 @@ namespace MultigridProjector.Logic
             if (!selectedBlockLocationsByEventControllerLocation.TryGetValue(eventControllerLocation, out var selectedBlockLocations))
                 return;
 
-            var selectedBlockIds = eventControllerBlock.GetSelectedBlockIds();
-            if (selectedBlockIds == null)
-                return;
-
-            selectedBlockIds.Clear();
+            var blockIdItemList = new MySerializableList<MyGuiControlListbox.Item>(selectedBlockLocations.Count);
             foreach (var selectedBlockLocation in selectedBlockLocations)
             {
                 if (!projection.TryGetProjectedBlock(selectedBlockLocation, out _, out var projectedBlock))
                     continue;
 
                 var selectedBlockEntityId = projectedBlock.SlimBlock?.FatBlock.EntityId;
-                if (selectedBlockEntityId == null)
-                    continue;
-
-                selectedBlockIds.Add(selectedBlockEntityId.Value);
+                if (selectedBlockEntityId.HasValue)
+                    blockIdItemList.Add(new MyGuiControlListbox.Item(userData: selectedBlockEntityId.Value));
             }
+            
+            eventControllerBlock.SelectAvailableBlocks(blockIdItemList);
+            eventControllerBlock.SelectButton();
         }
 
         public void AssignBlockToEventControllers(MultigridProjection projection, Subgrid subgrid, MyTerminalBlock terminalBlock)
         {
             var selectedBlockEntityId = terminalBlock.EntityId;
 
-            var selectedBlockLocation = new FastBlockLocation(subgrid.Index, subgrid.BuiltToPreviewBlockPosition(terminalBlock.Position));
-            if (!eventControllerLocationsBySelectedBlockLocation.TryGetValue(selectedBlockLocation, out var eventControllerLocations))
+            var selectedBlockPreviewPosition = subgrid.BuiltToPreviewBlockPosition(terminalBlock.Position);
+            var selectedBlockPreviewLocation = new FastBlockLocation(subgrid.Index, selectedBlockPreviewPosition);
+            if (!eventControllerLocationsBySelectedBlockLocation.TryGetValue(selectedBlockPreviewLocation, out var eventControllerLocations))
                 return;
 
             foreach (var eventControllerLocation in eventControllerLocations)
@@ -257,13 +257,13 @@ namespace MultigridProjector.Logic
 
                 if (!(projectedBlock?.SlimBlock?.FatBlock is MyEventControllerBlock eventControllerBlock))
                     continue;
-
-                var selectedBlockIds = eventControllerBlock.GetSelectedBlockIds();
-                if (selectedBlockIds == null)
-                    continue;
-
-                if (!selectedBlockIds.Contains(selectedBlockEntityId))
-                    selectedBlockIds.Add(selectedBlockEntityId);
+                
+                var blockIdItemList = new MySerializableList<MyGuiControlListbox.Item>
+                {
+                    new MyGuiControlListbox.Item(userData: selectedBlockEntityId)
+                };
+                eventControllerBlock.SelectAvailableBlocks(blockIdItemList);
+                eventControllerBlock.SelectButton();
             }
         }
 
@@ -286,31 +286,6 @@ namespace MultigridProjector.Logic
                     ConfigureEventController(projection, subgrid, eventControllerBlock);
                 }
             }
-        }
-        public bool TryGetSelectedBlockIdsFromEventController(MultigridProjection projection, MyEventControllerBlock eventControllerBlock, out HashSet<long> selectedBlockIds)
-        {
-            selectedBlockIds = null;
-
-            if (!projection.TryFindPreviewGrid(eventControllerBlock.CubeGrid, out var subgridIndex))
-                return false;
-
-            if (!projection.TryGetSupportedSubgrid(subgridIndex, out var subgrid))
-                return false;
-
-            var eventControllerLocation = new FastBlockLocation(subgrid.Index, subgrid.BuiltToPreviewBlockPosition(eventControllerBlock.Position));
-            if (!selectedBlockLocationsByEventControllerLocation.TryGetValue(eventControllerLocation, out var selectedBlockLocations))
-                return false;
-
-            selectedBlockIds = new HashSet<long>();
-            foreach (var selectedBlockLocation in selectedBlockLocations)
-            {
-                if (projection.TryGetProjectedBlock(selectedBlockLocation, out _, out var projectedBlock) &&
-                    projectedBlock.SlimBlock?.FatBlock is MyTerminalBlock selectedTerminalBlock)
-                {
-                    selectedBlockIds.Add(selectedTerminalBlock.EntityId);
-                }
-            }
-            return true;
         }
     }
 }

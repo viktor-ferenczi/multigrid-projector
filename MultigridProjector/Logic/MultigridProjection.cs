@@ -275,8 +275,6 @@ namespace MultigridProjector.Logic
 
             ToolbarFixer.ConfigureEventController(this, subgrid, terminalBlock);
             ToolbarFixer.AssignBlockToEventControllers(this, subgrid, terminalBlock);
-
-            // FIXME: Do we need to sync any changes made to the toolbars or selected blocks of event controllers in multiplayer?
         }
 
         private void MapBlueprintBlocks()

@@ -10,12 +10,9 @@ using System.Text;
 using VRage.Game;
 using VRageMath;
 using MultigridProjector.Utilities;
-using MultigridProjector.Extensions;
-using System.Linq;
 using IMyEventControllerBlock = Sandbox.ModAPI.Ingame.IMyEventControllerBlock;
 using SpaceEngineers.Game.EntityComponents.Blocks;
 using VRage.Sync;
-using Sandbox.Graphics.GUI;
 using MultigridProjector.Logic;
 
 namespace MultigridProjectorClient.Utilities
@@ -108,7 +105,7 @@ namespace MultigridProjectorClient.Utilities
 
             Events.InvokeOnGameThread(() => { CopyEventControllerCondition(sourceBlock, destinationBlock); }, 60);
 
-            Events.InvokeOnGameThread(() => { CopyEventControllerBlockSelection(sourceBlock, destinationBlock); }, 90);
+            Events.InvokeOnGameThread(() => { RestoreEventControllerBlockSelection(destinationBlock); }, 90);
         }
 
         private static void CopyEventControllerCondition(MyEventControllerBlock previewBlock, MyEventControllerBlock builtBlock)
@@ -131,34 +128,12 @@ namespace MultigridProjectorClient.Utilities
             }
         }
 
-        private static void CopyEventControllerBlockSelection(MyEventControllerBlock previewBlock, MyEventControllerBlock builtBlock)
+        private static void RestoreEventControllerBlockSelection(MyEventControllerBlock builtBlock)
         {
-            // Sanity checks, only for debugging
-            if (previewBlock.CubeGrid?.IsPreview != true)
-                return;
-            if (builtBlock.CubeGrid?.IsPreview != false)
+            if (!MultigridProjection.TryFindProjectionByBuiltGrid(builtBlock.CubeGrid, out var projection, out var subgrid))
                 return;
 
-            // FIXME: Awkward way to verify that the preview block corresponds to the built block.
-            // It would be much cleaner to pass only the block location of the event controller to restore
-            // the source blocks for from the corresponding projection (preview block).
-            if (!MultigridProjection.TryFindProjectionByProjector(previewBlock.CubeGrid.Projector, out var sourceProjection) ||
-                !MultigridProjection.TryFindProjectionByBuiltGrid(builtBlock.CubeGrid, out var projection, out _) ||
-                projection.Projector?.EntityId != sourceProjection.Projector?.EntityId)
-                return;
-
-            if (!projection.ToolbarFixer.TryGetSelectedBlockIdsFromEventController(projection, previewBlock, out var selectedBlockIds))
-                return;
-
-            // No need to select blocks if there were none selected (an empty list is the default)
-            if (!selectedBlockIds.Any())
-                return;
-
-            // Do exactly what the UI does, so the changes are synced to the server
-            // SelectAvailableBlocks and SelectButton expect MyGuiControlListbox.Item
-            var listItems = selectedBlockIds.Select(blockId => new MyGuiControlListbox.Item(userData: blockId)).ToList();
-            builtBlock.SelectAvailableBlocks(listItems);
-            builtBlock.SelectButton();
+            projection.ToolbarFixer.ConfigureToolbar(projection, subgrid, builtBlock);
         }
 
         private static void CopyPowerState(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
