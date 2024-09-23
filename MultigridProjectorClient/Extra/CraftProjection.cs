@@ -3,6 +3,7 @@ using HarmonyLib;
 using MultigridProjector.Extensions;
 using MultigridProjector.Logic;
 using MultigridProjectorClient.Utilities;
+using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
@@ -126,28 +127,43 @@ namespace MultigridProjectorClient.Extra
         {
             Dictionary<MyDefinitionId, int> components = new Dictionary<MyDefinitionId, int>();
 
-            if (!MultigridProjection.TryFindProjectionByProjector(projector, out MultigridProjection projection))
-                return components;
-
-            Subgrid[] subgrids = projection.GetSupportedSubgrids();
-            foreach (Subgrid subgrid in subgrids)
+            if (projector.AllowScaling) // Handle Console Blocks (projector table)
             {
-                HashSet<MySlimBlock> previewBlocks = subgrid.PreviewGrid.CubeBlocks;
-
-                foreach (MySlimBlock previewBlock in previewBlocks)
+                foreach (MyCubeGrid subgrid in projector.ProjectedGrid.GetConnectedGrids(GridLinkTypeEnum.Logical))
                 {
-                    Dictionary<MyDefinitionId, int> previewBlockComponents = GetBlockComponents(previewBlock);
-
-                    // Consider the progress of the built counterpart
-                    MySlimBlock builtBlock = Construction.GetBuiltBlock(previewBlock);
-                    if (builtBlock != null && builtBlock.Integrity < previewBlock.Integrity)
+                    foreach (MySlimBlock previewBlock in subgrid.CubeBlocks)
                     {
-                        Dictionary<MyDefinitionId, int> builtBlockComponents = GetBlockComponents(builtBlock);
-                        SubtractComponents(ref previewBlockComponents, builtBlockComponents);
-                        ClampComponents(ref previewBlockComponents);
+                        Dictionary<MyDefinitionId, int> previewBlockComponents = GetBlockComponents(previewBlock);
+                        AddComponents(ref components, previewBlockComponents);
                     }
+                }
 
-                    AddComponents(ref components, previewBlockComponents);
+            }
+            else
+            {
+                if (!MultigridProjection.TryFindProjectionByProjector(projector, out MultigridProjection projection))
+                    return components;
+
+                Subgrid[] subgrids = projection.GetSupportedSubgrids();
+                foreach (Subgrid subgrid in subgrids)
+                {
+                    HashSet<MySlimBlock> previewBlocks = subgrid.PreviewGrid.CubeBlocks;
+
+                    foreach (MySlimBlock previewBlock in previewBlocks)
+                    {
+                        Dictionary<MyDefinitionId, int> previewBlockComponents = GetBlockComponents(previewBlock);
+
+                        // Consider the progress of the built counterpart
+                        MySlimBlock builtBlock = Construction.GetBuiltBlock(previewBlock);
+                        if (builtBlock != null && builtBlock.Integrity < previewBlock.Integrity)
+                        {
+                            Dictionary<MyDefinitionId, int> builtBlockComponents = GetBlockComponents(builtBlock);
+                            SubtractComponents(ref previewBlockComponents, builtBlockComponents);
+                            ClampComponents(ref previewBlockComponents);
+                        }
+
+                        AddComponents(ref components, previewBlockComponents);
+                    }
                 }
             }
 

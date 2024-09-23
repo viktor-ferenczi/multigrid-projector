@@ -49,7 +49,7 @@ namespace MultigridProjectorClient.Extra
                         DisableHighlightBlocks(projector);
                 },
 
-                Visible = (_) => Enabled,
+                Visible = (projector) => Enabled && !projector.AllowScaling,
                 Enabled = IsProjecting,
                 SupportsMultipleBlocks = false
             };
