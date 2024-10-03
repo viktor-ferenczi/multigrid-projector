@@ -30,6 +30,10 @@ namespace MultigridProjectorClient
                 }
                 catch (NotSupportedException e)
                 {
+                    if (Environment.GetEnvironmentVariable("SE_PLUGIN_THROW_ON_FAILED_METHOD_VERIFICATION") != null)
+                    {
+                        throw;
+                    }                    
                     PluginLog.Error(e, "Disabled the plugin due to potentially incompatible code changes in the game or plugin patch collisions. Please report the exception below on the SE Mods Discord (invite is on the Workshop page):");
                     return;
                 }
