@@ -84,7 +84,9 @@ namespace MultigridProjector.Extensions
                 return terminalBlockBuilder.CustomName;
 
             string defaultName;
-            if (MyDefinitionManager.Static?.TryGetDefinition(terminalBlockBuilder.SubtypeId, out MyCubeBlockDefinition blockDefinition) ?? false)
+            MyCubeBlockDefinition blockDefinition = null;
+            if (MyDefinitionManager.Static != null &&
+                MyDefinitionManager.Static.TryGetDefinition(terminalBlockBuilder.SubtypeId, out blockDefinition))
             {
                 defaultName = blockDefinition.DisplayNameText;
             }
