@@ -19,32 +19,14 @@ namespace MultigridProjectorClient
             PluginLog.Logger = new PluginLogger();
 
             PluginLog.Info("Loading client plugin");
-            try
+            if (Environment.GetEnvironmentVariable("SE_PLUGIN_DISABLE_METHOD_VERIFICATION") == null)
             {
-                try
-                {
-                    if (Environment.GetEnvironmentVariable("SE_PLUGIN_DISABLE_METHOD_VERIFICATION") == null)
-                    {
-                        EnsureOriginal.VerifyAll();
-                    }
-                }
-                catch (NotSupportedException e)
-                {
-                    if (Environment.GetEnvironmentVariable("SE_PLUGIN_THROW_ON_FAILED_METHOD_VERIFICATION") != null)
-                    {
-                        throw;
-                    }                    
-                    PluginLog.Error(e, "Disabled the plugin due to potentially incompatible code changes in the game or plugin patch collisions. Please report the exception below on the SE Mods Discord (invite is on the Workshop page):");
-                    return;
-                }
-
-                Harmony.PatchAll(Assembly.GetExecutingAssembly());
+                // It will throw NotSupportedException if the game code has changed,
+                // Plugin Loader will catch this and show "Error" next to the plugin
+                EnsureOriginal.VerifyAll();
             }
-            catch (Exception e)
-            {
-                PluginLog.Error(e, "Plugin initialization failed");
-                throw;
-            }
+            
+            Harmony.PatchAll(Assembly.GetExecutingAssembly());
 
             PluginLog.Info("Loading config");
             Config.LoadConfig();
