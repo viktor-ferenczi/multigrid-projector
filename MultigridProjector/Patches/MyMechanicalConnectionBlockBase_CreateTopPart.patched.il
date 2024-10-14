@@ -1,4 +1,4 @@
-// df7299d0
+// 602b55f1
 ldarg.3
 brtrue.s L0
 ldarg.1
@@ -11,18 +11,13 @@ call Sandbox.Game.Entities.MyCubeGrid Sandbox.Game.Entities.MyCubeBlock::get_Cub
 callvirt virtual VRage.Game.MyCubeSize Sandbox.Game.Entities.MyCubeGrid::get_GridSizeEnum()
 stloc.0
 ldarg.s 4
-ldc.i4.2
-beq.s L1
-ldarg.s 4
-ldc.i4.1
-bne.un.s L2
-L1:
+ldc.i4.0
+beq.s L15
 ldloc.0
 ldc.i4.1
 xor
 stloc.0
-L2:
-L3:
+L15:
 ldarg.0
 callvirt abstract virtual VRageMath.MatrixD Sandbox.Game.Entities.Blocks.MyMechanicalConnectionBlockBase::GetTopGridMatrix()
 stloc.1
