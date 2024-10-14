@@ -60,5 +60,11 @@
     <Content Include="$(MSBuildThisFileDirectory)..\README.md">
       <Link>README.md</Link>
     </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.original.il" />
+    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.patched.il" />
+    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_OnBuildSuccess.original.il" />
+    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_OnBuildSuccess.patched.il" />
+    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RecreateTop.original.il" />
+    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RecreateTop.patched.il" />
   </ItemGroup>
 </Project>
