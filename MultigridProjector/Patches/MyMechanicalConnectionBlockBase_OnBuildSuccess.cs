@@ -3,6 +3,7 @@ using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using MultigridProjector.Logic;
+using MultigridProjector.Tools;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 
@@ -43,13 +44,15 @@ namespace MultigridProjector.Patches
         [ServerOnly]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var code = instructions.ToList();
+            var il = instructions.ToList();
+            il.RecordOriginalCode();
 
             // Jump to ret if the mechanical base is built from projection (disables building the default top part)
-            code.Insert(6, new CodeInstruction(OpCodes.Call, AccessTools.DeclaredMethod(typeof(MultigridProjection), nameof(MultigridProjection.IsBuildingProjection))));
-            code.Insert(7, new CodeInstruction(OpCodes.Brtrue, code[5].operand));
+            il.Insert(6, new CodeInstruction(OpCodes.Call, AccessTools.DeclaredMethod(typeof(MultigridProjection), nameof(MultigridProjection.IsBuildingProjection))));
+            il.Insert(7, new CodeInstruction(OpCodes.Brtrue, il[5].operand));
 
-            return code.AsEnumerable();
+            il.RecordPatchedCode();
+            return il.AsEnumerable();
         }
     }
 }

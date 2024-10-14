@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
+using MultigridProjector.Tools;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 
@@ -32,13 +33,15 @@ namespace MultigridProjector.Patches
         [ServerOnly]
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            var code = instructions.ToList();
+            var il = instructions.ToList();
+            il.RecordOriginalCode();
 
-            var index = code.FindIndex(i => i.opcode == OpCodes.Ldloc_1);
-            code[index + 1] = new CodeInstruction(OpCodes.Ldc_I4_1);
-            code[index + 2] = new CodeInstruction(OpCodes.Xor);
+            var index = il.FindIndex(i => i.opcode == OpCodes.Ldloc_1);
+            il[index + 1] = new CodeInstruction(OpCodes.Ldc_I4_1);
+            il[index + 2] = new CodeInstruction(OpCodes.Xor);
 
-            return code.AsEnumerable();
+            il.RecordPatchedCode();
+            return il.AsEnumerable();
         }
     }
 }

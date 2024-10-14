@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection.Emit;
 using HarmonyLib;
 using MultigridProjector.Logic;
+using MultigridProjector.Tools;
 using MultigridProjector.Utilities;
 using Sandbox.Game.Entities.Blocks;
 using VRageMath;
@@ -19,14 +21,22 @@ namespace MultigridProjectorClient.Patches
         // ReSharper disable once UnusedMember.Global
         public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions)
         {
-            yield return new CodeInstruction(OpCodes.Ldarg_0);
-            yield return new CodeInstruction(OpCodes.Ldarg_1);
-            yield return new CodeInstruction(OpCodes.Ldarg_2);
-            yield return new CodeInstruction(OpCodes.Ldarg_3);
-            yield return new CodeInstruction(OpCodes.Ldarg_S, 4);
-            yield return new CodeInstruction(OpCodes.Ldarg_S, 5);
-            yield return new CodeInstruction(OpCodes.Call, AccessTools.DeclaredMethod(typeof(MyProjectorBase_BuildInternal), nameof(BuildInternal)));
-            yield return new CodeInstruction(OpCodes.Ret);
+            instructions.ToList().RecordOriginalCode();
+
+            var il = new List<CodeInstruction>
+            {
+                new CodeInstruction(OpCodes.Ldarg_0),
+                new CodeInstruction(OpCodes.Ldarg_1),
+                new CodeInstruction(OpCodes.Ldarg_2),
+                new CodeInstruction(OpCodes.Ldarg_3),
+                new CodeInstruction(OpCodes.Ldarg_S, 4),
+                new CodeInstruction(OpCodes.Ldarg_S, 5),
+                new CodeInstruction(OpCodes.Call, AccessTools.DeclaredMethod(typeof(MyProjectorBase_BuildInternal), nameof(BuildInternal))),
+                new CodeInstruction(OpCodes.Ret)
+            };
+
+            il.RecordPatchedCode();
+            return il.AsEnumerable();
         }
 
         // IMPORTANT: Do NOT use a Prefix method! Although that would be simpler it is prone to random crashes with null dereference when a
