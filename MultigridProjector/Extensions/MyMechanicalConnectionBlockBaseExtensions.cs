@@ -21,9 +21,9 @@ namespace MultigridProjector.Extensions
         }
 
         private static readonly MethodInfo CreateTopPartMethodInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyMechanicalConnectionBlockBase), "CreateTopPart"));
-        public static MyAttachableTopBlockBase CreateTopPart(this MyMechanicalConnectionBlockBase baseBlock, MyCubeBlockDefinitionGroup definitionGroup, bool sizeConversion, bool instantBuild)
+        public static MyAttachableTopBlockBase CreateTopPart(this MyMechanicalConnectionBlockBase baseBlock, MyCubeBlockDefinitionGroup definitionGroup, MyMechanicalConnectionBlockBase.MyTopBlockSize topSize, bool instantBuild)
         {
-            var args = new object[] {null, baseBlock.BuiltBy, definitionGroup, sizeConversion, instantBuild};
+            var args = new object[] {null, baseBlock.BuiltBy, definitionGroup, topSize, instantBuild};
             CreateTopPartMethodInfo.Invoke(baseBlock, args);
             var topBlock = (MyAttachableTopBlockBase) args[0];
             return topBlock;

@@ -1590,7 +1590,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             var sizeConversion = baseConnection.Preview.CubeGrid.GridSizeEnum != topConnection.Preview.CubeGrid.GridSizeEnum;
             try
             {
-                var topBlock = baseBlock.CreateTopPart(definitionGroup, sizeConversion, instantBuild);
+                // Why 10 and 11? See the comment in MyMechanicalConnectionBlockBase_CreateTopPart
+                var topSize = (MyMechanicalConnectionBlockBase.MyTopBlockSize)(sizeConversion ? 11 : 10);
+                var topBlock = baseBlock.CreateTopPart(definitionGroup, topSize, instantBuild);
                 if (topBlock == null)
                     return false;
 

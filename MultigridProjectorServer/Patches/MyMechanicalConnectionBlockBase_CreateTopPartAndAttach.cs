@@ -20,7 +20,7 @@ namespace MultigridProjectorServer.Patches
             // ReSharper disable once InconsistentNaming
             MyMechanicalConnectionBlockBase __instance,
             long builtBy,
-            bool smallToLarge,
+            MyMechanicalConnectionBlockBase.MyTopBlockSize topSize,
             bool instantBuild)
         {
             var baseBlock = __instance;
