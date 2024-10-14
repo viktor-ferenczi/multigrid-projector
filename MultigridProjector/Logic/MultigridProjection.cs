@@ -1678,10 +1678,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         // Based on the original code, but without taking up PCU for the projection
         public void InitializeClipboard()
         {
+            clipboard.ResetGridOrientation();
             if (clipboard.IsActive || Projector.IsActivating)
                 return;
-
-            clipboard.ResetGridOrientation();
 
 #if INCOMPLETE_UNTESTED
             var gridBuilders = clipboard.CopiedGrids;
