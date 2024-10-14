@@ -145,6 +145,9 @@ namespace MultigridProjector.Logic
         // Mapping of toolbar slots to the respective blocks by location instead of EntityId
         private readonly ToolbarFixer toolbarFixer;
 
+        // Mapping of Event Controller selections to the respective blocks by location instead of EntityId
+        private readonly ControllerFixer controllerFixer;
+
         public static void EnsureNoProjections()
         {
             int projectionCount;
@@ -193,6 +196,7 @@ namespace MultigridProjector.Logic
                 CreateSubgrids();
                 MarkSupportedSubgrids();
                 toolbarFixer = new ToolbarFixer(SupportedSubgrids);
+                controllerFixer = new ControllerFixer(SupportedSubgrids);
             }
 
             ListenOnSubgridEvents();
@@ -2112,6 +2116,14 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         public void FixToolbars()
         {
             toolbarFixer.FixToolbars(this);
+        }
+
+        public (HashSet<long>, HashSet<long>) GetSelectedBlockIdsFromEventController(MyEventControllerBlock builtController)
+        {
+            if (!this.TryFindSubgridByBuiltGrid(builtController.CubeGrid, out Subgrid subgrid))
+                return (null, null);
+
+            return controllerFixer.GetSelectedBlockIds(this, subgrid, builtController);
         }
     }
 }
