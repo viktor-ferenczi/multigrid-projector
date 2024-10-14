@@ -1972,6 +1972,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 clipboard.Deactivate();
                 clipboard.Clear();
                 Projector.SetOriginalGridBuilders(null);
+                MyBlueprintIdTracker.OnRemove(Projector, Projector.GetReservedIds());
             }
 
             Projector.UpdateSounds();
