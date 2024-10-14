@@ -42,10 +42,6 @@ namespace MultigridProjector.Logic
         // Active multigrid projections by the Projector block's EntityId
         private static readonly RwLockDictionary<long, MultigridProjection> Projections = new RwLockDictionary<long, MultigridProjection>();
 
-        // Marks build calls to prevent building the default top block
-        private static readonly ThreadLocal<bool> IsBuildingProjectedBlock = new ThreadLocal<bool>();
-        public static bool IsBuildingProjection() => IsBuildingProjectedBlock.Value;
-
         internal readonly MyProjectorBase Projector;
         internal readonly List<MyObjectBuilder_CubeGrid> GridBuilders;
         private readonly MyProjectorClipboard clipboard;
@@ -1386,9 +1382,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             var visuals = new MyCubeGrid.MyBlockVisuals(previewBlock.ColorMaskHSV.PackHSVToUint(), skinId);
 
             // Actually build the block on both the server and all clients
-            IsBuildingProjectedBlock.Value = true;
             builtGrid.BuildBlockRequestInternal(visuals, location, blockBuilder, builder, instantBuild, owner, MyEventContext.Current.IsLocallyInvoked ? steamId : MyEventContext.Current.Sender.Value, isProjection: true);
-            IsBuildingProjectedBlock.Value = false;
         }
 
         [Everywhere]
@@ -2114,6 +2108,16 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         public void FixToolbars()
         {
             toolbarFixer.FixToolbars(this);
+        }
+        
+        [ServerOnly]
+        public static bool ShouldAllowBuildingDefaultTopBlock(MyMechanicalConnectionBlockBase baseBlock)
+        {
+            if (!TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out var subgrid))
+                return true;
+
+            var previewPosition = subgrid.BuiltToPreviewBlockPosition(baseBlock.Position);
+            return !subgrid.TopConnections.ContainsKey(previewPosition);
         }
     }
 }
