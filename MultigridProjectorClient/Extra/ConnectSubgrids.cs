@@ -163,7 +163,7 @@ namespace MultigridProjectorClient.Extra
 
             if (connectionType == ConnectionType.SmallDefault)
             {
-                OnOldHeadRemove = () => destinationBase.RecreateTop(smallToLarge: true);
+                OnOldHeadRemove = () => destinationBase.RecreateTop();
                 OnNewHeadAttach = () => SkinTopParts(sourceTop, destinationBase.TopBlock);
             }
             else if (connectionType == ConnectionType.Legacy)

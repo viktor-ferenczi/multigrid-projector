@@ -21,7 +21,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyGridPhysicalHierarchy_BreakLink.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_OnBuildSuccess.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RecreateTop.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyShipToolBase_UpdateAfterSimulation10.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Arithmetic.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Comms.cs" />
@@ -64,7 +63,5 @@
     <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.patched.il" />
     <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_OnBuildSuccess.original.il" />
     <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_OnBuildSuccess.patched.il" />
-    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RecreateTop.original.il" />
-    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RecreateTop.patched.il" />
   </ItemGroup>
 </Project>
