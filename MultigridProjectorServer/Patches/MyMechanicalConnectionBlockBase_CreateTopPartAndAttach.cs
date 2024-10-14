@@ -8,7 +8,7 @@ using Torch.Managers.PatchManager;
 namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
-    [EnsureOriginalTorch(typeof(MyMechanicalConnectionBlockBase), "CreateTopPartAndAttach", null,"e1d2892d")]
+    [EnsureOriginalTorch(typeof(MyMechanicalConnectionBlockBase), "CreateTopPartAndAttach", null,"7af10869")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyMechanicalConnectionBlockBase_CreateTopPartAndAttach

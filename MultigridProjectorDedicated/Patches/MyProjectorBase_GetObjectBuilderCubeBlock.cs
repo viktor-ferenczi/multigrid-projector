@@ -10,7 +10,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyProjectorBase))]
     [HarmonyPatch("GetObjectBuilderCubeBlock")]
-    [EnsureOriginal("66247c3b")]
+    [EnsureOriginal("3bff3fea")]
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_GetObjectBuilderCubeBlock
     {

@@ -8,7 +8,7 @@ using Torch.Managers.PatchManager;
 namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
-    [EnsureOriginalTorch(typeof(MyProjectorBase), "InitializeClipboard", null, "b7140f1d")]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "InitializeClipboard", null, "2f55ee2e")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_InitializeClipboard

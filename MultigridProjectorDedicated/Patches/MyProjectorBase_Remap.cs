@@ -11,7 +11,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyProjectorBase))]
     [HarmonyPatch("Remap")]
-    [EnsureOriginal("bce65541")]
+    [EnsureOriginal("73db0d9e")]
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_Remap
     {
