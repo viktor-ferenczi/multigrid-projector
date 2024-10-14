@@ -28,10 +28,12 @@
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\EnsureOriginal.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Events.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\ExecLocation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\Hashing.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\IPluginLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\MultigridProjectorConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\OrientationAlgebra.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\PluginLog.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\TranspilerHelpers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Validation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\RwLock.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\RwLockDictionary.cs" />
