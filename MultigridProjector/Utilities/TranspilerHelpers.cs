@@ -183,10 +183,19 @@ namespace MultigridProjector.Tools
             var dir = Path.GetDirectoryName(callerFilePath);
             Debug.Assert(dir != null);
 
-            const string expectedMemberNameSuffix = "Transpiler";
-            Debug.Assert(callerMemberName.Length > expectedMemberNameSuffix.Length);
-            Debug.Assert(callerMemberName.EndsWith(expectedMemberNameSuffix));
-            var name = callerMemberName.Substring(0, callerMemberName.Length - expectedMemberNameSuffix.Length);
+            string name;
+            if (callerMemberName == "Transpiler")
+            {
+                name = Path.GetFileName(callerFilePath).Split('.')[0];
+            }
+            else
+            {
+                const string expectedMemberNameSuffix = "Transpiler";
+                Debug.Assert(callerMemberName.Length > expectedMemberNameSuffix.Length);
+                Debug.Assert(callerMemberName.EndsWith(expectedMemberNameSuffix));
+                name = callerMemberName.Substring(0, callerMemberName.Length - expectedMemberNameSuffix.Length);
+            }
+            Debug.Assert(name.Length != 0);
 
             var path = Path.Combine(dir, $"{name}.{suffix}.il");
 
