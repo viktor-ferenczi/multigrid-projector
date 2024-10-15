@@ -32,7 +32,7 @@ namespace MultigridProjector.Patches
             var k = j + 1;
             il.Insert(k++, new CodeInstruction(OpCodes.Ldarg_0));
             il.Insert(k++, new CodeInstruction(OpCodes.Call, AccessTools.DeclaredMethod(typeof(MultigridProjection), nameof(MultigridProjection.ShouldAllowBuildingDefaultTopBlock))));
-            il.Insert(k, new CodeInstruction(OpCodes.Brtrue, il[j].operand));
+            il.Insert(k, new CodeInstruction(OpCodes.Brfalse, il[j].operand));
 
             il.RecordPatchedCode();
             return il.AsEnumerable();
