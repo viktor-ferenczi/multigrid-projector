@@ -2113,11 +2113,19 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         [ServerOnly]
         public static bool ShouldAllowBuildingDefaultTopBlock(MyMechanicalConnectionBlockBase baseBlock)
         {
+            PluginLog.Info("ShouldAllowBuildingDefaultTopBlock: 1");
             if (!TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out var subgrid))
+            {
+                PluginLog.Info("ShouldAllowBuildingDefaultTopBlock: 2");
                 return true;
+            }
 
-            var previewPosition = subgrid.BuiltToPreviewBlockPosition(baseBlock.Position);
-            return !subgrid.TopConnections.ContainsKey(previewPosition);
+            PluginLog.Info($"ShouldAllowBuildingDefaultTopBlock: 3");
+            var baseBlockPreviewPosition = subgrid.BuiltToPreviewBlockPosition(baseBlock.Position);
+            PluginLog.Info($"ShouldAllowBuildingDefaultTopBlock: baseBlockPreviewPosition={baseBlockPreviewPosition.FormatYaml()}");
+            var result = !subgrid.BaseConnections.ContainsKey(baseBlockPreviewPosition);
+            PluginLog.Info($"ShouldAllowBuildingDefaultTopBlock: result={result}");
+            return result;
         }
     }
 }

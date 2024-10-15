@@ -1,4 +1,4 @@
-// cffea4cb
+// 41e4e600
 ldarg.0
 ldarg.1
 ldarg.2
@@ -7,7 +7,7 @@ call static System.Boolean Sandbox.Game.Multiplayer.Sync::get_IsServer()
 brfalse.s L0
 ldarg.0
 call static System.Boolean MultigridProjector.Logic.MultigridProjection::ShouldAllowBuildingDefaultTopBlock(Sandbox.Game.Entities.Blocks.MyMechanicalConnectionBlockBase baseBlock)
-brtrue L0
+brfalse L0
 ldarg.0
 ldarg.1
 ldc.i4.0
