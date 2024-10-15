@@ -113,6 +113,8 @@
     <Content Include="manifest.xml">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="Patches\MyProjectorBase_BuildInternal.original.il" />
+    <Content Include="Patches\MyProjectorBase_BuildInternal.patched.il" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.3.3" />

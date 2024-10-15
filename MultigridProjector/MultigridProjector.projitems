@@ -21,17 +21,18 @@
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyGridPhysicalHierarchy_BreakLink.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_OnBuildSuccess.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_RecreateTop.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Patches\MyShipToolBase_UpdateAfterSimulation10.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Arithmetic.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Comms.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\EnsureOriginal.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Events.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\ExecLocation.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\Hashing.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\IPluginLogger.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\MultigridProjectorConfig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\OrientationAlgebra.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\PluginLog.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\TranspilerHelpers.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\Validation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\RwLock.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Utilities\RwLockDictionary.cs" />
@@ -58,5 +59,9 @@
     <Content Include="$(MSBuildThisFileDirectory)..\README.md">
       <Link>README.md</Link>
     </Content>
+    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.original.il" />
+    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_CreateTopPart.patched.il" />
+    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_OnBuildSuccess.original.il" />
+    <Content Include="$(MSBuildThisFileDirectory)Patches\MyMechanicalConnectionBlockBase_OnBuildSuccess.patched.il" />
   </ItemGroup>
 </Project>

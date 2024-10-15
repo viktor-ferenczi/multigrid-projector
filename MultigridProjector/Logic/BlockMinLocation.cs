@@ -17,7 +17,10 @@ namespace MultigridProjector.Logic
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
-            return ((GridIndex * 397 ^ MinPosition.X) * 397 ^ MinPosition.Y) * 397 ^ MinPosition.Z;
+            unchecked
+            {
+                return ((GridIndex * 397 ^ MinPosition.X) * 397 ^ MinPosition.Y) * 397 ^ MinPosition.Z;
+            }
         }
     }
 }

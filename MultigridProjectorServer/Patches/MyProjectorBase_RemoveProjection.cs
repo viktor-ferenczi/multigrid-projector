@@ -8,7 +8,7 @@ using Torch.Managers.PatchManager;
 namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
-    [EnsureOriginalTorch(typeof(MyProjectorBase), "RemoveProjection", null, "f6fc8084")]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "RemoveProjection", null, "c0739d3a")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_RemoveProjection

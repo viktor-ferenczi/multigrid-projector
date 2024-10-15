@@ -271,6 +271,13 @@ namespace MultigridProjector.Extensions
         {
             SetRotationMethodInfo.Invoke(projector, new object[] {clipboard, rotation});
         }
+        
+        private static readonly FieldInfo ReservedIdsFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_reservedIds"));
+
+        public static HashSet<long> GetReservedIds(this MyProjectorBase projector)
+        {
+            return (HashSet<long>) ReservedIdsFieldInfo.GetValue(projector);
+        }
 
         public static void RemapObjectBuilders(this MyProjectorBase projector)
         {

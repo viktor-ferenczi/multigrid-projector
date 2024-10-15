@@ -9,7 +9,7 @@ namespace MultigridProjector.Patches
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyMechanicalConnectionBlockBase))]
     [HarmonyPatch("CreateTopPartAndAttach")]
-    [EnsureOriginal("e1d2892d")]
+    [EnsureOriginal("7af10869")]
     // ReSharper disable once InconsistentNaming
     public static class MyMechanicalConnectionBlockBase_CreateTopPartAndAttach
     {
@@ -18,7 +18,7 @@ namespace MultigridProjector.Patches
             // ReSharper disable once InconsistentNaming
             MyMechanicalConnectionBlockBase __instance,
             long builtBy,
-            bool smallToLarge,
+            MyMechanicalConnectionBlockBase.MyTopBlockSize topSize,
             bool instantBuild)
         {
             var baseBlock = __instance;

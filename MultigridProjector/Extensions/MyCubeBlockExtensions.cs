@@ -44,9 +44,9 @@ namespace MultigridProjector.Extensions
 
         private static readonly MethodInfo RecreateTopInfo = Validation.EnsureInfo(AccessTools.DeclaredMethod(typeof(MyMechanicalConnectionBlockBase), "RecreateTop"));
 
-        public static void RecreateTop(this MyMechanicalConnectionBlockBase stator, long? builderId = null, bool smallToLarge = false, bool instantBuild = false)
+        public static void RecreateTop(this MyMechanicalConnectionBlockBase stator, long? builderId = null, MyMechanicalConnectionBlockBase.MyTopBlockSize topSize = MyMechanicalConnectionBlockBase.MyTopBlockSize.Normal, bool instantBuild = false)
         {
-            RecreateTopInfo.Invoke(stator, new object[] { builderId, smallToLarge, instantBuild });
+            RecreateTopInfo.Invoke(stator, new object[] { builderId, topSize, instantBuild });
         }
 
         // Aligns the grid of the block to a corresponding block on another grid

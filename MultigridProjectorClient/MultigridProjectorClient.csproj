@@ -134,6 +134,8 @@
     <Compile Include="Utilities\Config.cs" />
     <Compile Include="Utilities\Reflection.cs" />
     <Content Include="deploy.bat" />
+    <Content Include="Patches\MyProjectorBase_BuildInternal.original.il" />
+    <Content Include="Patches\MyProjectorBase_BuildInternal.patched.il" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.3.3" />

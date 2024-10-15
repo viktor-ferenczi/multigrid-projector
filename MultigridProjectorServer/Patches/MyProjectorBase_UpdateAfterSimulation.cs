@@ -8,7 +8,7 @@ using Torch.Managers.PatchManager;
 namespace MultigridProjectorServer.Patches
 {
     [PatchShim]
-    [EnsureOriginalTorch(typeof(MyProjectorBase), "UpdateAfterSimulation", null, "47184779")]
+    [EnsureOriginalTorch(typeof(MyProjectorBase), "UpdateAfterSimulation", null, "df3f0506")]
     // ReSharper disable once InconsistentNaming
     // ReSharper disable once UnusedType.Global
     public static class MyProjectorBase_UpdateAfterSimulation
