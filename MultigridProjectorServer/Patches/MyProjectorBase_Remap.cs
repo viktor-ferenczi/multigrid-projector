@@ -30,6 +30,7 @@ namespace MultigridProjectorServer.Patches
                 // if (!Sync.IsServer)
                 //     return false;
                 
+                // See #92 on `MyBlueprintIdTracker`: The change to preview block IDs are not registered.
                 projector.RemapObjectBuilders();
                 
                 // Call patched SetNewBlueprint
