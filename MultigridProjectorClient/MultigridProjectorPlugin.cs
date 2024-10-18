@@ -3,6 +3,7 @@ using System.Reflection;
 using HarmonyLib;
 using MultigridProjector.Utilities;
 using MultigridProjectorClient.Utilities;
+using MultigridProjectorServer.MultigridProjector.Utilities;
 using Sandbox.Graphics.GUI;
 using VRage.Plugins;
 
@@ -19,7 +20,8 @@ namespace MultigridProjectorClient
             PluginLog.Logger = new PluginLogger();
 
             PluginLog.Info("Loading client plugin");
-            if (Environment.GetEnvironmentVariable("SE_PLUGIN_DISABLE_METHOD_VERIFICATION") == null)
+            if (Environment.GetEnvironmentVariable("SE_PLUGIN_DISABLE_METHOD_VERIFICATION") == null &&
+                !WineDetector.IsRunningInWineOrProton())
             {
                 // It will throw NotSupportedException if the game code has changed,
                 // Plugin Loader will catch this and show "Error" next to the plugin

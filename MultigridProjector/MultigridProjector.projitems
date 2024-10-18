@@ -51,6 +51,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Logic\ProjectorSubgrid.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\Subgrid.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Logic\Connection.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Utilities\WineDetector.cs" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="$(MSBuildThisFileDirectory)..\.gitignore">

@@ -2,6 +2,7 @@
 using System.Reflection;
 using HarmonyLib;
 using MultigridProjector.Utilities;
+using MultigridProjectorServer.MultigridProjector.Utilities;
 using VRage.Plugins;
 
 namespace MultigridProjectorDedicated
@@ -19,14 +20,17 @@ namespace MultigridProjectorDedicated
             PluginLog.Info("Loading");
             try
             {
-                try
+                if (!WineDetector.IsRunningInWineOrProton())
                 {
-                    EnsureOriginal.VerifyAll();
-                }
-                catch (NotSupportedException e)
-                {
-                    PluginLog.Error(e, "Disabled the plugin due to potentially incompatible code changes in the game or plugin patch collisions. Please report the exception below on the SE Mods Discord (invite is on the Workshop page):");
-                    return;
+                    try
+                    {
+                        EnsureOriginal.VerifyAll();
+                    }
+                    catch (NotSupportedException e)
+                    {
+                        PluginLog.Error(e, "Disabled the plugin due to potentially incompatible code changes in the game or plugin patch collisions. Please report the exception below on the SE Mods Discord (invite is on the Workshop page):");
+                        return;
+                    }
                 }
 
                 Harmony.PatchAll(Assembly.GetExecutingAssembly());

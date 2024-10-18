@@ -7,6 +7,7 @@ using HarmonyLib;
 using MultigridProjector.Api;
 using MultigridProjector.Logic;
 using MultigridProjector.Utilities;
+using MultigridProjectorServer.MultigridProjector.Utilities;
 using Torch;
 using Torch.API;
 using Torch.API.Managers;
@@ -54,15 +55,18 @@ namespace MultigridProjectorServer
             config = Persistent<MultigridProjectorConfig>.Load(configPath);
             config.Data.PropertyChanged += OnPropertyChanged;
 
-            try
+            if (!WineDetector.IsRunningInWineOrProton())
             {
-                EnsureOriginal.VerifyAll();
-                EnsureOriginalTorch.VerifyAll();
-            }
-            catch (NotSupportedException e)
-            {
-                PluginLog.Error(e, "Disabled the plugin due to potentially incompatible code changes in the game or plugin patch collisions. Please report the exception below on the SE Mods Discord (invite is on the Workshop page):");
-                return;
+                try
+                {
+                    EnsureOriginal.VerifyAll();
+                    EnsureOriginalTorch.VerifyAll();
+                }
+                catch (NotSupportedException e)
+                {
+                    PluginLog.Error(e, "Disabled the plugin due to potentially incompatible code changes in the game or plugin patch collisions. Please report the exception below on the SE Mods Discord (invite is on the Workshop page):");
+                    return;
+                }
             }
 
             Harmony.PatchAll(Assembly.GetExecutingAssembly());
