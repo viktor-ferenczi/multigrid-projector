@@ -20,7 +20,8 @@ namespace MultigridProjectorDedicated
             PluginLog.Info("Loading");
             try
             {
-                if (!WineDetector.IsRunningInWineOrProton())
+                var isOldDotNetFramework = Environment.Version.Major < 5;
+                if (isOldDotNetFramework && !WineDetector.IsRunningInWineOrProton())
                 {
                     try
                     {

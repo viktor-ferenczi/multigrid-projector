@@ -20,7 +20,9 @@ namespace MultigridProjectorClient
             PluginLog.Logger = new PluginLogger();
 
             PluginLog.Info("Loading client plugin");
-            if (Environment.GetEnvironmentVariable("SE_PLUGIN_DISABLE_METHOD_VERIFICATION") == null &&
+            var isOldDotNetFramework = Environment.Version.Major < 5;
+            if (isOldDotNetFramework &&
+                Environment.GetEnvironmentVariable("SE_PLUGIN_DISABLE_METHOD_VERIFICATION") == null &&
                 !WineDetector.IsRunningInWineOrProton())
             {
                 // It will throw NotSupportedException if the game code has changed,

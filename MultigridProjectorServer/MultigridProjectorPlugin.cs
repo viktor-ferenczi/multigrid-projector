@@ -55,7 +55,8 @@ namespace MultigridProjectorServer
             config = Persistent<MultigridProjectorConfig>.Load(configPath);
             config.Data.PropertyChanged += OnPropertyChanged;
 
-            if (!WineDetector.IsRunningInWineOrProton())
+            var isOldDotNetFramework = Environment.Version.Major < 5;
+            if (isOldDotNetFramework && !WineDetector.IsRunningInWineOrProton())
             {
                 try
                 {
