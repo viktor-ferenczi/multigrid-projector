@@ -90,6 +90,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Extra\ApplyPaint.cs" />
     <Compile Include="Extra\CraftProjection.cs" />
     <Compile Include="Extra\ToolbarFix.cs" />
     <Compile Include="Menus\CraftDialog.cs" />
