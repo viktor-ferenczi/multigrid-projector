@@ -17,6 +17,11 @@ using VRage.ObjectBuilders;
 using Sandbox.Game.GameSystems;
 using MultigridProjector.Extensions;
 using System.Linq;
+using IMyEventControllerBlock = Sandbox.ModAPI.Ingame.IMyEventControllerBlock;
+using SpaceEngineers.Game.EntityComponents.Blocks;
+using VRage.Sync;
+using Sandbox.Graphics.GUI;
+using MultigridProjector.Logic;
 
 namespace MultigridProjectorClient.Utilities
 {
@@ -63,7 +68,10 @@ namespace MultigridProjectorClient.Utilities
             MyObjectBuilder_ToolbarItemTerminalGroup data = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemTerminalGroup>();
             data.GroupName = text;
             data._Action = "";
-            data.Parameters = new List<MyObjectBuilder_ToolbarItemActionParameter> { MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemActionParameter>() };
+            data.Parameters = new List<MyObjectBuilder_ToolbarItemActionParameter>
+            {
+                MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemActionParameter>()
+            };
 
             // This is used internally to find which grid the block group is on.
             // It needs to be set to the block we want to assign the toolbar to.
@@ -74,9 +82,12 @@ namespace MultigridProjectorClient.Utilities
 
         private static MyBlockGroup CreateDummyGroup(string name, MyTerminalBlock dummyBlock)
         {
-            MyBlockGroup dummyGroup = (MyBlockGroup)Activator.CreateInstance(typeof(MyBlockGroup), true);
+            MyBlockGroup dummyGroup = (MyBlockGroup) Activator.CreateInstance(typeof(MyBlockGroup), true);
             dummyGroup.Name = new StringBuilder(name);
-            Reflection.SetValue(dummyGroup, "Blocks", new HashSet<MyTerminalBlock> { dummyBlock });
+            Reflection.SetValue(dummyGroup, "Blocks", new HashSet<MyTerminalBlock>
+            {
+                dummyBlock
+            });
 
             MyGridTerminalSystem terminalSystem = dummyBlock.CubeGrid.GridSystems.TerminalSystem;
             terminalSystem.AddUpdateGroup(dummyGroup, true);
@@ -97,7 +108,7 @@ namespace MultigridProjectorClient.Utilities
             // We can sidestep this by making a group and removing it once the item is added
             // TODO: Use an event rather then a fixed delay
             MyBlockGroup group = CreateDummyGroup(name, dummyBlock);
-            Events.InvokeOnGameThread(() => toolbar.SetItemAtIndex(index, item), 20);   
+            Events.InvokeOnGameThread(() => toolbar.SetItemAtIndex(index, item), 20);
             Events.InvokeOnGameThread(() => RemoveDummyGroup(group), 40);
         }
 
@@ -119,7 +130,7 @@ namespace MultigridProjectorClient.Utilities
                 return flightMovementBlock.Toolbar;
 
             if (block is MyAirVent airVent)
-                return (MyToolbar)Reflection.GetValue(airVent, "m_actionToolbar");
+                return (MyToolbar) Reflection.GetValue(airVent, "m_actionToolbar");
 
             // Cockpits, remote controls and cryopods
             if (block is MyShipController shipController)
@@ -128,6 +139,7 @@ namespace MultigridProjectorClient.Utilities
             return null;
         }
 
+        // FIXME: Use `ToolbarFixer` instead to restore toolbar slots from the preview
         public static void CopyToolbars(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
         {
             MyToolbar sourceToolbar = GetToolbar(sourceBlock);
@@ -194,11 +206,45 @@ namespace MultigridProjectorClient.Utilities
 
     internal static class UpdateBlock
     {
-        public static void CopyProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
+        // Allocate this only once
+        private static readonly HashSet<string> ExcludedEventControllerProperties = new HashSet<string>
         {
+            "SearchBox"
+        };
+
+        public static void CopyProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock, bool shouldBlockBuiltOnServer = false)
+        {
+            // Blocks build on server side, we just fix the toolbars and envent controllers,
+            // since they may point from the main grid to subgrids
+            if (shouldBlockBuiltOnServer)
+            {
+                UpdateToolbar.CopyToolbars(sourceBlock, destinationBlock);
+                return;
+            }
+
+            // Special case event controllers
+            if (sourceBlock is MyEventControllerBlock sourceEventControllerBlock &&
+                destinationBlock is MyEventControllerBlock destinationEventControllerBlock)
+            {
+                // Copy over terminal properties
+                CopyTerminalProperties(sourceBlock, destinationBlock, ExcludedEventControllerProperties);
+                UpdateToolbar.CopyToolbars(sourceBlock, destinationBlock);
+
+                // Events in Event Controllers are not stored as properties, so copy those as well
+                CopyEvents(sourceEventControllerBlock, destinationEventControllerBlock);
+
+                // Copying power must be done in the next frame as disabling a block will prevent properties being modified
+                // so we need to wait for all the changes to process
+                Events.InvokeOnGameThread(() => CopyPowerState(sourceBlock, destinationBlock));
+
+                return;
+            }
+
+            // Copy over terminal properties
             CopyTerminalProperties(sourceBlock, destinationBlock);
             UpdateToolbar.CopyToolbars(sourceBlock, destinationBlock);
 
+            // Copy over special properties if applicable
             if (sourceBlock is MyProjectorBase sourceProjectorBase &&
                 destinationBlock is MyProjectorBase destinationProjectorBase)
             {
@@ -206,8 +252,8 @@ namespace MultigridProjectorClient.Utilities
             }
 
             else if (sourceBlock is IMyProgrammableBlock sourceProgrammableBlock &&
-                destinationBlock is IMyProgrammableBlock destinationProgrammableBlock &&
-                MySession.Static.IsSettingsExperimental())
+                     destinationBlock is IMyProgrammableBlock destinationProgrammableBlock &&
+                     MySession.Static.IsSettingsExperimental())
             {
                 CopyScripts(sourceProgrammableBlock, destinationProgrammableBlock);
             }
@@ -217,15 +263,80 @@ namespace MultigridProjectorClient.Utilities
             Events.InvokeOnGameThread(() => CopyPowerState(sourceBlock, destinationBlock));
         }
 
+        // FIXME: Use `ToolbarFixer` instead to restore event controller settings from the preview
+        private static void CopyEvents(MyEventControllerBlock sourceBlock, MyEventControllerBlock destinationBlock)
+        {
+            Events.InvokeOnGameThread(() =>
+            {
+                long eventId = ((Sandbox.ModAPI.IMyEventControllerBlock) sourceBlock).SelectedEvent.UniqueSelectionId;
+                Delegate selectEvent = Reflection.GetMethod(typeof(MyEventControllerBlock), destinationBlock, "SelectEvent");
+                selectEvent.DynamicInvoke(eventId);
+            }, 30);
+
+            Events.InvokeOnGameThread(() => { CopyEventControllerCondition(sourceBlock, destinationBlock); }, 60);
+
+            Events.InvokeOnGameThread(() => { CopyEventControllerBlockSelection(sourceBlock, destinationBlock); }, 90);
+        }
+
+        private static void CopyEventControllerCondition(MyEventControllerBlock previewBlock, MyEventControllerBlock builtBlock)
+        {
+            ((IMyEventControllerBlock) builtBlock).Threshold = ((IMyEventControllerBlock) previewBlock).Threshold;
+            ((IMyEventControllerBlock) builtBlock).IsLowerOrEqualCondition = ((IMyEventControllerBlock) previewBlock).IsLowerOrEqualCondition;
+            ((IMyEventControllerBlock) builtBlock).IsAndModeEnabled = ((IMyEventControllerBlock) previewBlock).IsAndModeEnabled;
+
+            if (previewBlock.Components.TryGet<MyEventAngleChanged>(out var sourceComp) &&
+                builtBlock.Components.TryGet<MyEventAngleChanged>(out var destinationComp))
+            {
+                Sync<float, SyncDirection.BothWays> sourceAngle = (Sync<float, SyncDirection.BothWays>) Reflection.GetValue(sourceComp, "m_angle");
+                Sync<float, SyncDirection.BothWays> destinationAngle = (Sync<float, SyncDirection.BothWays>) Reflection.GetValue(destinationComp, "m_angle");
+
+                destinationAngle.Value = sourceAngle.Value;
+            }
+            else
+            {
+                PluginLog.Error($"Could not find angle for block: {previewBlock.DisplayName}");
+            }
+        }
+
+        private static void CopyEventControllerBlockSelection(MyEventControllerBlock previewBlock, MyEventControllerBlock builtBlock)
+        {
+            // Sanity checks, only for debugging
+            if (previewBlock.CubeGrid?.IsPreview != true)
+                return;
+            if (builtBlock.CubeGrid?.IsPreview != false)
+                return;
+
+            // FIXME: Awkward way to verify that the preview block corresponds to the built block.
+            // It would be much cleaner to pass only the block location of the event controller to restore
+            // the source blocks for from the corresponding projection (preview block).
+            if (!MultigridProjection.TryFindProjectionByProjector(previewBlock.CubeGrid.Projector, out var sourceProjection) ||
+                !MultigridProjection.TryFindProjectionByBuiltGrid(builtBlock.CubeGrid, out var projection, out _) ||
+                projection.Projector?.EntityId != sourceProjection.Projector?.EntityId)
+                return;
+
+            if (!projection.ToolbarFixer.TryGetSelectedBlockIdsFromEventController(projection, previewBlock, out var selectedBlockIds))
+                return;
+
+            // No need to select blocks if there were none selected (an empty list is the default)
+            if (!selectedBlockIds.Any())
+                return;
+
+            // Do exactly what the UI does, so the changes are synced to the server
+            // SelectAvailableBlocks and SelectButton expect MyGuiControlListbox.Item
+            var listItems = selectedBlockIds.Select(blockId => new MyGuiControlListbox.Item(userData: blockId)).ToList();
+            builtBlock.SelectAvailableBlocks(listItems);
+            builtBlock.SelectButton();
+        }
+
         private static void CopyPowerState(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
         {
             if (destinationBlock.GetProperty("OnOff") == null)
                 return;
-            
+
             destinationBlock.SetValue("OnOff", sourceBlock.GetValue<bool>("OnOff"));
         }
 
-        private static void CopyTerminalProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
+        private static void CopyTerminalProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock, HashSet<string> exclude = null)
         {
             List<ITerminalProperty> properties = new List<ITerminalProperty>();
             sourceBlock.GetProperties(properties);
@@ -234,6 +345,10 @@ namespace MultigridProjectorClient.Utilities
             {
                 // Disabling a block messes with setting properties and must be done last (in a separate function)
                 if (property.Id == "OnOff")
+                    continue;
+
+                // Allow skipping properties for compatibility reasons
+                if (!(exclude is null) && exclude.Contains(property.Id))
                     continue;
 
                 string propertyType = property.TypeName;
@@ -271,13 +386,13 @@ namespace MultigridProjectorClient.Utilities
 
         private static void CopyBlueprints(MyProjectorBase sourceBlock, MyProjectorBase destinationBlock)
         {
-            List<MyObjectBuilder_CubeGrid> projectedGrids = (List<MyObjectBuilder_CubeGrid>)Reflection.GetValue(sourceBlock, "m_savedProjections");
-            Delegate InitFromObjectBuilder = Reflection.GetMethod(typeof(MyProjectorBase), destinationBlock, "InitFromObjectBuilder");
+            List<MyObjectBuilder_CubeGrid> projectedGrids = (List<MyObjectBuilder_CubeGrid>) Reflection.GetValue(sourceBlock, "m_savedProjections");
+            Delegate initFromObjectBuilder = Reflection.GetMethod(typeof(MyProjectorBase), destinationBlock, "InitFromObjectBuilder");
 
             if (projectedGrids == null)
                 return;
 
-            InitFromObjectBuilder.DynamicInvoke(projectedGrids, null);
+            initFromObjectBuilder.DynamicInvoke(projectedGrids, null);
         }
     }
 }

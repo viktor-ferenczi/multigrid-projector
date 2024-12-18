@@ -39,6 +39,7 @@ namespace MultigridProjector.Utilities
             MyAPIGateway.Utilities.InvokeOnGameThread(safeTask, "MultigridProjector", targetFrame);
         }
 
+        // FIXME: Depend on MGP's grid scan mechanism instead
         public static void OnNextFatBlockAdded(
             MyCubeGrid grid,
             Action<MyCubeBlock> action,
