@@ -31,7 +31,7 @@ namespace MultigridProjectorClient.Menus
                 buttonType: MyMessageBoxButtonsType.YES_NO_CANCEL,
                 messageText: new StringBuilder($"Assembler selected in the production tab:\n{assemblerName}"),
                 messageCaption: MessageCaption,
-                size: new Vector2(0.6f, 0.7f),
+                size: new Vector2(0.6f, 0.76f),
                 onClosing: onClosing
             );
 
@@ -39,7 +39,7 @@ namespace MultigridProjectorClient.Menus
             MyGuiControlMultilineText messageBoxText = (MyGuiControlMultilineText)Reflection.GetValue(messageBox, "m_messageBoxText");
             messageBoxText.TextAlign = MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_TOP;
             messageBoxText.Size = new Vector2(0.5f, 0.2f);
-            messageBoxText.Position = new Vector2(0f, -0.24f);
+            messageBoxText.Position = new Vector2(0f, -0.27f);
 
             // Make the background color less transparent, as the default is very faint and this is an important message
             messageBox.BackgroundColor = new Vector4(1f, 1f, 1f, 10.0f);
@@ -47,7 +47,7 @@ namespace MultigridProjectorClient.Menus
             // Create a table with all the components and their quantities
             MyGuiControlTable componentTable = new MyGuiControlTable
             {
-                Position = new Vector2(0f, -0.2f),
+                Position = new Vector2(0f, -0.23f),
                 Size = new Vector2(0.85f * 0.6f, 0.3f),
                 OriginAlign = MyGuiDrawAlignEnum.HORISONTAL_CENTER_AND_VERTICAL_TOP,
                 ColumnsCount = 4,
@@ -121,7 +121,7 @@ namespace MultigridProjectorClient.Menus
             MyGuiControlButton noButton = (MyGuiControlButton)Reflection.GetValue(messageBox, "m_noButton");
             noButton.Text = "Assemble Selected";
 
-            noButton.SetToolTip(new MyToolTips($"Assemble any selected 'Missing' components"));
+            noButton.SetToolTip(new MyToolTips("Assemble any selected 'Missing' components"));
             noButton.ButtonClicked += (_) => Assemble(assembleFunc, componentTable.SelectedRow, 1);
             noButton.Enabled = false;
             
@@ -132,6 +132,21 @@ namespace MultigridProjectorClient.Menus
             cancelButton.SetToolTip(new MyToolTips("Copy an Isy-compatible Bill of Materials to clipboard, for use with Special containers."));
             cancelButton.ButtonClicked += (_) => CopyBom(bomLines);
 
+            // Move the default buttons up to follow the table
+            yesButton.Position += new Vector2(0f, -0.06f);
+            noButton.Position += new Vector2(0f, -0.06f);
+            cancelButton.Position += new Vector2(0f, -0.06f);
+            
+            // Introduce a new Assemble All button
+            var assembleAllButton = new MyGuiControlButton(yesButton.Position + new Vector2(0f, 0.07f), yesButton.VisualStyle, yesButton.Size, originAlign: yesButton.OriginAlign)
+            {
+                Text = "Assemble All"
+            };
+            assembleAllButton.SetToolTip(new MyToolTips($"Send all components to '{assemblerName}' regardless of inventory"));
+            assembleAllButton.ButtonClicked += (_) => Assemble(assembleFunc, componentTable, 3);
+            assembleAllButton.Enabled = rows.Count != 0;
+            controls.Add(assembleAllButton);
+            
             componentTable.ItemSelected += (table, eventArgs) =>
             {
                 if (componentTable.SelectedRow == null)
