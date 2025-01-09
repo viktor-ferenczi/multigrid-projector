@@ -138,6 +138,10 @@ namespace MultigridProjector.Extensions
         {
             RemainingArmorBlocksFieldInfo.SetValue(projector, value);
         }
+        public static int GetRemainingArmorBlocks(this MyProjectorBase projector)
+        {
+            return (int)RemainingArmorBlocksFieldInfo.GetValue(projector);
+        }
 
         private static readonly FieldInfo RemainingBlocksPerTypeFieldInfo = Validation.EnsureInfo(AccessTools.Field(typeof(MyProjectorBase), "m_remainingBlocksPerType"));
 

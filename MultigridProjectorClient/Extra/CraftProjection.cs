@@ -39,11 +39,16 @@ namespace MultigridProjectorClient.Extra
                 MakeDialog)
             {
                 Visible = (_) => Enabled,
-                Enabled = (projector) => IsProjecting(projector) && projector.GetRemainingBlocksPerType().Count > 0,
+                Enabled = AreAnyBlocksRemaining,
                 SupportsMultipleBlocks = false
             };
 
             yield return new CustomControl(ControlPlacement.After, "Blueprint", control);
+        }
+
+        private static bool AreAnyBlocksRemaining(MySpaceProjector projector)
+        {
+            return IsProjecting(projector) && projector.GetRemainingArmorBlocks() + projector.GetRemainingBlocksPerType().Count > 0;
         }
 
         private static void MakeDialog(MySpaceProjector projector)
