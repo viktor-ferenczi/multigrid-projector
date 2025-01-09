@@ -64,7 +64,16 @@ namespace MultigridProjector.Logic
 
         // Enables detecting block state with Havok intersection enabled,
         // used only on client side if block highlighting is enabled for the projector
+        // ReSharper disable once UnassignedField.Global
         public bool CheckHavokIntersections;
+
+        public bool TryGetProjectedBlock(FastBlockLocation blockLocation, out Subgrid subgrid, out ProjectedBlock projectedBlock)
+        {
+            subgrid = null;
+            projectedBlock = null;
+            return TryGetSupportedSubgrid(blockLocation.GridIndex, out subgrid) &&
+                   subgrid.TryGetProjectedBlock(blockLocation.Position, out projectedBlock);
+        }
 
         public bool TryGetSupportedSubgrid(int gridIndex, out Subgrid subgrid)
         {
@@ -139,7 +148,7 @@ namespace MultigridProjector.Logic
         internal bool IsValidForApi => Initialized && HasScanned;
 
         // Mapping of toolbar slots to the respective blocks by location instead of EntityId
-        private readonly ToolbarFixer toolbarFixer;
+        public readonly ToolbarFixer ToolbarFixer;
 
         public static void EnsureNoProjections()
         {
@@ -188,7 +197,7 @@ namespace MultigridProjector.Logic
                 MapPreviewBlocks();
                 CreateSubgrids();
                 MarkSupportedSubgrids();
-                toolbarFixer = new ToolbarFixer(SupportedSubgrids);
+                ToolbarFixer = new ToolbarFixer(SupportedSubgrids);
             }
 
             ListenOnSubgridEvents();
@@ -257,8 +266,13 @@ namespace MultigridProjector.Logic
             if (terminalBlock.BlockDefinition.Id != projectedBlock.Preview.BlockDefinition.Id)
                 return;
 
-            toolbarFixer.ConfigureToolbar(this, subgrid, terminalBlock);
-            toolbarFixer.AssignBlockToToolbars(this, subgrid, terminalBlock);
+            ToolbarFixer.ConfigureToolbar(this, subgrid, terminalBlock);
+            ToolbarFixer.AssignBlockToToolbars(this, subgrid, terminalBlock);
+
+            ToolbarFixer.ConfigureEventController(this, subgrid, terminalBlock);
+            ToolbarFixer.AssignBlockToEventControllers(this, subgrid, terminalBlock);
+
+            // FIXME: Do we need to sync any changes made to the toolbars or selected blocks of event controllers in multiplayer?
         }
 
         private void MapBlueprintBlocks()
@@ -1449,7 +1463,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             if (!checkHavokIntersections)
                 return BuildCheckResult.OK;
 
-            var gridPlacementSettings = new MyGridPlacementSettings { SnapMode = SnapMode.OneFreeAxis };
+            var gridPlacementSettings = new MyGridPlacementSettings {SnapMode = SnapMode.OneFreeAxis};
             if (MyCubeGrid.TestPlacementAreaCube(builtGrid, ref gridPlacementSettings, min, max, previewBlock.Orientation, previewBlock.BlockDefinition, ignoredEntity: builtGrid, isProjected: true))
                 return BuildCheckResult.OK;
 
@@ -1923,7 +1937,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
                 // Cancel out the projector's block orientation in the blueprint, so the projector you
                 // build on will determine the orientation of the main grid in the projection
-                var projectorOrientationInBlueprint = (MyBlockOrientation)projectorBuilder.BlockOrientation;
+                var projectorOrientationInBlueprint = (MyBlockOrientation) projectorBuilder.BlockOrientation;
                 projectorOrientationInBlueprint.GetQuaternion(out var projectorOrientationQuaternion);
                 var projectionOrientationQuaternion = Quaternion.Inverse(projectorOrientationQuaternion);
                 var projectionOrientation = new MyBlockOrientation(ref projectionOrientationQuaternion);
@@ -2103,12 +2117,6 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             ForceUpdateProjection();
         }
 
-        // Rider mis-detects this method as unused
-        // ReSharper disable once UnusedMember.Global
-        public void FixToolbars()
-        {
-            toolbarFixer.FixToolbars(this);
-        }
         
         [ServerOnly]
         public static bool ShouldAllowBuildingDefaultTopBlock(MyMechanicalConnectionBlockBase baseBlock)
@@ -2122,5 +2130,6 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             var result = !subgrid.BaseConnections.ContainsKey(baseBlockPreviewPosition);
             return result;
         }
+
     }
 }

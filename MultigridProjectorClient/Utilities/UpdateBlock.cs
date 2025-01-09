@@ -1,7 +1,5 @@
 ﻿using Sandbox.Game.Entities.Blocks;
 using Sandbox.Game.Entities.Cube;
-using Sandbox.Game.Entities;
-using Sandbox.Game.Screens.Helpers;
 using Sandbox.Game.World;
 using Sandbox.ModAPI.Interfaces;
 using Sandbox.ModAPI;
@@ -12,193 +10,115 @@ using System.Text;
 using VRage.Game;
 using VRageMath;
 using MultigridProjector.Utilities;
-using Sandbox.Common.ObjectBuilders;
-using VRage.ObjectBuilders;
-using Sandbox.Game.GameSystems;
 using MultigridProjector.Extensions;
 using System.Linq;
+using IMyEventControllerBlock = Sandbox.ModAPI.Ingame.IMyEventControllerBlock;
+using SpaceEngineers.Game.EntityComponents.Blocks;
+using VRage.Sync;
+using Sandbox.Graphics.GUI;
+using MultigridProjector.Logic;
 
 namespace MultigridProjectorClient.Utilities
 {
-    internal static class UpdateToolbar
+    internal static class UpdateEventController
     {
-        private const string UnknownText = "UNKNOWN ACTION";
-        private const string PlaceholderText = "ACTION ENTITY NOT FOUND";
-
-        private static MyToolbarItem CreateTerminalToolbarItem(MyObjectBuilder_ToolbarItemTerminalBlock builder)
+        // FIXME: Use `ToolbarFixer` instead to restore event controller settings from the preview
+        public static void CopyEvents(MyEventControllerBlock sourceBlock, MyEventControllerBlock destinationBlock)
         {
-            // Use the entity ID of the built counterpart of the block tied to the builder
-            if (!MyEntities.TryGetEntityById(builder.BlockEntityId, out MyTerminalBlock itemPreview))
-                return null;
+            Events.InvokeOnGameThread(() =>
+            {
+                long eventId = ((Sandbox.ModAPI.IMyEventControllerBlock)sourceBlock).SelectedEvent.UniqueSelectionId;
+                Delegate selectEvent = Reflection.GetMethod(typeof(MyEventControllerBlock), destinationBlock, "SelectEvent");
+                selectEvent.DynamicInvoke(eventId);
+            }, 30);
 
-            MySlimBlock itemBuilt = Construction.GetBuiltBlock(itemPreview.SlimBlock);
+            Events.InvokeOnGameThread(() => { CopyEventControllerCondition(sourceBlock, destinationBlock); }, 60);
 
-            if (itemBuilt?.FatBlock == null)
-                return null;
-
-            MyObjectBuilder_ToolbarItemTerminalBlock data = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemTerminalBlock>();
-            data.BlockEntityId = itemBuilt.FatBlock.EntityId;
-            data._Action = builder._Action;
-            data.Parameters = builder.Parameters;
-
-            return MyToolbarItemFactory.CreateToolbarItem(data);
+            Events.InvokeOnGameThread(() => { CopyEventControllerBlockSelection(sourceBlock, destinationBlock); }, 90);
         }
 
-        private static MyToolbarItem CreateGroupToolbarItem(MyObjectBuilder_ToolbarItemTerminalGroup builder, long blockEntityId)
+        private static void CopyEventControllerCondition(MyEventControllerBlock previewBlock, MyEventControllerBlock builtBlock)
         {
-            MyObjectBuilder_ToolbarItemTerminalGroup data = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemTerminalGroup>();
-            data.GroupName = builder.GroupName;
-            data._Action = builder._Action;
-            data.Parameters = builder.Parameters;
+            ((IMyEventControllerBlock)builtBlock).Threshold = ((IMyEventControllerBlock)previewBlock).Threshold;
+            ((IMyEventControllerBlock)builtBlock).IsLowerOrEqualCondition = ((IMyEventControllerBlock)previewBlock).IsLowerOrEqualCondition;
+            ((IMyEventControllerBlock)builtBlock).IsAndModeEnabled = ((IMyEventControllerBlock)previewBlock).IsAndModeEnabled;
 
-            // This is used internally to find which grid the block group is on.
-            // It needs to be set to the block we want to assign the toolbar to.
-            data.BlockEntityId = blockEntityId;
+            if (previewBlock.Components.TryGet<MyEventAngleChanged>(out var sourceComp) &&
+                builtBlock.Components.TryGet<MyEventAngleChanged>(out var destinationComp))
+            {
+                Sync<float, SyncDirection.BothWays> sourceAngle = (Sync<float, SyncDirection.BothWays>)Reflection.GetValue(sourceComp, "m_angle");
+                Sync<float, SyncDirection.BothWays> destinationAngle = (Sync<float, SyncDirection.BothWays>)Reflection.GetValue(destinationComp, "m_angle");
 
-            return MyToolbarItemFactory.CreateToolbarItem(data);
+                destinationAngle.Value = sourceAngle.Value;
+            }
+            else
+            {
+                PluginLog.Error($"Could not find angle for block: {previewBlock.DisplayName}");
+            }
         }
 
-        private static MyToolbarItem CreateDummyToolbarItem(string text, long blockEntityId)
+        private static void CopyEventControllerBlockSelection(MyEventControllerBlock previewBlock, MyEventControllerBlock builtBlock)
         {
-            MyObjectBuilder_ToolbarItemTerminalGroup data = MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemTerminalGroup>();
-            data.GroupName = text;
-            data._Action = "";
-            data.Parameters = new List<MyObjectBuilder_ToolbarItemActionParameter> { MyObjectBuilderSerializer.CreateNewObject<MyObjectBuilder_ToolbarItemActionParameter>() };
-
-            // This is used internally to find which grid the block group is on.
-            // It needs to be set to the block we want to assign the toolbar to.
-            data.BlockEntityId = blockEntityId;
-
-            return MyToolbarItemFactory.CreateToolbarItem(data);
-        }
-
-        private static MyBlockGroup CreateDummyGroup(string name, MyTerminalBlock dummyBlock)
-        {
-            MyBlockGroup dummyGroup = (MyBlockGroup)Activator.CreateInstance(typeof(MyBlockGroup), true);
-            dummyGroup.Name = new StringBuilder(name);
-            Reflection.SetValue(dummyGroup, "Blocks", new HashSet<MyTerminalBlock> { dummyBlock });
-
-            MyGridTerminalSystem terminalSystem = dummyBlock.CubeGrid.GridSystems.TerminalSystem;
-            terminalSystem.AddUpdateGroup(dummyGroup, true);
-
-            return dummyGroup;
-        }
-
-        private static void RemoveDummyGroup(MyBlockGroup dummyGroup)
-        {
-            MyCubeBlock dummyBlock = dummyGroup.GetTerminalBlocks().First();
-            MyGridTerminalSystem terminalSystem = dummyBlock.CubeGrid.GridSystems.TerminalSystem;
-            terminalSystem.RemoveGroup(dummyGroup, true);
-        }
-
-        private static void SetItemAtIndexWithDummyGroup(MyToolbar toolbar, int index, MyToolbarItem item, string name, MyTerminalBlock dummyBlock)
-        {
-            // Server side validation prevents toolbars from being made without a valid group
-            // We can sidestep this by making a group and removing it once the item is added
-            // TODO: Use an event rather then a fixed delay
-            MyBlockGroup group = CreateDummyGroup(name, dummyBlock);
-            Events.InvokeOnGameThread(() => toolbar.SetItemAtIndex(index, item), 20);   
-            Events.InvokeOnGameThread(() => RemoveDummyGroup(group), 40);
-        }
-
-        private static MyToolbar GetToolbar(MyTerminalBlock block)
-        {
-            if (block is MyTimerBlock timerBlock)
-                return timerBlock.Toolbar;
-
-            if (block is MySensorBlock sensorBlock)
-                return sensorBlock.Toolbar;
-
-            if (block is MyButtonPanel buttonPanel)
-                return buttonPanel.Toolbar;
-
-            if (block is MyEventControllerBlock eventControllerBlock)
-                return eventControllerBlock.Toolbar;
-
-            if (block is MyFlightMovementBlock flightMovementBlock)
-                return flightMovementBlock.Toolbar;
-
-            if (block is MyAirVent airVent)
-                return (MyToolbar)Reflection.GetValue(airVent, "m_actionToolbar");
-
-            // Cockpits, remote controls and cryopods
-            if (block is MyShipController shipController)
-                return shipController.Toolbar;
-
-            return null;
-        }
-
-        public static void CopyToolbars(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
-        {
-            MyToolbar sourceToolbar = GetToolbar(sourceBlock);
-            MyToolbar destinationToolbar = GetToolbar(destinationBlock);
-
-            if (sourceToolbar == null || destinationToolbar == null)
+            // Sanity checks, only for debugging
+            if (previewBlock.CubeGrid?.IsPreview != true)
+                return;
+            if (builtBlock.CubeGrid?.IsPreview != false)
                 return;
 
-            for (int i = 0; i < sourceToolbar.Items.Length; i++)
-            {
-                MyToolbarItem toolbarItem = sourceToolbar.GetItemAtIndex(i);
+            // FIXME: Awkward way to verify that the preview block corresponds to the built block.
+            // It would be much cleaner to pass only the block location of the event controller to restore
+            // the source blocks for from the corresponding projection (preview block).
+            if (!MultigridProjection.TryFindProjectionByProjector(previewBlock.CubeGrid.Projector, out var sourceProjection) ||
+                !MultigridProjection.TryFindProjectionByBuiltGrid(builtBlock.CubeGrid, out var projection, out _) ||
+                projection.Projector?.EntityId != sourceProjection.Projector?.EntityId)
+                return;
 
-                if (toolbarItem == null)
-                    continue;
+            if (!projection.ToolbarFixer.TryGetSelectedBlockIdsFromEventController(projection, previewBlock, out var selectedBlockIds))
+                return;
 
-                MyObjectBuilder_ToolbarItem builder = toolbarItem.GetObjectBuilder();
-                if (builder is MyObjectBuilder_ToolbarItemTerminalBlock terminalBuilder)
-                {
-                    MyToolbarItem newToolbarItem = CreateTerminalToolbarItem(terminalBuilder);
+            // No need to select blocks if there were none selected (an empty list is the default)
+            if (!selectedBlockIds.Any())
+                return;
 
-                    // Make a placeholder if the entity the toolbar is attached to could not be found
-                    if (newToolbarItem == null)
-                    {
-                        newToolbarItem = CreateDummyToolbarItem(PlaceholderText, destinationBlock.EntityId);
-                        SetItemAtIndexWithDummyGroup(destinationToolbar, i, newToolbarItem, PlaceholderText, destinationBlock);
-                        continue;
-                    }
-
-                    destinationToolbar.SetItemAtIndex(i, newToolbarItem);
-                    continue;
-                }
-
-                if (builder is MyObjectBuilder_ToolbarItemTerminalGroup groupBuilder)
-                {
-                    bool groupExists = false;
-                    foreach (MyBlockGroup group in destinationBlock.CubeGrid.GetBlockGroups())
-                    {
-                        if (group.Name.ToString() == groupBuilder.GroupName)
-                            groupExists = true;
-                    }
-
-                    MyToolbarItem newToolbarItem = CreateGroupToolbarItem(groupBuilder, destinationBlock.EntityId);
-
-                    if (!groupExists)
-                    {
-                        SetItemAtIndexWithDummyGroup(destinationToolbar, i, newToolbarItem, groupBuilder.GroupName, destinationBlock);
-                        continue;
-                    }
-
-                    destinationToolbar.SetItemAtIndex(i, newToolbarItem);
-                    continue;
-                }
-
-                // If the toolbar item is of an unknown type make a dummy item as an error message
-                {
-                    MyToolbarItem newToolbarItem = CreateDummyToolbarItem(UnknownText, destinationBlock.EntityId);
-                    SetItemAtIndexWithDummyGroup(destinationToolbar, i, newToolbarItem, UnknownText, destinationBlock);
-
-                    PluginLog.Error($"Cannot process toolbar item: {toolbarItem}");
-                }
-            }
+            // Do exactly what the UI does, so the changes are synced to the server
+            // SelectAvailableBlocks and SelectButton expect MyGuiControlListbox.Item
+            var listItems = selectedBlockIds.Select(blockId => new MyGuiControlListbox.Item(userData: blockId)).ToList();
+            builtBlock.SelectAvailableBlocks(listItems);
+            builtBlock.SelectButton();
         }
     }
 
     internal static class UpdateBlock
     {
-        public static void CopyProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
+        // Allocate this only once
+        private static readonly HashSet<string> ExcludedEventControllerProperties = new HashSet<string>
         {
-            CopyTerminalProperties(sourceBlock, destinationBlock);
-            UpdateToolbar.CopyToolbars(sourceBlock, destinationBlock);
+            "SearchBox"
+        };
 
+        public static void CopyProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock, bool shouldBlockBuiltOnServer = false)
+        {
+            // Special case event controllers
+            if (sourceBlock is MyEventControllerBlock sourceEventControllerBlock &&
+                destinationBlock is MyEventControllerBlock destinationEventControllerBlock)
+            {
+                // Copy over terminal properties
+                CopyTerminalProperties(sourceBlock, destinationBlock, ExcludedEventControllerProperties);
+
+                // Events in Event Controllers are not stored as properties, so copy those as well
+                UpdateEventController.CopyEvents(sourceEventControllerBlock, destinationEventControllerBlock);
+
+                // Copying power must be done in the next frame as disabling a block will prevent properties being modified
+                // so we need to wait for all the changes to process
+                Events.InvokeOnGameThread(() => CopyPowerState(sourceBlock, destinationBlock), 120);
+
+                return;
+            }
+
+            // Copy over terminal properties
+            CopyTerminalProperties(sourceBlock, destinationBlock);
+
+            // Copy over special properties if applicable
             if (sourceBlock is MyProjectorBase sourceProjectorBase &&
                 destinationBlock is MyProjectorBase destinationProjectorBase)
             {
@@ -206,8 +126,8 @@ namespace MultigridProjectorClient.Utilities
             }
 
             else if (sourceBlock is IMyProgrammableBlock sourceProgrammableBlock &&
-                destinationBlock is IMyProgrammableBlock destinationProgrammableBlock &&
-                MySession.Static.IsSettingsExperimental())
+                     destinationBlock is IMyProgrammableBlock destinationProgrammableBlock &&
+                     MySession.Static.IsSettingsExperimental())
             {
                 CopyScripts(sourceProgrammableBlock, destinationProgrammableBlock);
             }
@@ -221,11 +141,11 @@ namespace MultigridProjectorClient.Utilities
         {
             if (destinationBlock.GetProperty("OnOff") == null)
                 return;
-            
+
             destinationBlock.SetValue("OnOff", sourceBlock.GetValue<bool>("OnOff"));
         }
 
-        private static void CopyTerminalProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
+        private static void CopyTerminalProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock, HashSet<string> exclude = null)
         {
             List<ITerminalProperty> properties = new List<ITerminalProperty>();
             sourceBlock.GetProperties(properties);
@@ -234,6 +154,10 @@ namespace MultigridProjectorClient.Utilities
             {
                 // Disabling a block messes with setting properties and must be done last (in a separate function)
                 if (property.Id == "OnOff")
+                    continue;
+
+                // Allow skipping properties for compatibility reasons
+                if (!(exclude is null) && exclude.Contains(property.Id))
                     continue;
 
                 string propertyType = property.TypeName;
@@ -271,13 +195,13 @@ namespace MultigridProjectorClient.Utilities
 
         private static void CopyBlueprints(MyProjectorBase sourceBlock, MyProjectorBase destinationBlock)
         {
-            List<MyObjectBuilder_CubeGrid> projectedGrids = (List<MyObjectBuilder_CubeGrid>)Reflection.GetValue(sourceBlock, "m_savedProjections");
-            Delegate InitFromObjectBuilder = Reflection.GetMethod(typeof(MyProjectorBase), destinationBlock, "InitFromObjectBuilder");
+            List<MyObjectBuilder_CubeGrid> projectedGrids = (List<MyObjectBuilder_CubeGrid>) Reflection.GetValue(sourceBlock, "m_savedProjections");
+            Delegate initFromObjectBuilder = Reflection.GetMethod(typeof(MyProjectorBase), destinationBlock, "InitFromObjectBuilder");
 
             if (projectedGrids == null)
                 return;
 
-            InitFromObjectBuilder.DynamicInvoke(projectedGrids, null);
+            initFromObjectBuilder.DynamicInvoke(projectedGrids, null);
         }
     }
 }
