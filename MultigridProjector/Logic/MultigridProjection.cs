@@ -266,13 +266,14 @@ namespace MultigridProjector.Logic
             if (terminalBlock.BlockDefinition.Id != projectedBlock.Preview.BlockDefinition.Id)
                 return;
 
-            ToolbarFixer.ConfigureToolbar(this, subgrid, terminalBlock);
-            ToolbarFixer.AssignBlockToToolbars(this, subgrid, terminalBlock);
-
-            ToolbarFixer.ConfigureEventController(this, subgrid, terminalBlock);
-            ToolbarFixer.AssignBlockToEventControllers(this, subgrid, terminalBlock);
-
             // FIXME: Do we need to sync any changes made to the toolbars or selected blocks of event controllers in multiplayer?
+            // FIXME: The full object builder is not being restored. The class is disabled but still used indirectly for ID mappings.
+
+            //ToolbarFixer.ConfigureToolbar(this, subgrid, terminalBlock);
+            //ToolbarFixer.AssignBlockToToolbars(this, subgrid, terminalBlock);
+
+            //ToolbarFixer.ConfigureEventController(this, subgrid, terminalBlock);
+            //ToolbarFixer.AssignBlockToEventControllers(this, subgrid, terminalBlock);
         }
 
         private void MapBlueprintBlocks()

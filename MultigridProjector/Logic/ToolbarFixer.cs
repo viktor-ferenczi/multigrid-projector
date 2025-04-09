@@ -185,6 +185,46 @@ namespace MultigridProjector.Logic
             toolbarBlock.RaisePropertiesChanged();
         }
 
+        public MyObjectBuilder_ToolbarItem GetBuilderAtIndex(MultigridProjection projection, Subgrid toolbarSubgrid, MyTerminalBlock toolbarBlock, int index)
+        {
+            var toolbar = toolbarBlock?.GetToolbar();
+            if (toolbar == null)
+                return null;
+
+            var toolbarLocation = new FastBlockLocation(toolbarSubgrid.Index, toolbarSubgrid.BuiltToPreviewBlockPosition(toolbarBlock.Position));
+            if (!toolbarConfigByToolbarLocation.TryGetValue(toolbarLocation, out var toolbarConfig))
+                return null;
+
+            foreach (var slotConfig in toolbarConfig.SlotConfigs.Values)
+            {
+                if (slotConfig.SlotIndex != index)
+                    continue;
+
+                if (!(slotConfig.ItemBuilder?.Clone() is MyObjectBuilder_ToolbarItem itemBuilder))
+                    continue;
+
+                switch (itemBuilder)
+                {
+                    case MyObjectBuilder_ToolbarItemTerminalBlock terminalBlockItemBuilder:
+                        if (slotConfig.BlockLocation.HasValue &&
+                            projection.TryGetProjectedBlock(slotConfig.BlockLocation.Value, out _, out var projectedBlock) &&
+                            projectedBlock.SlimBlock?.FatBlock is MyTerminalBlock terminalBlock)
+                        {
+                            terminalBlockItemBuilder.BlockEntityId = terminalBlock.EntityId;
+                        }
+                        break;
+
+                    case MyObjectBuilder_ToolbarItemTerminalGroup terminalGroupItemBuilder:
+                        terminalGroupItemBuilder.BlockEntityId = toolbarBlock.EntityId;
+                        break;
+                }
+
+                return itemBuilder;
+            }
+
+            return null;
+        }
+
         public void AssignBlockToToolbars(MultigridProjection projection, Subgrid blockSubgrid, MyTerminalBlock terminalBlock)
         {
             var blockLocation = new FastBlockLocation(blockSubgrid.Index, blockSubgrid.BuiltToPreviewBlockPosition(terminalBlock.Position));
