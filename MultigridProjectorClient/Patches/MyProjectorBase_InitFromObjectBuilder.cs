@@ -14,7 +14,7 @@ namespace MultigridProjectorClient.Patches
     // ReSharper disable once UnusedType.Global
     [HarmonyPatch(typeof(MyProjectorBase))]
     [HarmonyPatch("InitFromObjectBuilder")]
-    [EnsureOriginal("da4f7130")]
+    [EnsureOriginal("3b1e7d1f")]
     // ReSharper disable once InconsistentNaming
     public static class MyProjectorBase_InitFromObjectBuilder
     {
