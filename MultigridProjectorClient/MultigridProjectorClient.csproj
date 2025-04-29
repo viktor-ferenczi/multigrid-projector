@@ -95,6 +95,7 @@
     <Compile Include="Extra\ToolbarFix.cs" />
     <Compile Include="Menus\CraftDialog.cs" />
     <Compile Include="Patches\MyGuiBlueprintScreenPatches.cs" />
+    <Compile Include="Patches\MyProjectorBlockMarker_Constructor.cs" />
     <Compile Include="Patches\MySpaceProjector_CreateTerminalControls.cs" />
     <Compile Include="Utilities\ActionIcons.cs" />
     <Compile Include="Extra\ConnectSubgrids.cs" />
@@ -137,6 +138,8 @@
     <Content Include="deploy.bat" />
     <Content Include="Patches\MyProjectorBase_BuildInternal.original.il" />
     <Content Include="Patches\MyProjectorBase_BuildInternal.patched.il" />
+    <Content Include="Patches\MySpaceProjector_CreateTerminalControls.original.il" />
+    <Content Include="Patches\MySpaceProjector_CreateTerminalControls.patched.il" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.3.3" />
