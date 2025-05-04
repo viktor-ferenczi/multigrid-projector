@@ -108,6 +108,7 @@ You may also want to save this file for later reuse.
 - wafoxxx
 
 #### Captain level
+- CaptFacepalm
 - Diggz
 - lazul
 - jiringgot
