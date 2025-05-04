@@ -8,8 +8,10 @@ using Sandbox.Game.Entities.Cube;
 using System.Collections.Generic;
 using System.Linq;
 using Sandbox.Game.Screens.Helpers;
+using Sandbox.Graphics.GUI;
 using SpaceEngineers.Game.Entities.Blocks;
 using VRage.Game;
+using VRage.ObjectBuilder;
 using VRageMath;
 
 namespace MultigridProjector.Extensions
@@ -100,9 +102,36 @@ namespace MultigridProjector.Extensions
                     return b.Toolbar;
                 case MyTimerBlock b:
                     return b.Toolbar;
+                case MyAirVent b:
+                    // FIXME: Not handled, MyAirVent does not have a properly serialized toolbar
+                    break;
             }
 
             return null;
+        }
+
+        private static readonly FieldInfo SelectedBlockIdsFieldInfo = AccessTools.Field(typeof(MyEventControllerBlock), "m_selectedBlockIds");
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static MySerializableList<long> GetSelectedBlockIds(this MyEventControllerBlock block)
+        {
+            return SelectedBlockIdsFieldInfo.GetValue(block) as MySerializableList<long>;
+        }
+
+        private static readonly MethodInfo SelectAvailableBlocksMethodInfo = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "SelectAvailableBlocks");
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SelectAvailableBlocks(this MyEventControllerBlock block, List<MyGuiControlListbox.Item> selection)
+        {
+            SelectAvailableBlocksMethodInfo.Invoke(block, new object[]{selection});
+        }
+
+        private static readonly MethodInfo SelectButtonMethodInfo = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "SelectButton");
+        
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SelectButton(this MyEventControllerBlock block)
+        {
+            SelectButtonMethodInfo.Invoke(block, new object[]{});
         }
     }
 }
