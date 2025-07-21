@@ -10,6 +10,7 @@ using MultigridProjector.Api;
 using MultigridProjector.Utilities;
 using MultigridProjector.Extensions;
 using Sandbox;
+using Sandbox.Game;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Engine.Multiplayer;
@@ -39,7 +40,7 @@ namespace MultigridProjector.Logic
     // FIXME: Refactor this class
     public class MultigridProjection
     {
-        private const int UpdateCooldownTime = 2000; // ms
+        public static int UpdateCooldownTime { get; internal set; }  = 2000; // ms
 
         // Active multigrid projections by the Projector block's EntityId
         private static readonly RwLockDictionary<long, MultigridProjection> Projections = new RwLockDictionary<long, MultigridProjection>();
@@ -1504,7 +1505,11 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return BuildCheckResult.OK;
 
             var gridPlacementSettings = new MyGridPlacementSettings { SnapMode = SnapMode.OneFreeAxis };
-            if (MyCubeGrid.TestPlacementAreaCube(builtGrid, ref gridPlacementSettings, min, max, previewBlock.Orientation, previewBlock.BlockDefinition, ignoredEntity: builtGrid, isProjected: true))
+
+            if (checkHavokIntersections && CheckVoxels(previewBlock))
+                return BuildCheckResult.IntersectedWithSomethingElse;
+
+            if (MyCubeGrid.TestPlacementAreaCube(builtGrid, ref gridPlacementSettings, min, max, previewBlock.Orientation, previewBlock.BlockDefinition, ignoredEntity: builtGrid, isProjected: true, forceCheck: checkHavokIntersections))
                 return BuildCheckResult.OK;
 
             return BuildCheckResult.IntersectedWithSomethingElse;
@@ -1607,6 +1612,26 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             // Remove references to the cubes to allow for GC to clean them later
             for (var i = 0; i < count; i++)
                 cubes[i] = null;
+        }
+
+        public static bool CheckVoxels(MySlimBlock block)
+        {
+            if (MyPerGameSettings.Destruction && block.CubeGrid.GridSizeEnum == MyCubeSize.Large)
+                return block.CubeGrid.Physics.Shape.BlocksConnectedToWorld.Contains(block.Position);
+
+            block.GetWorldBoundingBox(out BoundingBoxD worldBoundingBox);
+            List<MyVoxelBase> voxels = new List<MyVoxelBase>();
+            MyGamePruningStructure.GetAllVoxelMapsInBox(ref worldBoundingBox, voxels);
+
+            float gridSize = block.CubeGrid.GridSize;
+            BoundingBoxD boundingBoxD = new BoundingBoxD(gridSize * ((Vector3D)block.Min - 0.5), gridSize * ((Vector3D)block.Max + 0.5));
+            MatrixD worldMatrix = block.CubeGrid.WorldMatrix;
+
+            foreach (MyVoxelBase voxel in voxels)
+                if (voxel.IsAnyAabbCornerInside(ref worldMatrix, boundingBoxD))
+                    return true;
+
+            return false;
         }
 
         [ServerOnly]
