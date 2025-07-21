@@ -200,6 +200,8 @@ namespace MultigridProjectorClient.Extra
                 }
 
                 MyStringId rotationControl = RotationControls[directionIndex];
+                MyInput.Static.SetEnabledOnControl(rotationControl, enabled: true);
+
                 if (MyControllerHelper.IsControl(MyStringId.NullOrEmpty, rotationControl, MyControlStateType.NEW_PRESSED_REPEATING))
                 {
                     Rotate(directionIndex);
