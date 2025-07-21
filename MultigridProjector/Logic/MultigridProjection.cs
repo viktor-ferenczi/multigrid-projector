@@ -1210,6 +1210,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                     ConfigureBaseToMatchTop(baseConnection);
 
                 baseSubgrid.RegisterBuiltGrid(baseConnection.Block.CubeGrid);
+                baseSubgrid.ConfigureBuiltGrid();
                 return;
             }
 
@@ -1223,6 +1224,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 }
 
                 topSubgrid.RegisterBuiltGrid(topConnection.Block.CubeGrid);
+                topSubgrid.ConfigureBuiltGrid();
             }
         }
 
