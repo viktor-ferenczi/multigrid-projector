@@ -232,6 +232,19 @@ namespace MultigridProjectorClient.Utilities
 
         private static void CopyTerminalProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
         {
+            // Guard condition to prevent a rare crash,
+            // see: https://discord.com/channels/1378756728107040829/1391879813006098463
+            if (sourceBlock == null)
+            {
+                PluginLog.Warn("CopyTerminalProperties(): sourceBlock is null");
+                return;
+            }
+            if (destinationBlock == null)
+            {
+                PluginLog.Warn("CopyTerminalProperties(): destinationBlock is null");
+                return;
+            }
+
             List<ITerminalProperty> properties = new List<ITerminalProperty>();
             sourceBlock.GetProperties(properties);
 
@@ -242,26 +255,37 @@ namespace MultigridProjectorClient.Utilities
                     continue;
 
                 string propertyType = property.TypeName;
-
-                if (propertyType == "Boolean")
-                    destinationBlock.SetValue(property.Id, sourceBlock.GetValue<bool>(property.Id));
-
-                else if (propertyType == "Color")
-                    destinationBlock.SetValue(property.Id, sourceBlock.GetValue<Color>(property.Id));
-
-                else if (propertyType == "Single")
-                    destinationBlock.SetValue(property.Id, sourceBlock.GetValue<float>(property.Id));
-
-                else if (propertyType == "Int64")
-                    destinationBlock.SetValue(property.Id, sourceBlock.GetValue<long>(property.Id));
-
-                else if (propertyType == "StringBuilder")
-                    destinationBlock.SetValue(property.Id, sourceBlock.GetValue<StringBuilder>(property.Id));
-
-                else
+                
+                // Silencing a rare crash,
+                // see: https://discord.com/channels/1378756728107040829/1391879813006098463
+                try
                 {
-                    // This should not be triggered unless Keen makes a MAJOR UI overhaul
-                    PluginLog.Error($"Unknown Property Type: {property.TypeName} in {property.Id}");
+                    switch (propertyType)
+                    {
+                        case "Boolean":
+                            destinationBlock.SetValue(property.Id, sourceBlock.GetValue<bool>(property.Id));
+                            break;
+                        case "Color":
+                            destinationBlock.SetValue(property.Id, sourceBlock.GetValue<Color>(property.Id));
+                            break;
+                        case "Single":
+                            destinationBlock.SetValue(property.Id, sourceBlock.GetValue<float>(property.Id));
+                            break;
+                        case "Int64":
+                            destinationBlock.SetValue(property.Id, sourceBlock.GetValue<long>(property.Id));
+                            break;
+                        case "StringBuilder":
+                            destinationBlock.SetValue(property.Id, sourceBlock.GetValue<StringBuilder>(property.Id));
+                            break;
+                        default:
+                            // This should not be triggered unless Keen makes a MAJOR UI overhaul
+                            PluginLog.Error($"CopyTerminalProperties(): Unknown property type: {property.TypeName} in {property.Id}");
+                            break;
+                    }
+                }
+                catch(NullReferenceException e)
+                {
+                    PluginLog.Error(e, $"CopyTerminalProperties(): Silenced NullReferenceException: {property.TypeName} in {property.Id}");
                 }
             }
 
