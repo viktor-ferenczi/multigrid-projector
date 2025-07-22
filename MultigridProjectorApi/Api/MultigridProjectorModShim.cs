@@ -44,7 +44,7 @@ namespace MultigridProjector.Api
         private Vector3I projectionOffset;
         private Vector3I projectionRotation;
 
-        public string Version => "0.8.0";
+        public string Version => "0.8.1";
 
         public int GetSubgridCount(long projectorId) => projector.IsProjecting ? 1 : 0;
 
