@@ -16,7 +16,8 @@ namespace MultigridProjector.Logic
 {
     public class Subgrid : IDisposable
     {
-        // Index of the subgrid in the blueprint, also indexes the preview grid list
+        // Index of the subgrid in the blueprint, it also indexes the preview grid list.
+        // Index zero is always the main grid, which has the projector on it.
         public readonly int Index;
 
         // Grid builder
@@ -288,8 +289,23 @@ namespace MultigridProjector.Logic
             return PreviewGrid.WorldToGridInteger(BuiltGrid.GridIntegerToWorld(position));
         }
 
-        #endregion
+        public void ConfigureBuiltGrid()
+        {
+            if (Index == 0)
+                return;
+                
+            var builtGrid = BuiltGrid;
+            if (builtGrid == null)
+                return;
+            
+            if (builtGrid.DisplayName != PreviewGrid.DisplayName)
+            {
+                builtGrid.ChangeDisplayNameRequest(PreviewGrid.DisplayName);
+            }
+        }
 
+        #endregion
+        
         #region Built Grid Registration
 
         public void RegisterBuiltGrid(MyCubeGrid grid)
@@ -302,7 +318,7 @@ namespace MultigridProjector.Logic
                 BuiltGrid = grid;
                 StateHash = 0;
             }
-
+            
             foreach (var fatBlock in BuiltGrid.GetFatBlocks<MyTerminalBlock>())
                 fatBlock.CheckConnectionChanged += OnCheckConnectionChanged;
 
