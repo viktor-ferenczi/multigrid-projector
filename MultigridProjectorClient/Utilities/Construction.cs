@@ -209,38 +209,42 @@ namespace MultigridProjectorClient.Utilities
         public static bool WeldBlock(MyProjectorBase projector, MySlimBlock cubeBlock, long owner, ref long builtBy)
         {
             // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
-            if (!TryGetSubgrid(cubeBlock, out Subgrid subgrid, out MultigridProjection _))
+            if (!TryGetSubgrid(cubeBlock, out var subgrid, out _))
                 return true;
 
-            int gridIndex = subgrid.Index;
-
-            MyCubeBlock previewBlock = cubeBlock.FatBlock;
-
-            // Weld blocks normally if supported
-            // This means either the server plugin is present or we are welding the initial grid supported by vanilla servers
-            // Blocks with subparts will not weld correctly on vanilla servers without the plugin (the subparts vanish)
-            bool hasSubpart = previewBlock is IMyMechanicalConnectionBlock || previewBlock is IMyAttachableTopBlock;
-
-            // The first subgrid with index 0 is the main grid with the projector on it, therefore it is always Supported
-            if (Comms.ServerHasPlugin || gridIndex == 0 && (!hasSubpart || !Config.CurrentConfig.ClientWelding))
+            // Let the server side MGP to handle building if it is available
+            if (Comms.ServerHasPlugin)
             {
-                if (Comms.ServerHasPlugin)
-                    builtBy = gridIndex; // Deliver the subgrid index via the builtBy field, the owner will be used instead in BuildInternal
-
+                // Deliver the subgrid index via the builtBy field, the owner will be used instead in BuildInternal
+                builtBy = subgrid.Index;
                 return true;
             }
-            
+
+            // Fall back to building only the main grid (first subgrid) on vanilla server if the client welding feature is disabled
+            var isMainGrid = subgrid.Index == 0;
             if (!Config.CurrentConfig.ClientWelding)
             {
-                return false;
+                return isMainGrid;
             }
 
+            // Weld the main grid (first subgrid) normally on vanilla servers, but mechanical connection blocks
+            // still need to be handled here, because the vanilla server cannot start subgrids
+            var previewBlock = cubeBlock.FatBlock;
+            var isMechanicalConnection = previewBlock is IMyMechanicalConnectionBlock || previewBlock is IMyAttachableTopBlock;
+            var shouldBlockBuiltOnServer = isMainGrid && !isMechanicalConnection;
+            
+            if (shouldBlockBuiltOnServer)
+                return true;
+
+            // Attempt to initiate building of the block on client side
+            // by simulating the player placing the block
+                
             // Make sure there is enough space to actually place the block
             if (projector.CanBuild(cubeBlock, true) != BuildCheckResult.OK)
                 return false;
 
             // Sanity checks for DLC and if the block can be welded
-            ulong steamId = MySession.Static.Players.TryGetSteamId(owner);
+            var steamId = MySession.Static.Players.TryGetSteamId(owner);
             if (!projector.AllowWelding || !MySession.Static.GetComponent<MySessionComponentDLC>().HasDefinitionDLC(cubeBlock.BlockDefinition, steamId))
                 return false;
 
@@ -248,53 +252,58 @@ namespace MultigridProjectorClient.Utilities
             PlacePreviewBlock(subgrid, cubeBlock.Position);
 
             // Register an event to update the block (if applicable)
-            if (previewBlock == null)
-                return false;
-
-            void OnPreviewPlace(MyCubeBlock builtBlock)
+            if (previewBlock != null)
             {
-                if (builtBlock is MyTerminalBlock block)
-                    UpdateBlock.CopyProperties((MyTerminalBlock)previewBlock, block);
+                // FIXME: Use previewBlock.IsBuilt
+                // FIXME: Depend on MGP's grid scan mechanism instead
+                Events.OnNextFatBlockAdded(
+                    subgrid.BuiltGrid,
+                    builtBlock => OnPreviewPlace(builtBlock, previewBlock),
+                    builtBlock => VerifyBuiltBlock(cubeBlock, builtBlock.SlimBlock)
+                );
+            }
 
-                // We need to wait for the basepart to replicate for the block to be fully placed
-                if (builtBlock is MyMechanicalConnectionBlockBase builtBase)
+            return false;
+        }
+
+        private static void OnPreviewPlace(MyCubeBlock builtBlock, MyCubeBlock previewBlock)
+        {
+            if (builtBlock is MyTerminalBlock block)
+                UpdateBlock.CopyProperties((MyTerminalBlock) previewBlock, block);
+
+            // We need to wait for the basepart to replicate for the block to be fully placed
+            if (builtBlock is MyMechanicalConnectionBlockBase builtBase)
+            {
+                Events.OnNextAttachedChanged(builtBase, (_) =>
                 {
-                    Events.OnNextAttachedChanged(builtBase, (_) =>
+                    if (Config.CurrentConfig.ConnectSubgrids)
                     {
-                        if (Config.CurrentConfig.ConnectSubgrids)
+                        UpdateTopParts((MyMechanicalConnectionBlockBase) previewBlock, builtBase);
+                    }
+                    else
+                    {
+                        MyAttachableTopBlockBase previewTop = GetTopPart((MyMechanicalConnectionBlockBase) previewBlock);
+                        MyAttachableTopBlockBase builtTop = GetTopPart((MyMechanicalConnectionBlockBase) builtBlock);
+
+                        ConnectionType connection = AnalyzeConnection(
+                            (MyMechanicalConnectionBlockBaseDefinition) previewBlock.BlockDefinition,
+                            previewTop?.BlockDefinition);
+
+                        if (connection == ConnectionType.Default)
                         {
-                            UpdateTopParts((MyMechanicalConnectionBlockBase)previewBlock, builtBase);
+                            SkinTopParts(previewTop, builtTop);
                         }
                         else
                         {
-                            MyAttachableTopBlockBase previewTop = GetTopPart((MyMechanicalConnectionBlockBase)previewBlock);
-                            MyAttachableTopBlockBase builtTop = GetTopPart((MyMechanicalConnectionBlockBase)builtBlock);
-
-                            ConnectionType connection = AnalyzeConnection(
-                                (MyMechanicalConnectionBlockBaseDefinition)previewBlock.BlockDefinition,
-                                previewTop?.BlockDefinition);
-
-                            if (connection == ConnectionType.Default)
-                            {
-                                SkinTopParts(previewTop, builtTop);
-                            }
-                            else
-                            {
-                                builtTop.CubeGrid.SkinBlocks(builtTop.Min, builtTop.Max, new Vector3(255, 0, 0), MyStringHash.GetOrCompute("Weldless"), false);
-                            }
+                            builtTop.CubeGrid.SkinBlocks(builtTop.Min, builtTop.Max, new Vector3(255, 0, 0), MyStringHash.GetOrCompute("Weldless"), false);
                         }
+                    }
 
-                    }, (_) => builtBase.TopBlock != null);
-                }
-
-                if (builtBlock is MyAttachableTopBlockBase @base && Config.CurrentConfig.ConnectSubgrids)
-                    UpdateBaseParts((MyAttachableTopBlockBase)previewBlock, @base);
+                }, _ => builtBase.TopBlock != null);
             }
 
-            // FIXME: Use previewBlock.IsBuilt
-            Events.OnNextFatBlockAdded(subgrid.BuiltGrid, OnPreviewPlace, (builtBlock) => VerifyBuiltBlock(cubeBlock, builtBlock.SlimBlock));
-
-            return false;
+            if (builtBlock is MyAttachableTopBlockBase @base && Config.CurrentConfig.ConnectSubgrids)
+                UpdateBaseParts((MyAttachableTopBlockBase) previewBlock, @base);
         }
     }
 }
