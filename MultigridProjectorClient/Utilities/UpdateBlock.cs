@@ -199,9 +199,11 @@ namespace MultigridProjectorClient.Utilities
     {
         public static void CopyProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
         {
+            // Copy over terminal properties
             CopyTerminalProperties(sourceBlock, destinationBlock);
             UpdateToolbar.CopyToolbars(sourceBlock, destinationBlock);
 
+            // Copy over special properties if applicable
             if (sourceBlock is MyProjectorBase sourceProjectorBase &&
                 destinationBlock is MyProjectorBase destinationProjectorBase)
             {
@@ -209,8 +211,8 @@ namespace MultigridProjectorClient.Utilities
             }
 
             else if (sourceBlock is IMyProgrammableBlock sourceProgrammableBlock &&
-                destinationBlock is IMyProgrammableBlock destinationProgrammableBlock &&
-                MySession.Static.IsSettingsExperimental())
+                     destinationBlock is IMyProgrammableBlock destinationProgrammableBlock &&
+                     MySession.Static.IsSettingsExperimental())
             {
                 CopyScripts(sourceProgrammableBlock, destinationProgrammableBlock);
             }
@@ -224,7 +226,7 @@ namespace MultigridProjectorClient.Utilities
         {
             if (destinationBlock.GetProperty("OnOff") == null)
                 return;
-            
+
             destinationBlock.SetValue("OnOff", sourceBlock.GetValue<bool>("OnOff"));
         }
 
