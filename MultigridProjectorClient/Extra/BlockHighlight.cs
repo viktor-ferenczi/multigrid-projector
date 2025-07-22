@@ -27,8 +27,6 @@ namespace MultigridProjectorClient.Extra
         private static bool IsProjecting(MyProjectorBase block) => IsWorking(block) && block.ProjectedGrid != null;
         private static bool IsWorking(MyProjectorBase block) => block.CubeGrid?.Physics != null && block.IsWorking;
         private static bool Enabled => Config.CurrentConfig.BlockHighlight;
-        private const int updateCooldown = 100; // ms
-        private static int oldUpdateCooldown;
 
         public static IEnumerable<CustomControl> IterControls()
         {
@@ -114,8 +112,7 @@ namespace MultigridProjectorClient.Extra
             TargetProjectors.Add((MyProjectorBase) projector);
 
             EnableCheckHavokIntersections(projector, true);
-            oldUpdateCooldown = MultigridProjection.UpdateCooldownTime;
-            MultigridProjection.UpdateCooldownTime = updateCooldown;
+            MultigridProjection.QuickUpdate = true;
         }
 
         private static void DisableHighlightBlocks(IMyProjector projector)
@@ -126,7 +123,7 @@ namespace MultigridProjectorClient.Extra
             TargetProjectors.Remove((MyProjectorBase) projector);
 
             EnableCheckHavokIntersections(projector, false);
-            MultigridProjection.UpdateCooldownTime = oldUpdateCooldown;
+            MultigridProjection.QuickUpdate = false;
         }
 
         private static void ToggleHighlightBlocks(IMyProjector projector)
