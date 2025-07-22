@@ -56,17 +56,19 @@ namespace MultigridProjector.Logic
                 SlotConfigs = iterSlotConfigs.ToDictionary(slotConfig => slotConfig.SlotIndex);
             }
         }
+        
+        // IMPORTANT: All block locations in the maps below are in the blueprint. NEVER use them to index built blocks!
 
-        // Toolbars in the blueprint
-        private readonly Dictionary<FastBlockLocation, ToolbarConfig> toolbarConfigByToolbarLocation = new Dictionary<FastBlockLocation, ToolbarConfig>();
+        // Toolbars in the blueprint by the location of blocks having the toolbars
+        private readonly Dictionary<FastBlockLocation, ToolbarConfig> toolbarConfigByToolbarLocation = new Dictionary<FastBlockLocation, ToolbarConfig>(32);
 
-        // Mapping from terminal block positions to toolbar slots they have assigned actions defined
-        private readonly Dictionary<FastBlockLocation, List<AssignedSlot>> assignedSlotsByBlockLocation = new Dictionary<FastBlockLocation, List<AssignedSlot>>();
+        // Mapping from terminal block locations to toolbar slots they have assigned actions defined
+        private readonly Dictionary<FastBlockLocation, List<AssignedSlot>> assignedSlotsByBlockLocation = new Dictionary<FastBlockLocation, List<AssignedSlot>>(32);
 
         public ToolbarFixer(IEnumerable<Subgrid> supportedSubgrids)
         {
             // Collect all blocks may be relevant by ID and all the toolbars
-            var blockLocationsByEntityId = new Dictionary<long, FastBlockLocation>(1024);
+            var terminalBlockLocationsByEntityId = new Dictionary<long, FastBlockLocation>(1024);
             foreach (var subgrid in supportedSubgrids)
             {
                 foreach (var (position, projectedBlock) in subgrid.Blocks)
@@ -74,9 +76,11 @@ namespace MultigridProjector.Logic
                     if (!(projectedBlock.Builder is MyObjectBuilder_TerminalBlock terminalBlockBuilder))
                         continue;
 
+                    // All terminal blocks
                     var location = new FastBlockLocation(subgrid.Index, position);
-                    blockLocationsByEntityId[terminalBlockBuilder.EntityId] = location;
+                    terminalBlockLocationsByEntityId[terminalBlockBuilder.EntityId] = location;
 
+                    // Blocks with a toolbar
                     var toolbarBuilder = terminalBlockBuilder.GetToolbar();
                     if (toolbarBuilder == null)
                         continue;
@@ -89,13 +93,13 @@ namespace MultigridProjector.Logic
                 }
             }
 
-            // Map the blocks to slots
+            // Map the blocks to toolbar slots (reverse mapping)
             foreach (var toolbarConfig in toolbarConfigByToolbarLocation.Values)
             {
                 foreach (var slotConfig in toolbarConfig.SlotConfigs.Values)
                 {
                     if (slotConfig.ItemBuilder is MyObjectBuilder_ToolbarItemTerminalBlock itemBuilder &&
-                        blockLocationsByEntityId.TryGetValue(itemBuilder.BlockEntityId, out var blockLocation))
+                        terminalBlockLocationsByEntityId.TryGetValue(itemBuilder.BlockEntityId, out var blockLocation))
                     {
                         slotConfig.BlockLocation = blockLocation;
 
@@ -120,28 +124,18 @@ namespace MultigridProjector.Logic
 
             foreach (var slotConfig in toolbarConfig.SlotConfigs.Values)
             {
-                if (slotConfig.ItemBuilder == null)
-                    continue;
-
-                var itemBuilder = slotConfig.ItemBuilder.Clone() as MyObjectBuilder_ToolbarItem;
-                if (itemBuilder == null)
+                if (!(slotConfig.ItemBuilder?.Clone() is MyObjectBuilder_ToolbarItem itemBuilder))
                     continue;
 
                 switch (itemBuilder)
                 {
                     case MyObjectBuilder_ToolbarItemTerminalBlock terminalBlockItemBuilder:
-                        if (!slotConfig.BlockLocation.HasValue)
-                            continue;
-
-                        var blockLocation = slotConfig.BlockLocation.Value;
-                        if (!projection.TryGetSupportedSubgrid(blockLocation.GridIndex, out var blockSubgrid) || !blockSubgrid.HasBuilt)
-                            continue;
-
-                        var blockPosition = blockSubgrid.PreviewToBuiltBlockPosition(blockLocation.Position);
-                        if (!(blockSubgrid.BuiltGrid?.GetCubeBlock(blockPosition)?.FatBlock is MyTerminalBlock terminalBlock))
-                            continue;
-
-                        terminalBlockItemBuilder.BlockEntityId = terminalBlock.EntityId;
+                        if (slotConfig.BlockLocation.HasValue &&
+                            projection.TryGetProjectedBlock(slotConfig.BlockLocation.Value, out _, out var projectedBlock) &&
+                            projectedBlock.SlimBlock?.FatBlock is MyTerminalBlock terminalBlock)
+                        {
+                            terminalBlockItemBuilder.BlockEntityId = terminalBlock.EntityId;
+                        }
                         break;
 
                     case MyObjectBuilder_ToolbarItemTerminalGroup terminalGroupItemBuilder:
@@ -167,23 +161,15 @@ namespace MultigridProjector.Logic
                 var toolbarConfig = toolbarConfigByToolbarLocation[assignedSlot.ToolbarLocation];
                 var slotConfig = toolbarConfig.SlotConfigs[assignedSlot.SlotIndex];
 
-                var toolbarLocation = toolbarConfig.ToolbarLocation;
-                if (!projection.TryGetSupportedSubgrid(toolbarLocation.GridIndex, out var toolbarSubgrid) || !toolbarSubgrid.HasBuilt)
-                    continue;
-
-                var toolbarPosition = toolbarSubgrid.PreviewToBuiltBlockPosition(toolbarLocation.Position);
-                if (!(toolbarSubgrid.BuiltGrid?.GetCubeBlock(toolbarPosition)?.FatBlock is MyTerminalBlock toolbarBlock))
+                if (!projection.TryGetProjectedBlock(toolbarConfig.ToolbarLocation, out _, out var projectedBlock) ||
+                    !(projectedBlock.SlimBlock?.FatBlock is MyTerminalBlock toolbarBlock))
                     continue;
 
                 var toolbar = toolbarBlock.GetToolbar();
                 if (toolbar == null)
                     continue;
 
-                if (slotConfig.ItemBuilder == null)
-                    continue;
-
-                var itemBuilder = slotConfig.ItemBuilder.Clone() as MyObjectBuilder_ToolbarItemTerminalBlock;
-                if (itemBuilder == null)
+                if (!(slotConfig.ItemBuilder?.Clone() is MyObjectBuilder_ToolbarItemTerminalBlock itemBuilder))
                     continue;
 
                 itemBuilder.BlockEntityId = terminalBlock.EntityId;

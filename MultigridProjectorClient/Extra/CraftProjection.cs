@@ -3,7 +3,6 @@ using HarmonyLib;
 using MultigridProjector.Extensions;
 using MultigridProjector.Logic;
 using MultigridProjectorClient.Utilities;
-using Sandbox.Common.ObjectBuilders;
 using Sandbox.Definitions;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Blocks;
@@ -132,7 +131,8 @@ namespace MultigridProjectorClient.Extra
         {
             Dictionary<MyDefinitionId, int> components = new Dictionary<MyDefinitionId, int>();
 
-            if (projector.AllowScaling) // Handle Console Blocks (projector table)
+            // Handle Console Blocks (projector table)
+            if (projector.AllowScaling)
             {
                 foreach (MyCubeGrid subgrid in projector.ProjectedGrid.GetConnectedGrids(GridLinkTypeEnum.Logical))
                 {
@@ -142,33 +142,32 @@ namespace MultigridProjectorClient.Extra
                         AddComponents(ref components, previewBlockComponents);
                     }
                 }
-
+                return components;
             }
-            else
+            
+            // Handle projectors
+            if (!MultigridProjection.TryFindProjectionByProjector(projector, out MultigridProjection projection))
+                return components;
+
+            Subgrid[] subgrids = projection.GetSupportedSubgrids();
+            foreach (Subgrid subgrid in subgrids)
             {
-                if (!MultigridProjection.TryFindProjectionByProjector(projector, out MultigridProjection projection))
-                    return components;
+                HashSet<MySlimBlock> previewBlocks = subgrid.PreviewGrid.CubeBlocks;
 
-                Subgrid[] subgrids = projection.GetSupportedSubgrids();
-                foreach (Subgrid subgrid in subgrids)
+                foreach (MySlimBlock previewBlock in previewBlocks)
                 {
-                    HashSet<MySlimBlock> previewBlocks = subgrid.PreviewGrid.CubeBlocks;
+                    Dictionary<MyDefinitionId, int> previewBlockComponents = GetBlockComponents(previewBlock);
 
-                    foreach (MySlimBlock previewBlock in previewBlocks)
+                    // Consider the progress of the built counterpart
+                    MySlimBlock builtBlock = Construction.GetBuiltBlock(previewBlock);
+                    if (builtBlock != null && builtBlock.Integrity < previewBlock.Integrity)
                     {
-                        Dictionary<MyDefinitionId, int> previewBlockComponents = GetBlockComponents(previewBlock);
-
-                        // Consider the progress of the built counterpart
-                        MySlimBlock builtBlock = Construction.GetBuiltBlock(previewBlock);
-                        if (builtBlock != null && builtBlock.Integrity < previewBlock.Integrity)
-                        {
-                            Dictionary<MyDefinitionId, int> builtBlockComponents = GetBlockComponents(builtBlock);
-                            SubtractComponents(ref previewBlockComponents, builtBlockComponents);
-                            ClampComponents(ref previewBlockComponents);
-                        }
-
-                        AddComponents(ref components, previewBlockComponents);
+                        Dictionary<MyDefinitionId, int> builtBlockComponents = GetBlockComponents(builtBlock);
+                        SubtractComponents(ref previewBlockComponents, builtBlockComponents);
+                        ClampComponents(ref previewBlockComponents);
                     }
+
+                    AddComponents(ref components, previewBlockComponents);
                 }
             }
 

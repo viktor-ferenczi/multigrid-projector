@@ -35,12 +35,16 @@ namespace MultigridProjectorClient.Extra
 
             MyGuiSandbox.AddScreen(
                 MyGuiSandbox.CreateMessageBox(buttonType: MyMessageBoxButtonsType.YES_NO,
-                    messageText: new StringBuilder("Are you sure to merge ALL slots of\r\nALL toolbars from the projection?"),
+                    messageText: new StringBuilder("Are you sure to merge ALL slots of\r\n" +
+                                                   "ALL toolbars from the projection?\r\n" +
+                                                   "\r\n" +
+                                                   "It will also fix block relations\r\n" +
+                                                   "and button names on button panels."),
                     messageCaption: new StringBuilder("Confirmation"),
                     callback: result =>
                     {
                         if (result == MyGuiScreenMessageBox.ResultEnum.YES)
-                            projection.FixToolbars();
+                            projection.FixBlockRelations();
                     }));
         }
     }
