@@ -74,11 +74,14 @@ namespace MultigridProjectorClient.Utilities
 
         private static MyBlockGroup CreateDummyGroup(string name, MyTerminalBlock dummyBlock)
         {
-            MyBlockGroup dummyGroup = (MyBlockGroup)Activator.CreateInstance(typeof(MyBlockGroup), true);
+            var dummyGroup = (MyBlockGroup)Activator.CreateInstance(typeof(MyBlockGroup), true);
             dummyGroup.Name = new StringBuilder(name);
-            Reflection.SetValue(dummyGroup, "Blocks", new HashSet<MyTerminalBlock> { dummyBlock });
+            Reflection.SetValue(dummyGroup, "Blocks", new HashSet<MyTerminalBlock>
+            {
+                dummyBlock
+            });
 
-            MyGridTerminalSystem terminalSystem = dummyBlock.CubeGrid.GridSystems.TerminalSystem;
+            var terminalSystem = dummyBlock.CubeGrid.GridSystems.TerminalSystem;
             terminalSystem.AddUpdateGroup(dummyGroup, true);
 
             return dummyGroup;
@@ -86,8 +89,8 @@ namespace MultigridProjectorClient.Utilities
 
         private static void RemoveDummyGroup(MyBlockGroup dummyGroup)
         {
-            MyCubeBlock dummyBlock = dummyGroup.GetTerminalBlocks().First();
-            MyGridTerminalSystem terminalSystem = dummyBlock.CubeGrid.GridSystems.TerminalSystem;
+            var dummyBlock = dummyGroup.GetTerminalBlocks().First();
+            var terminalSystem = dummyBlock.CubeGrid.GridSystems.TerminalSystem;
             terminalSystem.RemoveGroup(dummyGroup, true);
         }
 
@@ -96,8 +99,8 @@ namespace MultigridProjectorClient.Utilities
             // Server side validation prevents toolbars from being made without a valid group
             // We can sidestep this by making a group and removing it once the item is added
             // TODO: Use an event rather then a fixed delay
-            MyBlockGroup group = CreateDummyGroup(name, dummyBlock);
-            Events.InvokeOnGameThread(() => toolbar.SetItemAtIndex(index, item), 20);   
+            var group = CreateDummyGroup(name, dummyBlock);
+            Events.InvokeOnGameThread(() => toolbar.SetItemAtIndex(index, item), 20);
             Events.InvokeOnGameThread(() => RemoveDummyGroup(group), 40);
         }
 
@@ -271,13 +274,13 @@ namespace MultigridProjectorClient.Utilities
 
         private static void CopyBlueprints(MyProjectorBase sourceBlock, MyProjectorBase destinationBlock)
         {
-            List<MyObjectBuilder_CubeGrid> projectedGrids = (List<MyObjectBuilder_CubeGrid>)Reflection.GetValue(sourceBlock, "m_savedProjections");
-            Delegate InitFromObjectBuilder = Reflection.GetMethod(typeof(MyProjectorBase), destinationBlock, "InitFromObjectBuilder");
+            var projectedGrids = (List<MyObjectBuilder_CubeGrid>) Reflection.GetValue(sourceBlock, "m_savedProjections");
+            var initFromObjectBuilder = Reflection.GetMethod(typeof(MyProjectorBase), destinationBlock, "InitFromObjectBuilder");
 
             if (projectedGrids == null)
                 return;
 
-            InitFromObjectBuilder.DynamicInvoke(projectedGrids, null);
+            initFromObjectBuilder.DynamicInvoke(projectedGrids, null);
         }
     }
 }

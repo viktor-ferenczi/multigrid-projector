@@ -59,80 +59,79 @@ namespace MultigridProjectorClient.Utilities
 
             // Specify the author of the block. This is of the private type Author and therefore must be made at runtime.
             object authorData = Activator.CreateInstance(
-                Reflection.GetType(cubeBuilder, "Author"),
-                new object[] {
-                    MySession.Static.LocalCharacterEntityId,
-                    MySession.Static.LocalPlayerId
-                });
+                Reflection.GetType(cubeBuilder, "Author"), 
+                MySession.Static.LocalCharacterEntityId, 
+                MySession.Static.LocalPlayerId);
 
             // Create the data to be used in the multiplayer request. This is of the private type GridSpawnRequestData and therefore must be made at runtime.
             object requestData = Activator.CreateInstance(
-                Reflection.GetType(cubeBuilder, "GridSpawnRequestData"),
-                new object[] {
-                    authorData,
-                    (DefinitionIdBlit)blockDefinition.Id,
-                    position,
-                    MySession.Static.CreativeToolsEnabled(Sync.MyId),
-                    false,
-                    visuals
-                });
+                Reflection.GetType(cubeBuilder, "GridSpawnRequestData"), 
+                authorData, 
+                (DefinitionIdBlit) blockDefinition.Id, 
+                position, 
+                MySession.Static.CreativeToolsEnabled(Sync.MyId), 
+                false, 
+                visuals);
 
             // Get the method that is (indirectly) passed into the multiplayer request
-            Delegate RequestGridSpawn = Reflection.GetMethod(typeof(MyCubeBuilder), "RequestGridSpawn");
+            Delegate requestGridSpawn = Reflection.GetMethod(typeof(MyCubeBuilder), "RequestGridSpawn");
 
             // Create the lambda that is passed to the multiplayer request and returns the RequestGridSpawn method when called.
             // The game requires that it takes a parameter despite it not being used in any way.
             // As the return type is only known at runtime it must also be compiled it at runtime.
-            LambdaExpression lambda = Expression.Lambda(
-                Expression.Constant(RequestGridSpawn),
+            var lambda = Expression.Lambda(
+                Expression.Constant(requestGridSpawn),
                 Expression.Parameter(typeof(IMyEventOwner), "s"));
 
-            Delegate RequestGridSpawnWrapper = lambda.Compile();
+            var requestGridSpawnWrapper = lambda.Compile();
 
             // Get the RaiseStaticEvent function that is used for multiplayer communication.
             // This is a generic method so after finding it we need to create one for the GridSpawnRequestData type
-            Delegate RaiseStaticEvent = Reflection.GetGenericMethod(
+            var raiseStaticEvent = Reflection.GetGenericMethod(
                 typeof(Sandbox.Engine.Multiplayer.MyMultiplayer),
                 (m) => m.Name == "RaiseStaticEvent" && m.IsGenericMethodDefinition && m.GetParameters().Length == 4,
-                new Type[] { Reflection.GetType(cubeBuilder, "GridSpawnRequestData") });
+                new Type[]
+                {
+                    Reflection.GetType(cubeBuilder, "GridSpawnRequestData")
+                });
 
             // Invoke the method with the wrapper function, request data, and default optional parameters
-            RaiseStaticEvent.DynamicInvoke(RequestGridSpawnWrapper, requestData, default(EndpointId), null);
+            raiseStaticEvent.DynamicInvoke(requestGridSpawnWrapper, requestData, default(EndpointId), null);
 
             // Call everything subscribed to the OnBlockAdded event
-            Delegate eventDelegate = (Delegate)Reflection.GetValue(cubeBuilder, "OnBlockAdded");
+            var eventDelegate = (Delegate) Reflection.GetValue(cubeBuilder, "OnBlockAdded");
 
             if (eventDelegate == null)
                 return;
 
-            foreach (Delegate handler in eventDelegate.GetInvocationList())
+            foreach (var handler in eventDelegate.GetInvocationList())
                 handler.Method.Invoke(handler.Target, new object[] { blockDefinition });
         }
 
         public static void PlacePreviewBlock(Subgrid subgrid, Vector3I blockPosition)
         {
-            MyCubeGrid previewGrid = subgrid.PreviewGrid;
-            MyCubeGrid builtGrid = subgrid.BuiltGrid;
+            var previewGrid = subgrid.PreviewGrid;
+            var builtGrid = subgrid.BuiltGrid;
 
-            MySlimBlock block = previewGrid.GetCubeBlock(blockPosition);
-            MyCubeBlock fatBlock = block.FatBlock;
+            var block = previewGrid.GetCubeBlock(blockPosition);
+            var fatBlock = block.FatBlock;
 
             // Get the relative position to the built grid
-            Vector3I previewMin = fatBlock?.Min ?? block.Position;
-            Vector3I previewMax = fatBlock?.Max ?? block.Position;
+            var previewMin = fatBlock?.Min ?? block.Position;
+            var previewMax = fatBlock?.Max ?? block.Position;
 
-            Vector3I builtMinTemp = builtGrid.WorldToGridInteger(previewGrid.GridIntegerToWorld(previewMin));
-            Vector3I builtMaxTemp = builtGrid.WorldToGridInteger(previewGrid.GridIntegerToWorld(previewMax));
-            Vector3I builtPos = builtGrid.WorldToGridInteger(previewGrid.GridIntegerToWorld(block.Position));
+            var builtMinTemp = builtGrid.WorldToGridInteger(previewGrid.GridIntegerToWorld(previewMin));
+            var builtMaxTemp = builtGrid.WorldToGridInteger(previewGrid.GridIntegerToWorld(previewMax));
+            var builtPos = builtGrid.WorldToGridInteger(previewGrid.GridIntegerToWorld(block.Position));
 
-            Vector3I builtMin = Vector3I.Min(builtMinTemp, builtMaxTemp);
-            Vector3I builtMax = Vector3I.Max(builtMinTemp, builtMaxTemp);
+            var builtMin = Vector3I.Min(builtMinTemp, builtMaxTemp);
+            var builtMax = Vector3I.Max(builtMinTemp, builtMaxTemp);
 
             // Get the relative rotation to the built grid
             subgrid.GetBlockOrientationQuaternion(block, out var previewQuaternion);
 
             // Define where the block should be placed
-            HashSet<MyCubeGrid.MyBlockLocation> blockLocations = new HashSet<MyCubeGrid.MyBlockLocation>
+            var blockLocations = new HashSet<MyCubeGrid.MyBlockLocation>
             {
                 new MyCubeGrid.MyBlockLocation(
                     block.BlockDefinition.Id,
@@ -206,6 +205,7 @@ namespace MultigridProjectorClient.Utilities
             return MyCubeGrid.TestBlockPlacementArea(blockDefinition, new MyBlockOrientation(), worldMatrix, ref settings, localBox, dynamicMode);
         }
 
+        // Returns true if building of the block should be handled by the server, false if it is handled by the client
         public static bool WeldBlock(MyProjectorBase projector, MySlimBlock cubeBlock, long owner, ref long builtBy)
         {
             // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
