@@ -8,8 +8,11 @@ using Sandbox.Game.Entities.Cube;
 using System.Collections.Generic;
 using System.Linq;
 using Sandbox.Game.Screens.Helpers;
+using Sandbox.ModAPI;
 using SpaceEngineers.Game.Entities.Blocks;
 using VRage.Game;
+using VRage.ObjectBuilder;
+using VRage.Sync;
 using VRageMath;
 
 namespace MultigridProjector.Extensions
@@ -100,12 +103,59 @@ namespace MultigridProjector.Extensions
                     return b.Toolbar;
                 case MyTimerBlock b:
                     return b.Toolbar;
-                case MyAirVent b:
-                    // FIXME: Not handled, MyAirVent does not have a properly serialized toolbar
-                    break;
+                case MyDefensiveCombatBlock b:
+                    return b.GetWaypointActionsToolbar();
             }
 
             return null;
+        }
+
+        private static readonly FieldInfo WaypointActionsToolbarField = AccessTools.DeclaredField(typeof(MyDefensiveCombatBlock), "m_waypointActionsToolbar");
+
+        public static MyToolbar GetWaypointActionsToolbar(this MyDefensiveCombatBlock defensiveCombatBlock)
+        {
+            return (MyToolbar)WaypointActionsToolbarField.GetValue(defensiveCombatBlock);
+        }
+
+        private static readonly FieldInfo BoundCameraSyncField = AccessTools.DeclaredField(typeof(MyRemoteControl), "m_bindedCamera" /* sic */);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static Sync<long, SyncDirection.BothWays> GetBoundCameraSync(this MyRemoteControl remoteControlBlock)
+        {
+            return (Sync<long, SyncDirection.BothWays>)BoundCameraSyncField.GetValue(remoteControlBlock);
+        }
+
+        private static readonly MethodInfo AddBlocksMethod = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "AddBlocks");
+
+        public static void AddBlocks(this MyEventControllerBlock eventControllerBlock, List<long> toSync)
+        {
+            AddBlocksMethod.Invoke(eventControllerBlock, new[] { toSync });
+        }
+
+        private static readonly MethodInfo RemoveBlocksMethod = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "RemoveBlocks");
+
+        public static void RemoveBlocks(this MyEventControllerBlock eventControllerBlock, List<long> toSync)
+        {
+            RemoveBlocksMethod.Invoke(eventControllerBlock, new[] { toSync });
+        }
+
+        private static readonly FieldInfo SelectedBlockIdsField = AccessTools.DeclaredField(typeof(MyEventControllerBlock), "m_selectedBlockIds");
+
+        public static MySerializableList<long> GetSelectedBlockIds(this MyEventControllerBlock eventControllerBlock)
+        {
+            return (MySerializableList<long>)SelectedBlockIdsField.GetValue(eventControllerBlock);
+        }
+
+        public static void SetSelectedBlockIds(this MyEventControllerBlock eventControllerBlock, MySerializableList<long> selectedBlockIds)
+        {
+            SelectedBlockIdsField.SetValue(eventControllerBlock, selectedBlockIds);
+        }
+
+        private static readonly FieldInfo SelectedBlocksField = AccessTools.DeclaredField(typeof(MyEventControllerBlock), "m_selectedBlocks");
+
+        public static Dictionary<long, IMyTerminalBlock> GetSelectedBlocks(this MyEventControllerBlock eventControllerBlock)
+        {
+            return (Dictionary<long, IMyTerminalBlock>)SelectedBlocksField.GetValue(eventControllerBlock);
         }
     }
 }

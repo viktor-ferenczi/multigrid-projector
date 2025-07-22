@@ -6,6 +6,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Threading;
 using HarmonyLib;
+using MultigridProjector.Api;
 using MultigridProjector.Utilities;
 using MultigridProjector.Extensions;
 using Sandbox;
@@ -24,6 +25,7 @@ using Sandbox.ModAPI;
 using Sandbox.ModAPI.Interfaces;
 using SpaceEngineers.Game.Entities.Blocks;
 using VRage;
+using VRage.Collections;
 using VRage.Game;
 using VRage.Game.ObjectBuilders.Definitions.SessionComponents;
 using VRage.ModAPI;
@@ -148,7 +150,7 @@ namespace MultigridProjector.Logic
         internal bool IsValidForApi => Initialized && HasScanned;
 
         // Mapping of toolbar slots to the respective blocks by location instead of EntityId
-        private readonly ToolbarFixer toolbarFixer;
+        private readonly ReferenceFixer referenceFixer;
 
         public static void EnsureNoProjections()
         {
@@ -197,7 +199,7 @@ namespace MultigridProjector.Logic
                 MapPreviewBlocks();
                 CreateSubgrids();
                 MarkSupportedSubgrids();
-                toolbarFixer = new ToolbarFixer(SupportedSubgrids);
+                referenceFixer = new ReferenceFixer(SupportedSubgrids);
             }
 
             ListenOnSubgridEvents();
@@ -266,8 +268,10 @@ namespace MultigridProjector.Logic
             if (terminalBlock.BlockDefinition.Id != projectedBlock.Preview.BlockDefinition.Id)
                 return;
 
-            toolbarFixer.ConfigureToolbar(this, subgrid, terminalBlock);
-            toolbarFixer.AssignBlockToToolbars(this, subgrid, terminalBlock);
+            if (!terminalBlockAddedQueue.Contains(projectedBlock))
+                terminalBlockAddedQueue.Add(projectedBlock);
+            
+            subgrid.RequestUpdate();
         }
 
         private void MapBlueprintBlocks()
@@ -618,6 +622,31 @@ namespace MultigridProjector.Logic
 
             if (!latestKeepProjection && IsBuildCompleted)
                 Projector.RequestRemoveProjection();
+            
+            ScheduleTerminalBlocksForRestore();
+        }
+
+        private void ScheduleTerminalBlocksForRestore()
+        {
+            while (terminalBlockAddedQueue.TryDequeueBack(out var projectedBlock))
+            {
+                if (projectedBlock.State == BlockState.BeingBuilt || projectedBlock.State == BlockState.FullyBuilt)
+                    terminalBlockRestoreQueue.Add(projectedBlock);
+                else
+                    terminalBlockRetryQueue.Add(projectedBlock);
+            }
+            
+            terminalBlockAddedQueue.AddRange(terminalBlockRetryQueue);
+            terminalBlockRetryQueue.Clear();
+        }
+        
+        private void RestoreTerminalBlocks()
+        {
+            // This is called periodically from the main thread
+            while(terminalBlockRestoreQueue.TryDequeueBack(out var projectedBlock))
+            {
+                referenceFixer.Restore(projectedBlock);
+            }
         }
 
         public string GetYaml(bool requireScan = true)
@@ -1251,6 +1280,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return;
 
             UpdateGridTransformations();
+            RestoreTerminalBlocks();
 
             if (updateWork == null || !updateWork.IsComplete)
                 return;
@@ -1495,6 +1525,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         }
 
         private readonly ThreadLocal<FindProjectedBlockLocals> findProjectedBlockLocals = new ThreadLocal<FindProjectedBlockLocals>();
+        private readonly MyConcurrentList<ProjectedBlock> terminalBlockAddedQueue = new MyConcurrentList<ProjectedBlock>(32);
+        private readonly MyConcurrentList<ProjectedBlock> terminalBlockRestoreQueue = new MyConcurrentList<ProjectedBlock>(32);
+        private readonly List<ProjectedBlock> terminalBlockRetryQueue = new List<ProjectedBlock>(8);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void FindProjectedBlock(Vector3D center, Vector3D reachFarPoint, ref MyWelder.ProjectionRaycastData raycastData)
@@ -2115,11 +2148,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             ForceUpdateProjection();
         }
 
-        // Rider mis-detects this method as unused
-        // ReSharper disable once UnusedMember.Global
         public void FixBlockRelations()
         {
-            toolbarFixer.FixToolbars(this);
+            referenceFixer.RestoreAll();
         }
 
         [ServerOnly]
