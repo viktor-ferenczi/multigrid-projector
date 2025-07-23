@@ -41,7 +41,7 @@ namespace MultigridProjector.Logic
     public class MultigridProjection
     {
         public static bool QuickUpdate = false;
-        public static int UpdateCooldownTime => QuickUpdate ? 100 : 2000; // ms
+        private static int UpdateCooldownTime => QuickUpdate ? 100 : 2000; // ms
 
         // Active multigrid projections by the Projector block's EntityId
         private static readonly RwLockDictionary<long, MultigridProjection> Projections = new RwLockDictionary<long, MultigridProjection>();
@@ -1505,11 +1505,10 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             if (!checkHavokIntersections)
                 return BuildCheckResult.OK;
 
-            var gridPlacementSettings = new MyGridPlacementSettings { SnapMode = SnapMode.OneFreeAxis };
-
             if (CheckVoxels(previewBlock))
                 return BuildCheckResult.IntersectedWithSomethingElse;
 
+            var gridPlacementSettings = new MyGridPlacementSettings { SnapMode = SnapMode.OneFreeAxis };
             if (MyCubeGrid.TestPlacementAreaCube(builtGrid, ref gridPlacementSettings, min, max, previewBlock.Orientation, previewBlock.BlockDefinition, ignoredEntity: builtGrid, isProjected: true, forceCheck: checkHavokIntersections))
                 return BuildCheckResult.OK;
 
