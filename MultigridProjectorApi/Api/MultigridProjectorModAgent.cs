@@ -10,8 +10,6 @@ namespace MultigridProjector.Api
     // ReSharper disable once UnusedType.Global
     public class MultigridProjectorModAgent : IMultigridProjectorApi
     {
-        private const string CompatibleMajorVersion = "0.";
-
         private const long WorkshopId = 2415983416;
         private const long ModApiRequestId = WorkshopId * 1000 + 0;
         private const long ModApiResponseId = WorkshopId * 1000 + 1;
@@ -170,9 +168,6 @@ namespace MultigridProjector.Api
                 return;
 
             Version = api[0] as string;
-            if (Version == null || !Version.StartsWith(CompatibleMajorVersion))
-                return;
-
             Available = true;
         }
     }

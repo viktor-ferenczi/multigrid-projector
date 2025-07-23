@@ -16,7 +16,6 @@ namespace MultigridProjector.Api
     public class MultigridProjectorTorchAgent : IMultigridProjectorApi
     {
         public static readonly Guid PluginId = new Guid("d9359ba0-9a69-41c3-971d-eb5170adb97e");
-        public static readonly string CompatibleMajorVersion = "0.";
         public readonly ITorchPlugin Plugin;
         public readonly object Api;
 
@@ -49,8 +48,6 @@ namespace MultigridProjector.Api
 
             var apiType = Api.GetType();
             Version = (string) apiType.GetProperty("Version")?.GetValue(Api);
-            if (Version == null || !Version.StartsWith(CompatibleMajorVersion))
-                return;
 
             _miGetSubgridCount = apiType.GetMethod("GetSubgridCount", BindingFlags.Instance | BindingFlags.Public);
             _miGetOriginalGridBuilders = apiType.GetMethod("GetOriginalGridBuilders", BindingFlags.Instance | BindingFlags.Public);
