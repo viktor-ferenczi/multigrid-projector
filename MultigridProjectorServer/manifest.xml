@@ -3,5 +3,5 @@
   <Name>Multigrid Projector</Name>
   <Guid>d9359ba0-9a69-41c3-971d-eb5170adb97e</Guid>
   <Repository>MultigridProjectorServer</Repository>
-  <Version>v0.8.1.0</Version>
+  <Version>v0.8.2.0</Version>
 </PluginManifest>
