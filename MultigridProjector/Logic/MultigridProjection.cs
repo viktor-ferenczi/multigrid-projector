@@ -216,8 +216,11 @@ namespace MultigridProjector.Logic
 
             Projector.PropertiesChanged += OnPropertiesChanged;
 
-            MyEntities.OnEntityAdd += InvalidateVoxelCacheIfVoxelBaseEntity;
-            MyEntities.OnEntityRemove += InvalidateVoxelCacheIfVoxelBaseEntity;
+            if (!Sync.IsDedicated)
+            {
+                MyEntities.OnEntityAdd += InvalidateVoxelCacheIfVoxelBaseEntity;
+                MyEntities.OnEntityRemove += InvalidateVoxelCacheIfVoxelBaseEntity;
+            }
             
             Initialized = true;
 
@@ -239,8 +242,11 @@ namespace MultigridProjector.Logic
 
             Initialized = false;
 
-            MyEntities.OnEntityAdd -= InvalidateVoxelCacheIfVoxelBaseEntity;
-            MyEntities.OnEntityRemove -= InvalidateVoxelCacheIfVoxelBaseEntity;
+            if (!Sync.IsDedicated)
+            {
+                MyEntities.OnEntityAdd -= InvalidateVoxelCacheIfVoxelBaseEntity;
+                MyEntities.OnEntityRemove -= InvalidateVoxelCacheIfVoxelBaseEntity;
+            }
             
             Projector.PropertiesChanged -= OnPropertiesChanged;
 
