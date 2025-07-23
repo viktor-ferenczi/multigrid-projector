@@ -36,7 +36,7 @@ namespace MultigridProjectorClient.Extra
                 MyStringId.GetOrCompute("Highlight blocks based on their status:\n" +
                                         "Green - Can be built\n" +
                                         "Yellow - Not fully welded\n" +
-                                        "Orange - Obstructed by entity\n" +
+                                        "Cyan - Obstructed by entity\n" +
                                         "Red - Obstructed by other block\n" +
                                         "No Highlight - Built or unconnected"))
             {
@@ -189,7 +189,7 @@ namespace MultigridProjectorClient.Extra
                                     color = Color.Crimson;
                                     break;
                                 case BuildCheckResult.IntersectedWithSomethingElse:
-                                    color = Color.DarkOrange;
+                                    color = Color.Cyan;
                                     break;
 
                                 case BuildCheckResult.AlreadyBuilt:
