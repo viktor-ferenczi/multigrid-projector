@@ -1461,7 +1461,12 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 return BuildCheckResult.NotFound;
             }
 
+            // The projection must be active
             fallback = false;
+            if (!Projector.IsProjecting())
+            {
+                return BuildCheckResult.NotFound;
+            }
 
             // Subgrid
             Subgrid subgrid;
