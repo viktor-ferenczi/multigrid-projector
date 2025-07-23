@@ -189,8 +189,6 @@ https://github.com/viktor-ferenczi/multigrid-projector
 
         public class MultigridProjectorProgrammableBlockAgent
         {
-            private const string CompatibleMajorVersion = "0.";
-
             private readonly Delegate[] api;
 
             public bool Available { get; }
@@ -350,9 +348,6 @@ https://github.com/viktor-ferenczi/multigrid-projector
                     return;
 
                 Version = getVersion();
-                if (Version == null || !Version.StartsWith(CompatibleMajorVersion))
-                    return;
-
                 Available = true;
             }
         }
