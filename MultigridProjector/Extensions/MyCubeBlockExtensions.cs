@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Sandbox.Game.Screens.Helpers;
 using Sandbox.ModAPI;
+using Sandbox.Graphics.GUI;
 using SpaceEngineers.Game.Entities.Blocks;
 using VRage.Game;
 using VRage.ObjectBuilder;
@@ -125,20 +126,6 @@ namespace MultigridProjector.Extensions
             return (Sync<long, SyncDirection.BothWays>)BoundCameraSyncField.GetValue(remoteControlBlock);
         }
 
-        private static readonly MethodInfo AddBlocksMethod = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "AddBlocks");
-
-        public static void AddBlocks(this MyEventControllerBlock eventControllerBlock, List<long> toSync)
-        {
-            AddBlocksMethod.Invoke(eventControllerBlock, new[] { toSync });
-        }
-
-        private static readonly MethodInfo RemoveBlocksMethod = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "RemoveBlocks");
-
-        public static void RemoveBlocks(this MyEventControllerBlock eventControllerBlock, List<long> toSync)
-        {
-            RemoveBlocksMethod.Invoke(eventControllerBlock, new[] { toSync });
-        }
-
         private static readonly FieldInfo SelectedBlockIdsField = AccessTools.DeclaredField(typeof(MyEventControllerBlock), "m_selectedBlockIds");
 
         public static MySerializableList<long> GetSelectedBlockIds(this MyEventControllerBlock eventControllerBlock)
@@ -156,6 +143,24 @@ namespace MultigridProjector.Extensions
         public static Dictionary<long, IMyTerminalBlock> GetSelectedBlocks(this MyEventControllerBlock eventControllerBlock)
         {
             return (Dictionary<long, IMyTerminalBlock>)SelectedBlocksField.GetValue(eventControllerBlock);
+        }
+
+        private static readonly MethodInfo SelectAvailableBlocksMethod = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "SelectAvailableBlocks");
+
+        // ReSharper disable once UnusedMember.Global
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SelectAvailableBlocks(this MyEventControllerBlock block, List<MyGuiControlListbox.Item> selection)
+        {
+            SelectAvailableBlocksMethod.Invoke(block, new object[] { selection });
+        }
+
+        private static readonly MethodInfo SelectButtonMethod = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "SelectButton");
+
+        // ReSharper disable once UnusedMember.Global
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static void SelectButton(this MyEventControllerBlock block)
+        {
+            SelectButtonMethod.Invoke(block, new object[] { });
         }
     }
 }

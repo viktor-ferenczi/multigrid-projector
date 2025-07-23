@@ -259,7 +259,7 @@ namespace MultigridProjectorClient.Extra
 
                     UpdateBlock.CopyProperties(sourceBase, newBase);
                 }
-
+                
                 Events.OnBlockSpawned(
                     (block) => OnNewBaseBuild((MyMechanicalConnectionBlockBase)block.FatBlock),
                     (block) => block.BlockDefinition == sourceBase.BlockDefinition);
