@@ -6,6 +6,7 @@ using Sandbox.Definitions;
 using Sandbox.Game.Entities.Blocks;
 using VRage;
 using VRage.Game;
+using VRage.Game.ObjectBuilders.ComponentSystem;
 using VRageMath;
 
 namespace MultigridProjector.Extensions
@@ -121,6 +122,7 @@ namespace MultigridProjector.Extensions
             // so it can zero out the offset and set the rotation of the projection
             return true;
         }
+
         private static MyObjectBuilder_Projector FindMatchingProjectorInBlueprint(MyObjectBuilder_CubeGrid gridBuilder, MyProjectorBase projector)
         {
             // Find all projectors in the blueprint
@@ -132,10 +134,10 @@ namespace MultigridProjector.Extensions
                 return null;
 
             // Select the repair projector (must be unambiguous)
-            MyObjectBuilder_Projector projectorBuilder; 
+            MyObjectBuilder_Projector projectorBuilder;
             if (projector != null)
             {
-                var existingProjectorBuilder = (MyObjectBuilder_TerminalBlock) projector.GetObjectBuilderCubeBlock();
+                var existingProjectorBuilder = (MyObjectBuilder_TerminalBlock)projector.GetObjectBuilderCubeBlock();
                 var existingProjectorName = FormatBlockName(existingProjectorBuilder);
                 var projectorBuildersWithSameName = projectorBuilders
                     .Where(b => FormatBlockName(b) == existingProjectorName)
@@ -144,7 +146,7 @@ namespace MultigridProjector.Extensions
                 // 1. Projector in the blueprint with the exact same name, position and orientation as the existing projector
                 // (Load Repair Projection was used or original repair projector)
                 projectorBuilder = projectorBuildersWithSameName
-                    .FirstOrDefault(b => 
+                    .FirstOrDefault(b =>
                         b.Min == existingProjectorBuilder.Min &&
                         b.BlockOrientation == existingProjectorBuilder.BlockOrientation);
                 if (projectorBuilder != null)
@@ -157,18 +159,18 @@ namespace MultigridProjector.Extensions
                     return projectorBuildersWithSameName.First();
                 }
             }
-            
+
             // 3. The projector in the blueprint which is the very first block (standardized blueprints which always load with default alignment)
             projectorBuilder = gridBuilder.CubeBlocks.FirstOrDefault() as MyObjectBuilder_Projector;
             if (projectorBuilder != null)
             {
                 return projectorBuilder;
             }
-            
+
             // 4. The first projector in the blueprint with "Repair" in its name, case-insensitive (best guess for any random blueprint)
             projectorBuilder = projectorBuilders
                 .FirstOrDefault(b => FormatBlockName(b).ToLower().Contains("repair"));
-            
+
             return projectorBuilder;
         }
 
@@ -189,7 +191,7 @@ namespace MultigridProjector.Extensions
             if (!maybeMainGridPO.HasValue)
                 return;
 
-            var mainGridPosition = (Vector3D) maybeMainGridPO.Value.Position;
+            var mainGridPosition = (Vector3D)maybeMainGridPO.Value.Position;
 
             foreach (var gridBuilder in gridBuilders)
             {
@@ -199,6 +201,14 @@ namespace MultigridProjector.Extensions
                 var gridPO = gridBuilder.PositionAndOrientation.Value;
                 gridBuilder.PositionAndOrientation = new MyPositionAndOrientation(gridPO.Position - mainGridPosition, gridPO.Forward, gridPO.Up);
             }
+        }
+
+        public static bool TryGet<T>(this MyObjectBuilder_ComponentContainer componentContainer, out T component) where T : MyObjectBuilder_ComponentBase
+        {
+            component = componentContainer.Components
+                .Select(c => c.Component as T)
+                .FirstOrDefault(c => c != null);
+            return component != null;
         }
     }
 }
