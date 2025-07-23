@@ -98,7 +98,8 @@ namespace MultigridProjectorClient.Utilities
 
         private static readonly HashSet<string> ExcludedEventControllerPropertiesTurretController = new HashSet<string>
         {
-            // These are filled by ReferenceFixer
+            // These are filled by ReferenceFixer,
+            // they contain block IDs which must be mapped
             "RotorAzimuth",
             "RotorElevation",
             "CameraList",

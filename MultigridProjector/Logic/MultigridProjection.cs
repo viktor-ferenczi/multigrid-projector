@@ -69,6 +69,12 @@ namespace MultigridProjector.Logic
         // ReSharper disable once UnassignedField.Global
         public bool CheckHavokIntersections;
 
+        // Queue of newly built terminal blocks, some of their properties point to other blocks, which need to be
+        // restored according to the blueprint once both the referencing and referred blocks are built  
+        private readonly MyConcurrentList<ProjectedBlock> terminalBlockAddedQueue = new MyConcurrentList<ProjectedBlock>(32);
+        private readonly MyConcurrentList<ProjectedBlock> terminalBlockRestoreQueue = new MyConcurrentList<ProjectedBlock>(32);
+        private readonly List<ProjectedBlock> terminalBlockRetryQueue = new List<ProjectedBlock>(8);
+        
         public bool TryGetProjectedBlock(FastBlockLocation blockLocation, out Subgrid subgrid, out ProjectedBlock projectedBlock)
         {
             subgrid = null;
@@ -1517,17 +1523,13 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         }
 
         private const int MaxHandWeldableCubes = 32;
+        private readonly ThreadLocal<FindProjectedBlockLocals> findProjectedBlockLocals = new ThreadLocal<FindProjectedBlockLocals>();
 
         private class FindProjectedBlockLocals
         {
             public readonly MyCube[] Cubes = new MyCube[MaxHandWeldableCubes];
             public readonly double[] Distances = new double[MaxHandWeldableCubes];
         }
-
-        private readonly ThreadLocal<FindProjectedBlockLocals> findProjectedBlockLocals = new ThreadLocal<FindProjectedBlockLocals>();
-        private readonly MyConcurrentList<ProjectedBlock> terminalBlockAddedQueue = new MyConcurrentList<ProjectedBlock>(32);
-        private readonly MyConcurrentList<ProjectedBlock> terminalBlockRestoreQueue = new MyConcurrentList<ProjectedBlock>(32);
-        private readonly List<ProjectedBlock> terminalBlockRetryQueue = new List<ProjectedBlock>(8);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void FindProjectedBlock(Vector3D center, Vector3D reachFarPoint, ref MyWelder.ProjectionRaycastData raycastData)
