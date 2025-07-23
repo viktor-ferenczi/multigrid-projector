@@ -651,7 +651,13 @@ namespace MultigridProjector.Logic
             // This is called periodically from the main thread
             while (terminalBlockRestoreQueue.TryDequeueBack(out var projectedBlock))
             {
-                referenceFixer.Restore(projectedBlock);
+                if (Sync.IsServer)
+                    referenceFixer.RestoreSafe(projectedBlock);
+                else
+                {
+                    var capturedProjectedBlock = projectedBlock;
+                    Events.InvokeOnGameThread(() => referenceFixer.RestoreSafe(capturedProjectedBlock), 60);
+                }
             }
         }
 
@@ -2152,7 +2158,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
         public void FixBlockRelations()
         {
-            referenceFixer.RestoreAll();
+            referenceFixer.RestoreAllSafe();
         }
 
         [ServerOnly]

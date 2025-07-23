@@ -8,7 +8,9 @@ using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Cube;
 using Sandbox.Game.EntityComponents;
+using Sandbox.Game.Multiplayer;
 using Sandbox.Game.Screens.Helpers;
+using Sandbox.Graphics.GUI;
 using SpaceEngineers.Game.Entities.Blocks;
 using SpaceEngineers.Game.EntityComponents.Blocks;
 using SpaceEngineers.Game.ModAPI.Ingame;
@@ -156,14 +158,30 @@ namespace MultigridProjector.Logic
             {
                 if (projectedBlock.State != BlockState.BeingBuilt && projectedBlock.State != BlockState.FullyBuilt)
                     return false;
-                
+
                 targetBlock = projectedBlock.SlimBlock?.FatBlock as T;
             }
 
             return targetBlock != null && !targetBlock.Closed && targetBlock.InScene;
         }
 
-        public void Restore(ProjectedBlock projectedBlock)
+        public void RestoreSafe(ProjectedBlock projectedBlock)
+        {
+#if DEBUG
+            Restore(projectedBlock);
+#else
+            try
+            {
+                Restore(projectedBlock);
+            }
+            catch (Exception e)
+            {
+                PluginLog.Error(e, $"ReferenceFixer: RestoreSafe failed: projectedBlock.Builder.SubtypeName=\"{projectedBlock.Builder.SubtypeName}\"");
+            }
+#endif
+        }
+
+        private void Restore(ProjectedBlock projectedBlock)
         {
             RestoreOneWay(projectedBlock);
 
@@ -178,7 +196,23 @@ namespace MultigridProjector.Logic
             }
         }
 
-        public void RestoreAll()
+        public void RestoreAllSafe()
+        {
+#if DEBUG
+            RestoreAll();
+#else
+            try
+            {
+                RestoreAll();
+            }
+            catch (Exception e)
+            {
+                PluginLog.Error(e, $"ReferenceFixer: RestoreAll failed");
+            }
+#endif
+        }
+
+        private void RestoreAll()
         {
             foreach (var projectedBlock in blocksById.Values)
             {
@@ -190,7 +224,7 @@ namespace MultigridProjector.Logic
         {
             if (projectedBlock.State != BlockState.BeingBuilt && projectedBlock.State != BlockState.FullyBuilt)
                 return;
-                
+
             if (!(projectedBlock.SlimBlock?.FatBlock is MyTerminalBlock terminalBlock) || terminalBlock.Closed || !terminalBlock.InScene)
                 return;
 
@@ -354,6 +388,17 @@ namespace MultigridProjector.Logic
             }
 
             selectedBlockIds.AddRange(ids);
+
+            if (!Sync.IsServer)
+            {
+                // Do exactly what the UI does, so the changes are synced to the server
+                // SelectAvailableBlocks and SelectButton expect MyGuiControlListbox.Item
+                var listItems = selectedBlockIds.Select(blockId => new MyGuiControlListbox.Item(userData: blockId)).ToList();
+                block.SetSelectedBlockIds(null);
+                block.SelectAvailableBlocks(listItems);
+                block.SelectButton();
+            }
+
             return true;
         }
 
@@ -374,6 +419,7 @@ namespace MultigridProjector.Logic
                 {
                     PluginLog.Error(e, "RestoreTurretController(): Error setting AzimuthRotor");
                 }
+
                 modified = true;
             }
 
@@ -387,6 +433,7 @@ namespace MultigridProjector.Logic
                 {
                     PluginLog.Error(e, "RestoreTurretController(): Error setting ElevationRotor");
                 }
+
                 modified = true;
             }
 
@@ -400,12 +447,13 @@ namespace MultigridProjector.Logic
                 {
                     PluginLog.Error(e, "RestoreTurretController(): Error setting Camera");
                 }
+
                 modified = true;
             }
 
             var tools = new List<IngameIMyFunctionalBlock>();
             block.GetTools(tools);
-            
+
             var removeTools = new HashSet<IngameIMyFunctionalBlock>(tools);
             var addTools = new HashSet<IngameIMyFunctionalBlock>(builder.ToolIds.Count);
             foreach (var toolId in builder.ToolIds)

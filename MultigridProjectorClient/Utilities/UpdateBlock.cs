@@ -22,7 +22,6 @@ namespace MultigridProjectorClient.Utilities
 {
     internal static class UpdateEventController
     {
-        // FIXME: Use `ToolbarFixer` instead to restore event controller settings from the preview
         public static void CopyEvents(MyEventControllerBlock sourceBlock, MyEventControllerBlock destinationBlock)
         {
             Events.InvokeOnGameThread(() =>
@@ -32,9 +31,7 @@ namespace MultigridProjectorClient.Utilities
                 selectEvent.DynamicInvoke(eventId);
             }, 30);
 
-            Events.InvokeOnGameThread(() => { CopyEventControllerCondition(sourceBlock, destinationBlock); }, 60);
-
-            Events.InvokeOnGameThread(() => { CopyEventControllerBlockSelection(sourceBlock, destinationBlock); }, 90);
+            Events.InvokeOnGameThread(() => { CopyEventControllerCondition(sourceBlock, destinationBlock); }, 15);
         }
 
         private static void CopyEventControllerCondition(MyEventControllerBlock previewBlock, MyEventControllerBlock builtBlock)
@@ -55,35 +52,6 @@ namespace MultigridProjectorClient.Utilities
             {
                 PluginLog.Error($"Could not find angle for block: {previewBlock.DisplayName}");
             }
-        }
-
-        private static void CopyEventControllerBlockSelection(MyEventControllerBlock previewBlock, MyEventControllerBlock builtBlock)
-        {
-            // Sanity checks, only for debugging
-            if (previewBlock.CubeGrid?.IsPreview != true)
-                return;
-            if (builtBlock.CubeGrid?.IsPreview != false)
-                return;
-
-            // FIXME: Awkward way to verify that the preview block corresponds to the built block.
-            // It would be much cleaner to pass only the block location of the event controller to restore
-            // the source blocks for from the corresponding projection (preview block).
-            if (!MultigridProjection.TryFindProjectionByProjector(previewBlock.CubeGrid.Projector, out var sourceProjection) ||
-                !MultigridProjection.TryFindProjectionByBuiltGrid(builtBlock.CubeGrid, out var projection, out _) ||
-                projection.Projector?.EntityId != sourceProjection.Projector?.EntityId)
-                return;
-
-            var selectedBlockIds = projection.MapPreviewToBuiltTerminalBlockIds(previewBlock.GetSelectedBlockIds()).ToList();
-
-            // No need to select blocks if there were none selected (an empty list is the default)
-            if (!selectedBlockIds.Any())
-                return;
-
-            // Do exactly what the UI does, so the changes are synced to the server
-            // SelectAvailableBlocks and SelectButton expect MyGuiControlListbox.Item
-            var listItems = selectedBlockIds.Select(blockId => new MyGuiControlListbox.Item(userData: blockId)).ToList();
-            builtBlock.SelectAvailableBlocks(listItems);
-            builtBlock.SelectButton();
         }
     }
 
@@ -107,54 +75,57 @@ namespace MultigridProjectorClient.Utilities
 
         public static void CopyProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
         {
+            ProjectedBlock projectedBlock = null;
+            var foundProjectedBlock = MultigridProjection.TryFindProjectionByBuiltGrid(destinationBlock.CubeGrid, out _, out var subgrid) && subgrid.TryGetProjectedBlock(sourceBlock.Min, out projectedBlock);
+            
             // Special cases
-            var powerDelay = -1;
             HashSet<string> exclude = null;
             switch (sourceBlock)
             {
                 case MyEventControllerBlock _:
                     exclude = ExcludedEventControllerPropertiesEventController;
-                    powerDelay = 120;
                     break;
 
                 case MyTurretControlBlock _:
                     exclude = ExcludedEventControllerPropertiesTurretController;
-                    powerDelay = 120;
                     break;
             }
 
             // Copy over terminal properties
-            CopyTerminalProperties(sourceBlock, destinationBlock, exclude);
+            Events.InvokeOnGameThread(() => CopyTerminalProperties(sourceBlock, destinationBlock, exclude), 30);
 
             // Copy over special properties if applicable
             switch (sourceBlock)
             {
                 case MyProjectorBase sourceProjectorBase when destinationBlock is MyProjectorBase destinationProjectorBase:
-                    CopyBlueprints(sourceProjectorBase, destinationProjectorBase);
+                    Events.InvokeOnGameThread(() => CopyBlueprints(sourceProjectorBase, destinationProjectorBase), 40);
                     break;
 
                 case MyEventControllerBlock sourceEventControllerBlock when destinationBlock is MyEventControllerBlock destinationEventControllerBlock:
                     // Events in Event Controllers are not stored as properties, so copy those as well
-                    UpdateEventController.CopyEvents(sourceEventControllerBlock, destinationEventControllerBlock);
+                    Events.InvokeOnGameThread(() => UpdateEventController.CopyEvents(sourceEventControllerBlock, destinationEventControllerBlock), 40);
                     break;
 
                 case IMyProgrammableBlock sourceProgrammableBlock when destinationBlock is IMyProgrammableBlock destinationProgrammableBlock:
                     if (MySession.Static.IsSettingsExperimental())
-                        CopyScripts(sourceProgrammableBlock, destinationProgrammableBlock);
+                        Events.InvokeOnGameThread(() => CopyScripts(sourceProgrammableBlock, destinationProgrammableBlock), 40);
                     break;
             }
 
             // Copying power must be done in the next frame as disabling a block will prevent properties being modified
             // so we need to wait for all the changes to process
-            Events.InvokeOnGameThread(() => CopyPowerState(sourceBlock, destinationBlock), powerDelay);
+            if (foundProjectedBlock)
+            {
+                Events.InvokeOnGameThread(() => CopyPowerState(projectedBlock, destinationBlock), 80);
+            }
         }
 
-        private static void CopyPowerState(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock)
+        private static void CopyPowerState(ProjectedBlock projectedBlock, MyTerminalBlock destinationBlock)
         {
-            if (destinationBlock.GetProperty("OnOff") == null)
+            if (!(projectedBlock.Builder is MyObjectBuilder_FunctionalBlock functionalBlockBuilder))
                 return;
-
-            destinationBlock.SetValue("OnOff", sourceBlock.GetValue<bool>("OnOff"));
+            
+            destinationBlock.SetValue("OnOff", functionalBlockBuilder.Enabled);
         }
 
         private static void CopyTerminalProperties(MyTerminalBlock sourceBlock, MyTerminalBlock destinationBlock, HashSet<string> exclude = null)
