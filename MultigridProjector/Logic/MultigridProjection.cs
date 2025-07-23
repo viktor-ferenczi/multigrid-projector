@@ -270,7 +270,7 @@ namespace MultigridProjector.Logic
 
             if (!terminalBlockAddedQueue.Contains(projectedBlock))
                 terminalBlockAddedQueue.Add(projectedBlock);
-            
+
             subgrid.RequestUpdate();
         }
 
@@ -622,7 +622,7 @@ namespace MultigridProjector.Logic
 
             if (!latestKeepProjection && IsBuildCompleted)
                 Projector.RequestRemoveProjection();
-            
+
             ScheduleTerminalBlocksForRestore();
         }
 
@@ -635,15 +635,15 @@ namespace MultigridProjector.Logic
                 else
                     terminalBlockRetryQueue.Add(projectedBlock);
             }
-            
+
             terminalBlockAddedQueue.AddRange(terminalBlockRetryQueue);
             terminalBlockRetryQueue.Clear();
         }
-        
+
         private void RestoreTerminalBlocks()
         {
             // This is called periodically from the main thread
-            while(terminalBlockRestoreQueue.TryDequeueBack(out var projectedBlock))
+            while (terminalBlockRestoreQueue.TryDequeueBack(out var projectedBlock))
             {
                 referenceFixer.Restore(projectedBlock);
             }
@@ -2156,7 +2156,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
         [ServerOnly]
         public static bool ShouldAllowBuildingDefaultTopBlock(MyMechanicalConnectionBlockBase baseBlock)
         {
-            if (!TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out var subgrid))
+            if (!TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var _, out var subgrid))
             {
                 return true;
             }
@@ -2164,6 +2164,30 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             var baseBlockPreviewPosition = subgrid.BuiltToPreviewBlockPosition(baseBlock.Position);
             var result = !subgrid.BaseConnections.ContainsKey(baseBlockPreviewPosition);
             return result;
+        }
+
+        public bool TryMapPreviewToBuiltTerminalBlockId(long previewBlockId, out long blockId)
+        {
+            if (!referenceFixer.TryMapPreviewToBuiltTerminalBlock<MyTerminalBlock>(previewBlockId, out var terminalBlock))
+            {
+                blockId = 0;
+                return false;
+            }
+
+            blockId = terminalBlock.EntityId;
+            return true;
+        }
+
+        public IEnumerable<long> MapPreviewToBuiltTerminalBlockIds(IEnumerable<long> previewBlockIds)
+        {
+            if (previewBlockIds == null)
+                yield break;
+
+            foreach (var bpBlockId in previewBlockIds)
+            {
+                if (referenceFixer.TryMapPreviewToBuiltTerminalBlock<MyTerminalBlock>(bpBlockId, out var terminalBlock))
+                    yield return terminalBlock.EntityId;
+            }
         }
     }
 }

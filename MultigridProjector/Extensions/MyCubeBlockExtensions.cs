@@ -126,20 +126,6 @@ namespace MultigridProjector.Extensions
             return (Sync<long, SyncDirection.BothWays>)BoundCameraSyncField.GetValue(remoteControlBlock);
         }
 
-        private static readonly MethodInfo AddBlocksMethod = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "AddBlocks");
-
-        public static void AddBlocks(this MyEventControllerBlock eventControllerBlock, List<long> toSync)
-        {
-            AddBlocksMethod.Invoke(eventControllerBlock, new[] { toSync });
-        }
-
-        private static readonly MethodInfo RemoveBlocksMethod = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "RemoveBlocks");
-
-        public static void RemoveBlocks(this MyEventControllerBlock eventControllerBlock, List<long> toSync)
-        {
-            RemoveBlocksMethod.Invoke(eventControllerBlock, new[] { toSync });
-        }
-
         private static readonly FieldInfo SelectedBlockIdsField = AccessTools.DeclaredField(typeof(MyEventControllerBlock), "m_selectedBlockIds");
 
         public static MySerializableList<long> GetSelectedBlockIds(this MyEventControllerBlock eventControllerBlock)
@@ -159,28 +145,22 @@ namespace MultigridProjector.Extensions
             return (Dictionary<long, IMyTerminalBlock>)SelectedBlocksField.GetValue(eventControllerBlock);
         }
 
-        private static readonly FieldInfo SelectedBlockIdsFieldInfo = AccessTools.Field(typeof(MyEventControllerBlock), "m_selectedBlockIds");
-        
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static MySerializableList<long> GetSelectedBlockIds(this MyEventControllerBlock block)
-        {
-            return SelectedBlockIdsFieldInfo.GetValue(block) as MySerializableList<long>;
-        }
+        private static readonly MethodInfo SelectAvailableBlocksMethod = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "SelectAvailableBlocks");
 
-        private static readonly MethodInfo SelectAvailableBlocksMethodInfo = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "SelectAvailableBlocks");
-        
+        // ReSharper disable once UnusedMember.Global
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SelectAvailableBlocks(this MyEventControllerBlock block, List<MyGuiControlListbox.Item> selection)
         {
-            SelectAvailableBlocksMethodInfo.Invoke(block, new object[]{selection});
+            SelectAvailableBlocksMethod.Invoke(block, new object[] { selection });
         }
 
-        private static readonly MethodInfo SelectButtonMethodInfo = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "SelectButton");
-        
+        private static readonly MethodInfo SelectButtonMethod = AccessTools.DeclaredMethod(typeof(MyEventControllerBlock), "SelectButton");
+
+        // ReSharper disable once UnusedMember.Global
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void SelectButton(this MyEventControllerBlock block)
         {
-            SelectButtonMethodInfo.Invoke(block, new object[]{});
+            SelectButtonMethod.Invoke(block, new object[] { });
         }
     }
 }

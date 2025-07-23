@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using MultigridProjector.Api;
 using MultigridProjector.Extensions;
+using MultigridProjector.Utilities;
 using Sandbox.Common.ObjectBuilders;
 using Sandbox.Game.Entities;
 using Sandbox.Game.Entities.Cube;
@@ -148,7 +149,7 @@ namespace MultigridProjector.Logic
             }
         }
 
-        private bool TryFindTargetBlock<T>(long targetId, out T targetBlock) where T : MyTerminalBlock
+        public bool TryMapPreviewToBuiltTerminalBlock<T>(long targetId, out T targetBlock) where T : MyTerminalBlock
         {
             targetBlock = null;
             if (blocksById.TryGetValue(targetId, out var projectedBlock))
@@ -255,7 +256,7 @@ namespace MultigridProjector.Logic
                 if (i < 0 || i >= toolbar.ItemCount)
                     continue;
 
-                if (!TryFindTargetBlock<MyTerminalBlock>(terminalBlockItemBuilder.BlockEntityId, out var targetBlock))
+                if (!TryMapPreviewToBuiltTerminalBlock<MyTerminalBlock>(terminalBlockItemBuilder.BlockEntityId, out var targetBlock))
                     continue;
 
                 // Optimization: Do not change the toolbar item if it already has the right target ID 
@@ -288,7 +289,7 @@ namespace MultigridProjector.Logic
                 var actionBuilder = actionBuilders[i];
                 if (actionBuilder is MyObjectBuilder_ToolbarItemTerminalBlock terminalBlockItemBuilder)
                 {
-                    if (!TryFindTargetBlock<MyTerminalBlock>(terminalBlockItemBuilder.BlockEntityId, out var targetBlock))
+                    if (!TryMapPreviewToBuiltTerminalBlock<MyTerminalBlock>(terminalBlockItemBuilder.BlockEntityId, out var targetBlock))
                         continue;
 
                     // Optimization: Do not change the action if it already has the right target ID 
@@ -313,7 +314,7 @@ namespace MultigridProjector.Logic
             var builder = (MyObjectBuilder_RemoteControl)projectedBlock.Builder;
             var block = (MyRemoteControl)projectedBlock.SlimBlock.FatBlock;
 
-            if (!TryFindTargetBlock<MyRemoteControl>(builder.BindedCamera, out var cameraBlock))
+            if (!TryMapPreviewToBuiltTerminalBlock<MyRemoteControl>(builder.BindedCamera, out var cameraBlock))
                 return false;
 
             var boundCameraSync = block.GetBoundCameraSync();
@@ -332,7 +333,7 @@ namespace MultigridProjector.Logic
             var block = (MyEventControllerBlock)projectedBlock.SlimBlock.FatBlock;
 
             var ids = builder.SelectedBlocks
-                .Select(id => TryFindTargetBlock<MyTerminalBlock>(id, out var selectedBlock) ? selectedBlock : null)
+                .Select(id => TryMapPreviewToBuiltTerminalBlock<MyTerminalBlock>(id, out var selectedBlock) ? selectedBlock : null)
                 .Where(tb => tb != null)
                 .Select(tb => tb.EntityId)
                 .ToHashSet();
@@ -363,21 +364,42 @@ namespace MultigridProjector.Logic
 
             var modified = false;
 
-            if (TryFindTargetBlock<MyMotorStator>(builder.AzimuthId, out var azimuthRotor) && block.AzimuthRotor != azimuthRotor)
+            if (TryMapPreviewToBuiltTerminalBlock<MyMotorStator>(builder.AzimuthId, out var azimuthRotor) && block.AzimuthRotor != azimuthRotor)
             {
-                block.AzimuthRotor = azimuthRotor;
+                try
+                {
+                    block.AzimuthRotor = azimuthRotor;
+                }
+                catch (Exception e)
+                {
+                    PluginLog.Error(e, "RestoreTurretController(): Error setting AzimuthRotor");
+                }
                 modified = true;
             }
 
-            if (TryFindTargetBlock<MyMotorStator>(builder.ElevationId, out var elevationRotor) && block.ElevationRotor != elevationRotor)
+            if (TryMapPreviewToBuiltTerminalBlock<MyMotorStator>(builder.ElevationId, out var elevationRotor) && block.ElevationRotor != elevationRotor)
             {
-                block.ElevationRotor = elevationRotor;
+                try
+                {
+                    block.ElevationRotor = elevationRotor;
+                }
+                catch (Exception e)
+                {
+                    PluginLog.Error(e, "RestoreTurretController(): Error setting ElevationRotor");
+                }
                 modified = true;
             }
 
-            if (TryFindTargetBlock<MyCameraBlock>(builder.CameraId, out var camera) && block.Camera != camera)
+            if (TryMapPreviewToBuiltTerminalBlock<MyCameraBlock>(builder.CameraId, out var camera) && block.Camera != camera)
             {
-                block.Camera = camera;
+                try
+                {
+                    block.Camera = camera;
+                }
+                catch (Exception e)
+                {
+                    PluginLog.Error(e, "RestoreTurretController(): Error setting Camera");
+                }
                 modified = true;
             }
 
@@ -388,7 +410,7 @@ namespace MultigridProjector.Logic
             var addTools = new HashSet<IngameIMyFunctionalBlock>(builder.ToolIds.Count);
             foreach (var toolId in builder.ToolIds)
             {
-                if (!TryFindTargetBlock<MyTerminalBlock>(toolId, out var targetBlock))
+                if (!TryMapPreviewToBuiltTerminalBlock<MyTerminalBlock>(toolId, out var targetBlock))
                     continue;
 
                 if (!(targetBlock is IngameIMyFunctionalBlock targetFunctionalBlock))
@@ -431,7 +453,7 @@ namespace MultigridProjector.Logic
 
             foreach (var blockId in componentBuilder.SelectedWeapons)
             {
-                if (!TryFindTargetBlock<MyTerminalBlock>(blockId, out var targetBlock))
+                if (!TryMapPreviewToBuiltTerminalBlock<MyTerminalBlock>(blockId, out var targetBlock))
                     continue;
 
                 var targetBlockId = targetBlock.EntityId;
