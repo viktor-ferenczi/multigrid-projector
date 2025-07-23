@@ -28,6 +28,7 @@ using SpaceEngineers.Game.Entities.Blocks;
 using VRage;
 using VRage.Collections;
 using VRage.Game;
+using VRage.Game.Entity;
 using VRage.Game.ObjectBuilders.Definitions.SessionComponents;
 using VRage.ModAPI;
 using VRage.Network;
@@ -40,9 +41,6 @@ namespace MultigridProjector.Logic
     // FIXME: Refactor this class
     public class MultigridProjection
     {
-        public static bool QuickUpdate = false;
-        private static int UpdateCooldownTime => QuickUpdate ? 100 : 2000; // ms
-
         // Active multigrid projections by the Projector block's EntityId
         private static readonly RwLockDictionary<long, MultigridProjection> Projections = new RwLockDictionary<long, MultigridProjection>();
 
@@ -70,6 +68,9 @@ namespace MultigridProjector.Logic
         // used only on client side if block highlighting is enabled for the projector
         // ReSharper disable once UnassignedField.Global
         public bool CheckHavokIntersections;
+        
+        // Speed up the grid scan if block highlighting is enabled (it happens only on client side)
+        private int UpdateCooldownTime => CheckHavokIntersections ? 200 : 2000; // ms
 
         // Queue of newly built terminal blocks, some of their properties point to other blocks, which need to be
         // restored according to the blueprint once both the referencing and referred blocks are built  
@@ -215,6 +216,9 @@ namespace MultigridProjector.Logic
 
             Projector.PropertiesChanged += OnPropertiesChanged;
 
+            MyEntities.OnEntityAdd += InvalidateVoxelCacheIfVoxelBaseEntity;
+            MyEntities.OnEntityRemove += InvalidateVoxelCacheIfVoxelBaseEntity;
+            
             Initialized = true;
 
             foreach (var subgrid in SupportedSubgrids)
@@ -235,6 +239,9 @@ namespace MultigridProjector.Logic
 
             Initialized = false;
 
+            MyEntities.OnEntityAdd -= InvalidateVoxelCacheIfVoxelBaseEntity;
+            MyEntities.OnEntityRemove -= InvalidateVoxelCacheIfVoxelBaseEntity;
+            
             Projector.PropertiesChanged -= OnPropertiesChanged;
 
             updateWork.OnUpdateWorkCompleted -= OnUpdateWorkCompletedWithErrorHandler;
@@ -1614,22 +1621,73 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 cubes[i] = null;
         }
 
-        public static bool CheckVoxels(MySlimBlock block)
+        /*
+         * Expect the whole projection to fit into a 500m radius circle around the projector.
+         * Outside that the voxel check won't be reliable, but it won't happen often in practice.
+         * Voxel maps intersecting that sphere are cached as long as the projector does not move
+         * more than 100m from the position it had when the cache was created.
+         * The cache is invalidated if a voxel map is added or removed from the entity list.
+         */
+        private const double VoxelCacheSphereRadius = 500.0; // m
+        private const double VoxelCacheMaxProjectorMovement = 100.0; // m
+        private Vector3D voxelCacheProjectorPosition = Vector3D.PositiveInfinity;
+        private readonly List<MyVoxelBase> voxelCache = new List<MyVoxelBase>(4);
+        private readonly RwLock voxelCacheLock = new RwLock();
+
+        private void InvalidateVoxelCacheIfVoxelBaseEntity(MyEntity entity)
+        {
+            if (entity is MyVoxelBase)
+                InvalidateVoxelCache();
+        }
+
+        private void InvalidateVoxelCache()
+        {
+            voxelCacheProjectorPosition = Vector3D.NegativeInfinity;
+            voxelCache.Clear();
+        }
+
+        private void EnsureVoxelCache()
+        {
+            var projectorPosition = Projector.PositionComp.GetPosition();
+            var projectorMoved = (projectorPosition - voxelCacheProjectorPosition).LengthSquared();
+            if (!(projectorMoved > VoxelCacheMaxProjectorMovement * VoxelCacheMaxProjectorMovement)) 
+                return;
+            
+            using (voxelCacheLock.Write())
+            {
+                voxelCache.Clear();
+                voxelCacheProjectorPosition = projectorPosition;
+                
+                var boundingSphere = new BoundingSphereD(projectorPosition, VoxelCacheSphereRadius);
+                MyGamePruningStructure.GetAllVoxelMapsInSphere(ref boundingSphere, voxelCache);
+            }
+        }
+
+        private bool CheckVoxels(MySlimBlock block)
         {
             if (MyPerGameSettings.Destruction && block.CubeGrid.GridSizeEnum == MyCubeSize.Large)
                 return block.CubeGrid.Physics.Shape.BlocksConnectedToWorld.Contains(block.Position);
+            
+            if (Projector.PositionComp == null)
+                return false;
+            
+            EnsureVoxelCache();
 
-            block.GetWorldBoundingBox(out BoundingBoxD worldBoundingBox);
-            List<MyVoxelBase> voxels = new List<MyVoxelBase>();
-            MyGamePruningStructure.GetAllVoxelMapsInBox(ref worldBoundingBox, voxels);
+            using (voxelCacheLock.Read())
+            {
+                if (!voxelCache.Any())
+                    return false;
+                
+                var gridSize = block.CubeGrid.GridSize;
+                var boundingBoxD = new BoundingBoxD(gridSize * ((Vector3D)block.Min - 0.5), gridSize * ((Vector3D)block.Max + 0.5));
+                var worldMatrix = block.CubeGrid.WorldMatrix;
 
-            float gridSize = block.CubeGrid.GridSize;
-            BoundingBoxD boundingBoxD = new BoundingBoxD(gridSize * ((Vector3D)block.Min - 0.5), gridSize * ((Vector3D)block.Max + 0.5));
-            MatrixD worldMatrix = block.CubeGrid.WorldMatrix;
-
-            foreach (MyVoxelBase voxel in voxels)
-                if (voxel.IsAnyAabbCornerInside(ref worldMatrix, boundingBoxD))
-                    return true;
+                foreach (var voxel in voxelCache)
+                {
+                    if (voxel.IsAnyAabbCornerInside(ref worldMatrix, boundingBoxD))
+                        return true;
+                }
+            }
 
             return false;
         }

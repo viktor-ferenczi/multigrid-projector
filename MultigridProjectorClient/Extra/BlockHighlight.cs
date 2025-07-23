@@ -112,7 +112,6 @@ namespace MultigridProjectorClient.Extra
             TargetProjectors.Add((MyProjectorBase) projector);
 
             EnableCheckHavokIntersections(projector, true);
-            MultigridProjection.QuickUpdate = true;
         }
 
         private static void DisableHighlightBlocks(IMyProjector projector)
@@ -123,7 +122,6 @@ namespace MultigridProjectorClient.Extra
             TargetProjectors.Remove((MyProjectorBase) projector);
 
             EnableCheckHavokIntersections(projector, false);
-            MultigridProjection.QuickUpdate = false;
         }
 
         private static void ToggleHighlightBlocks(IMyProjector projector)
