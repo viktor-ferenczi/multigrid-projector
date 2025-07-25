@@ -22,6 +22,9 @@ namespace MultigridProjector.Utilities
             else
                 targetFrame = -1;
 
+#if DEBUG
+            MyAPIGateway.Utilities.InvokeOnGameThread(task, "MultigridProjector", targetFrame);
+#else
             // This is called by the game itself and will not be caught by any of the plugin's try/catch blocks
             // We need to wrap our Action in a try/catch so should it error it does not take out the entire game
             void safeTask()
@@ -37,6 +40,7 @@ namespace MultigridProjector.Utilities
             }
 
             MyAPIGateway.Utilities.InvokeOnGameThread(safeTask, "MultigridProjector", targetFrame);
+#endif
         }
 
         // FIXME: Depend on MGP's grid scan mechanism instead

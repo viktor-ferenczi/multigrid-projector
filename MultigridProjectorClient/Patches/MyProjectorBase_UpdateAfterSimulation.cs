@@ -21,6 +21,9 @@ namespace MultigridProjectorClient.Patches
         {
             var projector = __instance;
 
+#if DEBUG
+            return MultigridProjection.ProjectorUpdateAfterSimulation(projector);
+#else
             try
             {
                 return MultigridProjection.ProjectorUpdateAfterSimulation(projector);
@@ -30,6 +33,7 @@ namespace MultigridProjectorClient.Patches
                 PluginLog.Error(e);
                 return false;
             }
+#endif
         }
     }
 }

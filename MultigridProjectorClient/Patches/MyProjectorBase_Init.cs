@@ -23,6 +23,9 @@ namespace MultigridProjectorClient.Patches
         {
             var projector = __instance;
 
+#if DEBUG
+            MultigridProjection.ProjectorInit(projector, objectBuilder);
+#else
             try
             {
                 MultigridProjection.ProjectorInit(projector, objectBuilder);
@@ -31,6 +34,7 @@ namespace MultigridProjectorClient.Patches
             {
                 PluginLog.Error(e);
             }
+#endif
         }
     }
 }

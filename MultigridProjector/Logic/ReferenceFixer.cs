@@ -66,30 +66,30 @@ namespace MultigridProjector.Logic
             {
                 case MyObjectBuilder_RemoteControl builder:
                     foreach (var blockId in IterToolbarReferencedBlockIds(terminalBlockBuilder))
-                    {
                         yield return blockId;
-                    }
 
                     yield return builder.BindedCamera;
                     break;
 
                 case MyObjectBuilder_EventControllerBlock builder:
                     foreach (var blockId in IterToolbarReferencedBlockIds(terminalBlockBuilder))
-                    {
                         yield return blockId;
-                    }
 
+                    if (builder.SelectedBlocks == null)
+                        break;
+                    
                     foreach (var blockId in builder.SelectedBlocks)
-                    {
                         yield return blockId;
-                    }
 
                     break;
 
                 case MyObjectBuilder_TurretControlBlock builder:
-                    foreach (var blockId in builder.ToolIds)
+                    if (builder.ToolIds != null)
                     {
-                        yield return blockId;
+                        foreach (var blockId in builder.ToolIds)
+                        {
+                            yield return blockId;
+                        }
                     }
 
                     yield return builder.AzimuthId;
@@ -100,10 +100,12 @@ namespace MultigridProjector.Logic
                 case MyObjectBuilder_OffensiveCombatBlock builder:
                     if (!builder.ComponentContainer.TryGet<MyObjectBuilder_OffensiveCombatCircleOrbit>(out var offensiveCombatComponentBuilder))
                         break;
+                    
+                    if (offensiveCombatComponentBuilder.SelectedWeapons == null)
+                        break;
+                    
                     foreach (var blockId in offensiveCombatComponentBuilder.SelectedWeapons)
-                    {
                         yield return blockId;
-                    }
 
                     break;
 
@@ -111,6 +113,10 @@ namespace MultigridProjector.Logic
                 case MyObjectBuilder_PathRecorderBlock builder:
                     if (!builder.ComponentContainer.TryGet<MyObjectBuilder_PathRecorderComponent>(out var pathRecorderComponentBuilder))
                         break;
+                    
+                    if (pathRecorderComponentBuilder.Waypoints == null)
+                        break;
+                    
                     foreach (var waypoint in pathRecorderComponentBuilder.Waypoints)
                     {
                         foreach (var waypointActionBuilder in waypoint.Actions)
@@ -131,9 +137,7 @@ namespace MultigridProjector.Logic
                 case MyObjectBuilder_ShipController _:
                 case MyObjectBuilder_TimerBlock _:
                     foreach (var blockId in IterToolbarReferencedBlockIds(terminalBlockBuilder))
-                    {
                         yield return blockId;
-                    }
 
                     break;
             }
@@ -142,12 +146,13 @@ namespace MultigridProjector.Logic
         private IEnumerable<long> IterToolbarReferencedBlockIds(MyObjectBuilder_TerminalBlock terminalBlockBuilder)
         {
             var toolbarBuilder = terminalBlockBuilder.GetToolbar();
+            if (toolbarBuilder?.Slots == null)
+                yield break;
+            
             foreach (var slot in toolbarBuilder.Slots)
             {
                 if (slot.Data is MyObjectBuilder_ToolbarItemTerminalBlock terminalBlockItem)
-                {
                     yield return terminalBlockItem.BlockEntityId;
-                }
             }
         }
 
@@ -167,9 +172,6 @@ namespace MultigridProjector.Logic
 
         public void RestoreSafe(ProjectedBlock projectedBlock)
         {
-#if DEBUG
-            Restore(projectedBlock);
-#else
             try
             {
                 Restore(projectedBlock);
@@ -178,10 +180,9 @@ namespace MultigridProjector.Logic
             {
                 PluginLog.Error(e, $"ReferenceFixer: RestoreSafe failed: projectedBlock.Builder.SubtypeName=\"{projectedBlock.Builder.SubtypeName}\"");
             }
-#endif
         }
 
-        private void Restore(ProjectedBlock projectedBlock)
+        public void Restore(ProjectedBlock projectedBlock)
         {
             RestoreOneWay(projectedBlock);
 
@@ -198,9 +199,6 @@ namespace MultigridProjector.Logic
 
         public void RestoreAllSafe()
         {
-#if DEBUG
-            RestoreAll();
-#else
             try
             {
                 RestoreAll();
@@ -209,10 +207,9 @@ namespace MultigridProjector.Logic
             {
                 PluginLog.Error(e, $"ReferenceFixer: RestoreAll failed");
             }
-#endif
         }
 
-        private void RestoreAll()
+        public void RestoreAll()
         {
             foreach (var projectedBlock in blocksById.Values)
             {
@@ -277,7 +274,7 @@ namespace MultigridProjector.Logic
         {
             var builder = ((MyObjectBuilder_TerminalBlock)projectedBlock.Builder).GetToolbar();
             var toolbar = ((MyTerminalBlock)projectedBlock.SlimBlock?.FatBlock)?.GetToolbar();
-            if (toolbar == null)
+            if (builder == null || toolbar == null)
                 return false;
 
             var modified = false;

@@ -23,31 +23,40 @@ namespace MultigridProjectorClient.Patches
         {
             var projector = __instance;
 
+            if (!Sync.IsServer)
+                return false;
+
+#if DEBUG
+            SetNewBlueprint_Implementation(projector);
+#else
             try
             {
-                if (!Sync.IsServer)
-                    return false;
-
-                projector.RemapObjectBuilders();
-
-                // Call patched SetNewBlueprint
-                var gridBuilders = projector.GetOriginalGridBuilders();
-                if (gridBuilders != null && gridBuilders.Count > 0)
-                {
-                    SetNewBlueprintMethod.Invoke(projector, new object[] { gridBuilders });
-                }
-                else
-                {
-                    PluginLog.Warn($"Remap is called on an empty projector: \"{projector.CustomName}\" [{projector.EntityId}] on grid \"{projector.CubeGrid?.DisplayName ?? projector.CubeGrid?.Name}\" [{projector.CubeGrid?.EntityId}]");
-                }
+                SetNewBlueprint_Implementation(projector);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
             }
+#endif
 
             // Never run the original handler, because that breaks subgrid connections with inconsistent remapping of Entity IDs
             return false;
+        }
+
+        private static void SetNewBlueprint_Implementation(MyProjectorBase projector)
+        {
+            projector.RemapObjectBuilders();
+
+            // Call patched SetNewBlueprint
+            var gridBuilders = projector.GetOriginalGridBuilders();
+            if (gridBuilders != null && gridBuilders.Count > 0)
+            {
+                SetNewBlueprintMethod.Invoke(projector, new object[] { gridBuilders });
+            }
+            else
+            {
+                PluginLog.Warn($"Remap is called on an empty projector: \"{projector.CustomName}\" [{projector.EntityId}] on grid \"{projector.CubeGrid?.DisplayName ?? projector.CubeGrid?.Name}\" [{projector.CubeGrid?.EntityId}]");
+            }
         }
     }
 }

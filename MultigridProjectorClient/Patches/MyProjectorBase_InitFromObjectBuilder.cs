@@ -25,30 +25,38 @@ namespace MultigridProjectorClient.Patches
             MyProjectorBase __instance,
             List<MyObjectBuilder_CubeGrid> gridsObs)
         {
+#if DEBUG
+            return InitFromObjectBuilder_Implementation(__instance, gridsObs);
+#else
             try
             {
-                if (MultigridProjection.InitFromObjectBuilder(__instance, gridsObs))
-                    return true;
-
-                if (!__instance.AllowScaling && 
-                    !Comms.ServerHasPlugin && 
-                    gridsObs.Count > 1 && 
-                    Config.CurrentConfig.ShowDialogs)
-                {
-                    if (Config.CurrentConfig.ClientWelding)
-                        MyGuiSandbox.AddScreen(ProjectionDialog.CreateDialog());
-
-                    else
-                        MyGuiSandbox.AddScreen(ProjectionDialog.CreateUnsupportedDialog());
-                }
-
-                return false;
+                return InitFromObjectBuilder_Implementation(__instance, gridsObs);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
                 return false;
             }
+#endif
+        }
+
+        private static bool InitFromObjectBuilder_Implementation(MyProjectorBase projector, List<MyObjectBuilder_CubeGrid> gridsObs)
+        {
+            if (MultigridProjection.InitFromObjectBuilder(projector, gridsObs))
+                return true;
+
+            if (!projector.AllowScaling && 
+                !Comms.ServerHasPlugin && 
+                gridsObs.Count > 1 && 
+                Config.CurrentConfig.ShowDialogs)
+            {
+                if (Config.CurrentConfig.ClientWelding)
+                    MyGuiSandbox.AddScreen(ProjectionDialog.CreateDialog());
+                else
+                    MyGuiSandbox.AddScreen(ProjectionDialog.CreateUnsupportedDialog());
+            }
+
+            return false;
         }
     }
 }

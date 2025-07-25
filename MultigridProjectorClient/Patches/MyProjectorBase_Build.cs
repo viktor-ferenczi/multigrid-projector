@@ -24,6 +24,9 @@ namespace MultigridProjectorClient.Patches
         {
             var projector = __instance;
 
+#if DEBUG
+            return Construction.WeldBlock(projector, cubeBlock, owner, ref builtBy);
+#else    
             try
             {
                 return Construction.WeldBlock(projector, cubeBlock, owner, ref builtBy);
@@ -33,6 +36,7 @@ namespace MultigridProjectorClient.Patches
                 PluginLog.Error(e);
                 return false;
             }
+#endif
         }
     }
 }

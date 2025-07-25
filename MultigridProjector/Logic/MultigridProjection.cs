@@ -573,6 +573,9 @@ namespace MultigridProjector.Logic
         [Everywhere]
         private void OnUpdateWorkCompletedWithErrorHandler()
         {
+#if DEBUG
+            OnUpdateWorkCompleted();
+#else
             try
             {
                 OnUpdateWorkCompleted();
@@ -581,6 +584,7 @@ namespace MultigridProjector.Logic
             {
                 PluginLog.Error(e);
             }
+#endif
         }
 
         [Everywhere]
@@ -667,11 +671,20 @@ namespace MultigridProjector.Logic
             while (terminalBlockRestoreQueue.TryDequeueBack(out var projectedBlock))
             {
                 if (Sync.IsServer)
+#if DEBUG
+                    referenceFixer.Restore(projectedBlock);
+#else
                     referenceFixer.RestoreSafe(projectedBlock);
+#endif
                 else
                 {
+                    const int delayFrames = 60;
                     var capturedProjectedBlock = projectedBlock;
-                    Events.InvokeOnGameThread(() => referenceFixer.RestoreSafe(capturedProjectedBlock), 60);
+#if DEBUG
+                    Events.InvokeOnGameThread(() => referenceFixer.Restore(capturedProjectedBlock), delayFrames);
+#else
+                    Events.InvokeOnGameThread(() => referenceFixer.RestoreSafe(capturedProjectedBlock), delayFrames);
+#endif
                 }
             }
         }
@@ -2151,6 +2164,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 if (gridBuilders == null || gridBuilders.Count != projector.Clipboard.PreviewGrids.Count)
                     return true;
 
+#if DEBUG
+                projection = Create(projector, gridBuilders);
+#else
                 try
                 {
                     projection = Create(projector, gridBuilders);
@@ -2161,6 +2177,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                     ((IMyProjector)projector).SetProjectedGrid(null);
                     return false;
                 }
+#endif
 
                 if (projection == null)
                     return true;
@@ -2171,6 +2188,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
             // Could not call virtual base class method, so copied it here from MyEntity where it is defined:
             projector.GameLogic.UpdateAfterSimulation();
 
+#if DEBUG
+            projection.UpdateAfterSimulation();
+#else
             // Call custom update logic
             try
             {
@@ -2181,9 +2201,9 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 PluginLog.Error(e, "UpdateAfterSimulation of multigrid projection failed - Removing blueprint to avoid spamming the log.");
                 ((IMyProjector)projector).SetProjectedGrid(null);
             }
+#endif
 
             // Based on the original code
-
             var projectionTimer = projector.GetProjectionTimer();
             if (!projector.GetTierCanProject() && projectionTimer > 0)
             {
@@ -2252,7 +2272,11 @@ System.NullReferenceException: Object reference not set to an instance of an obj
 
         public void FixBlockRelations()
         {
+#if DEBUG
+            referenceFixer.RestoreAll();
+#else
             referenceFixer.RestoreAllSafe();
+#endif
         }
 
         [ServerOnly]

@@ -22,18 +22,11 @@ namespace MultigridProjectorClient.Patches
         {
             var projector = ___m_projector;
 
-            try
-            {
-                if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
-                    return true;
-
-                // Preview grid alignment is needed on server side as well, so it was moved into UpdateAfterSimulation
-            }
-            catch (Exception e)
-            {
-                PluginLog.Error(e);
-            }
-
+            if (!MultigridProjection.TryFindProjectionByProjector(projector, out _))
+                return true;
+            
+            // Do not run the original.
+            // Preview grid alignment is needed on server side as well, so it was moved into UpdateAfterSimulation
             return false;
         }
     }

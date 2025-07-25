@@ -19,13 +19,14 @@ namespace MultigridProjector.Patches
             MyMechanicalConnectionBlockBase __instance)
         {
             var baseBlock = __instance;
-
+            if (!MultigridProjection.TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out var subgrid))
+                return true;
+            
+#if DEBUG
+            return projection.CreateTopPartAndAttach(subgrid, baseBlock);
+#else
             try
             {
-                var baseGrid = baseBlock.CubeGrid;
-                if (!MultigridProjection.TryFindProjectionByBuiltGrid(baseGrid, out var projection, out var subgrid))
-                    return true;
-
                 return projection.CreateTopPartAndAttach(subgrid, baseBlock);
             }
             catch (Exception e)
@@ -33,6 +34,7 @@ namespace MultigridProjector.Patches
                 PluginLog.Error(e);
                 return false;
             }
+#endif
         }
     }
 }

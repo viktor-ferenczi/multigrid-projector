@@ -23,6 +23,9 @@ namespace MultigridProjectorClient.Patches
             // ReSharper disable once InconsistentNaming
             MyObjectBuilder_CubeBlock __result)
         {
+#if DEBUG
+            MultigridProjection.GetObjectBuilderOfProjector(__instance, copy, __result);
+#else
             try
             {
                 MultigridProjection.GetObjectBuilderOfProjector(__instance, copy, __result);
@@ -31,6 +34,7 @@ namespace MultigridProjectorClient.Patches
             {
                 PluginLog.Error(e);
             }
+#endif
         }
     }
 }
