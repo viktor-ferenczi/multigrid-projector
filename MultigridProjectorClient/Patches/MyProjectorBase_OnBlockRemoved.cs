@@ -21,17 +21,10 @@ namespace MultigridProjectorClient.Patches
         {
             var projector = __instance;
 
-            try
-            {
-                // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
-                if (!MultigridProjection.TryFindProjectionByProjector(projector, out _))
-                    return true;
-            }
-            catch (Exception e)
-            {
-                PluginLog.Error(e);
-            }
-
+            // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
+            if (!MultigridProjection.TryFindProjectionByProjector(projector, out _))
+                return true;
+            
             // Disable the original handler, since the MultigridProjection instance already handles it
             return false;
         }

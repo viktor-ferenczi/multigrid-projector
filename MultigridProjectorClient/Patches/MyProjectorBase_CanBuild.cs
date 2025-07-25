@@ -25,16 +25,19 @@ namespace MultigridProjectorClient.Patches
             // ReSharper disable once InconsistentNaming
             out BuildCheckResult __result)
         {
-            var projector = __instance;
-
             __result = BuildCheckResult.NotWeldable;
+            
+            // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
+            var projector = __instance;
+            if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
+                return true;
 
+#if DEBUG
+            __result = projection.CanBuild(projectedBlock, checkHavokIntersections, out var fallback);
+            return fallback;
+#else
             try
             {
-                // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
-                if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
-                    return true;
-
                 __result = projection.CanBuild(projectedBlock, checkHavokIntersections, out var fallback);
                 return fallback;
             }
@@ -43,6 +46,7 @@ namespace MultigridProjectorClient.Patches
                 PluginLog.Error(e);
                 return false;
             }
+#endif
         }
     }
 }

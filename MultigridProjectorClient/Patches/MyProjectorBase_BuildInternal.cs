@@ -54,20 +54,24 @@ namespace MultigridProjectorClient.Patches
             long builtBy)
         {
             var projector = __instance;
+            
+            // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
+            if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
+                return;
 
+            // We use the builtBy field to pass the subgrid index
+#if DEBUG
+            projection.BuildInternal(cubeBlockPosition, owner, builder, requestInstant, builtBy);
+#else            
             try
             {
-                // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
-                if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
-                    return;
-
-                // We use the builtBy field to pass the subgrid index
                 projection.BuildInternal(cubeBlockPosition, owner, builder, requestInstant, builtBy);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
             }
+#endif
         }
     }
 }

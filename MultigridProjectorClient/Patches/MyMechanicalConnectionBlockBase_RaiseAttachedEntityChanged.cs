@@ -20,17 +20,21 @@ namespace MultigridProjectorClient.Patches
             MyMechanicalConnectionBlockBase __instance)
         {
             var baseBlock = __instance;
+            if (!MultigridProjection.TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out _)) 
+                return;
 
+#if DEBUG
+            projection.RaiseAttachedEntityChanged();
+#else            
             try
             {
-                if (!MultigridProjection.TryFindProjectionByBuiltGrid(baseBlock.CubeGrid, out var projection, out _)) return;
-
                 projection.RaiseAttachedEntityChanged();
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
             }
+#endif
         }
     }
 }

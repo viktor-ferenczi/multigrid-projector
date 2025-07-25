@@ -167,9 +167,6 @@ namespace MultigridProjector.Logic
 
         public void RestoreSafe(ProjectedBlock projectedBlock)
         {
-#if DEBUG
-            Restore(projectedBlock);
-#else
             try
             {
                 Restore(projectedBlock);
@@ -178,10 +175,9 @@ namespace MultigridProjector.Logic
             {
                 PluginLog.Error(e, $"ReferenceFixer: RestoreSafe failed: projectedBlock.Builder.SubtypeName=\"{projectedBlock.Builder.SubtypeName}\"");
             }
-#endif
         }
 
-        private void Restore(ProjectedBlock projectedBlock)
+        public void Restore(ProjectedBlock projectedBlock)
         {
             RestoreOneWay(projectedBlock);
 
@@ -198,9 +194,6 @@ namespace MultigridProjector.Logic
 
         public void RestoreAllSafe()
         {
-#if DEBUG
-            RestoreAll();
-#else
             try
             {
                 RestoreAll();
@@ -209,10 +202,9 @@ namespace MultigridProjector.Logic
             {
                 PluginLog.Error(e, $"ReferenceFixer: RestoreAll failed");
             }
-#endif
         }
 
-        private void RestoreAll()
+        public void RestoreAll()
         {
             foreach (var projectedBlock in blocksById.Values)
             {

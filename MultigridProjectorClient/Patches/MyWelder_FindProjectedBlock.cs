@@ -24,7 +24,10 @@ namespace MultigridProjectorClient.Patches
             out MyWelder.ProjectionRaycastData __result)
         {
             __result = new MyWelder.ProjectionRaycastData {raycastResult = BuildCheckResult.NotFound};
-            
+
+#if DEBUG
+            return MultigridProjection.MyWelder_FindProjectedBlock(rayCaster, distanceMultiplier, ref __result);
+#else
             try
             {
                 return MultigridProjection.MyWelder_FindProjectedBlock(rayCaster, distanceMultiplier, ref __result); 
@@ -33,6 +36,7 @@ namespace MultigridProjectorClient.Patches
             {
                 PluginLog.Error(e);
             }
+#endif
 
             return false;
         }

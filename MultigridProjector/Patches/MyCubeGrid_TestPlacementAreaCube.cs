@@ -61,17 +61,21 @@ namespace MultigridProjector.Patches
             if (!isProjected)
                 return;
 
+            if (!MultigridProjection.TryFindProjectionByBuiltGrid(targetGrid, out var projection, out var subgrid))
+                return;
+            
+#if DEBUG
+            __result = __result || projection.TestPlacementAreaCube(subgrid, targetGrid, min);
+#else
             try
             {
-                if (!MultigridProjection.TryFindProjectionByBuiltGrid(targetGrid, out var projection, out var subgrid))
-                    return;
-
                 __result = __result || projection.TestPlacementAreaCube(subgrid, targetGrid, min);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
             }
+#endif
         }
     }
 }

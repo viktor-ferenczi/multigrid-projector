@@ -42,6 +42,9 @@ namespace MultigridProjectorClient.Utilities
             catch (Exception e)
             {
                 PluginLog.Error(e, "Could not save config");
+#if DEBUG
+                throw;
+#endif
                 return false;
             }
 
@@ -72,6 +75,9 @@ namespace MultigridProjectorClient.Utilities
             catch (Exception e)
             {
                 PluginLog.Error(e, "Could not load config");
+#if DEBUG
+                throw;
+#endif
                 return false;
             }
 

@@ -20,18 +20,22 @@ namespace MultigridProjectorClient.Patches
         {
             var projector = __instance;
 
+            // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
+            if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
+                return true;
+
+#if DEBUG
+            projection.RemoveProjection(keepProjection);
+#else
             try
             {
-                // Find the multigrid projection, fall back to the default implementation if this projector is not handled by the plugin
-                if (!MultigridProjection.TryFindProjectionByProjector(projector, out var projection))
-                    return true;
-
                 projection.RemoveProjection(keepProjection);
             }
             catch (Exception e)
             {
                 PluginLog.Error(e);
             }
+#endif
             
             return false;
         }

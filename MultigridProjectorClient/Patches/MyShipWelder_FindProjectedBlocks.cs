@@ -33,6 +33,9 @@ namespace MultigridProjectorClient.Patches
             var detectorSphere = ___m_detectorSphere;
             var weldedBlocks = ___m_projectedBlock;
 
+#if DEBUG
+            __result = MultigridProjection.FindProjectedBlocks(welder, detectorSphere, weldedBlocks);
+#else
             try
             {
                 __result = MultigridProjection.FindProjectedBlocks(welder, detectorSphere, weldedBlocks);
@@ -42,6 +45,7 @@ namespace MultigridProjectorClient.Patches
                 PluginLog.Error(e);
                 __result = new MyWelder.ProjectionRaycastData[]{};
             }
+#endif
 
             return false;
         }

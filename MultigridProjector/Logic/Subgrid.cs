@@ -366,22 +366,40 @@ namespace MultigridProjector.Logic
 
         private void ConnectGridEvents()
         {
+#if DEBUG
+            BuiltGrid.OnBlockIntegrityChanged += OnBlockIntegrityChanged;
+            BuiltGrid.OnBlockAdded += OnBlockAdded;
+            BuiltGrid.OnBlockRemoved += OnBlockRemoved;
+            BuiltGrid.OnGridSplit += OnGridSplitOrMerge;
+            BuiltGrid.OnGridMerge += OnGridSplitOrMerge;
+            BuiltGrid.OnClosing += OnGridClosing;
+#else
             BuiltGrid.OnBlockIntegrityChanged += OnBlockIntegrityChangedWithErrorHandler;
             BuiltGrid.OnBlockAdded += OnBlockAddedWithErrorHandler;
             BuiltGrid.OnBlockRemoved += OnBlockRemovedWithErrorHandler;
             BuiltGrid.OnGridSplit += OnGridSplitOrMergeWithErrorHandler;
             BuiltGrid.OnGridMerge += OnGridSplitOrMergeWithErrorHandler;
             BuiltGrid.OnClosing += OnGridClosingWithErrorHandler;
+#endif
         }
 
         private void DisconnectGridEvents()
         {
+#if DEBUG
+            BuiltGrid.OnBlockIntegrityChanged -= OnBlockIntegrityChanged;
+            BuiltGrid.OnBlockAdded -= OnBlockAdded;
+            BuiltGrid.OnBlockRemoved -= OnBlockRemoved;
+            BuiltGrid.OnGridSplit -= OnGridSplitOrMerge;
+            BuiltGrid.OnGridMerge -= OnGridSplitOrMerge;
+            BuiltGrid.OnClosing -= OnGridClosing;
+#else
             BuiltGrid.OnBlockIntegrityChanged -= OnBlockIntegrityChangedWithErrorHandler;
             BuiltGrid.OnBlockAdded -= OnBlockAddedWithErrorHandler;
             BuiltGrid.OnBlockRemoved -= OnBlockRemovedWithErrorHandler;
             BuiltGrid.OnGridSplit -= OnGridSplitOrMergeWithErrorHandler;
             BuiltGrid.OnGridMerge -= OnGridSplitOrMergeWithErrorHandler;
             BuiltGrid.OnClosing -= OnGridClosingWithErrorHandler;
+#endif
         }
 
         [ServerOnly]
