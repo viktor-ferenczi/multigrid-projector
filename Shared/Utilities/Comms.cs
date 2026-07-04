@@ -69,7 +69,7 @@ namespace MultigridProjector.Utilities
 
         private static void OnServerPluginMessage(byte[] data, ulong fromSteamId, bool fromServer)
         {
-            if (!fromServer || data.SequenceEqual(Signature))
+            if (!fromServer || Enumerable.SequenceEqual(data, Signature))
                 return;
 
             ServerHasPlugin = true;
