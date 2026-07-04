@@ -297,12 +297,12 @@
   </ItemGroup>
 
   <PropertyGroup Condition=" $([MSBuild]::IsOSPlatform('Windows')) ">
-    <PreBuildEvent>call "$(SolutionDir)\verify_props.bat" "$(Bin64)"</PreBuildEvent>
+    <PreBuildEvent>call "$(RepoRoot)verify_props.bat" "$(Bin64)"</PreBuildEvent>
     <PostBuildEvent>call "$(MSBuildProjectDirectory)\Deploy.bat" "$(AssemblyName).dll" "$(MSBuildProjectDirectory)\$(OutputPath)$(TargetFramework)" "$(TargetFramework)"</PostBuildEvent>
   </PropertyGroup>
 
   <PropertyGroup Condition=" !$([MSBuild]::IsOSPlatform('Windows')) ">
-    <PreBuildEvent>sh "$(SolutionDir)verify_props.sh" "$(Bin64)"</PreBuildEvent>
+    <PreBuildEvent>sh "$(RepoRoot)verify_props.sh" "$(Bin64)"</PreBuildEvent>
     <PostBuildEvent>sh "$(MSBuildProjectDirectory)/Deploy.sh" "$(AssemblyName).dll" "$(MSBuildProjectDirectory)/$(OutputPath.Replace('\','/'))$(TargetFramework)" "$(TargetFramework)"</PostBuildEvent>
   </PropertyGroup>
 
