@@ -51,6 +51,16 @@ namespace MultigridProjector.Extensions
             return projector.m_keepProjection;
         }
 
+        // Sets KeepProjection by writing the synced backing field directly, exactly as the
+        // game's own KeepProjection property setter does. This avoids the fragile terminal
+        // property path (block.SetValue("KeepProjection", ...)), which throws
+        // InvalidOperationException("Invalid property") whenever the "KeepProjection" terminal
+        // control has not been registered for the block's runtime type yet (see issue #99).
+        public static void SetKeepProjection(this MyProjectorBase projector, bool value)
+        {
+            projector.m_keepProjection.Value = value;
+        }
+
         public static bool GetInstantBuildingEnabled(this MyProjectorBase projector)
         {
             return projector.m_instantBuildingEnabled;

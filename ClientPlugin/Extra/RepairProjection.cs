@@ -4,7 +4,6 @@ using System.Linq;
 using VRage.Game;
 using MultigridProjectorClient.Utilities;
 using ClientPlugin;
-using Sandbox.ModAPI.Interfaces;
 using Entities.Blocks;
 using MultigridProjector.Extensions;
 using MultigridProjector.Logic;
@@ -52,7 +51,7 @@ namespace MultigridProjectorClient.Extra
             // KeepProjection is enabled by InitFromObjectBuilder if it is detected as a
             // repair blueprint. But just in case we make it explicit here, so even in the
             // case of an ambiguous repair projector it will still work as expected.
-            projector.SetValue("KeepProjection", true);
+            projector.SetKeepProjection(true);
         }
     }
 }

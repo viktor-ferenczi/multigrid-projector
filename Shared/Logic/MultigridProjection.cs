@@ -2144,7 +2144,7 @@ System.NullReferenceException: Object reference not set to an instance of an obj
                 // Keep the repair projection even if it is completely built. In that case the player
                 // would not have a chance to enable it before the projector disabled itself, therefore
                 // the projector would not be active for repair.
-                projector.SetValue("KeepProjection", true);
+                projector.SetKeepProjection(true);
             }
 
             // Prepare the blueprint for being projected for welding
