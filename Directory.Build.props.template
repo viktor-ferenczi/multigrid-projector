@@ -24,6 +24,14 @@
         <Dedicated64 />
     </PropertyGroup>
 
+    <!-- Repository root (this file lives in it). Used instead of $(SolutionDir) so
+         the PreBuildEvent scripts are found whether the build is driven from the
+         solution or a single project. $(MSBuildThisFileDirectory) ends with a
+         directory separator. -->
+    <PropertyGroup>
+        <RepoRoot>$(MSBuildThisFileDirectory)</RepoRoot>
+    </PropertyGroup>
+
     <!-- User home, resolved once for the Linux auto-detection below -->
     <PropertyGroup Condition=" !$([MSBuild]::IsOSPlatform('Windows')) ">
         <_UserHome>$([System.Environment]::GetFolderPath(SpecialFolder.UserProfile))</_UserHome>
