@@ -75,7 +75,7 @@ An inline comment notes this fix may no longer be needed and suggests removal if
 
 ## MyMechanicalConnectionBlockBase_CreateTopPart
 
-*`public static class MyMechanicalConnectionBlockBase_CreateTopPart` — `[HarmonyPatch(typeof(MyMechanicalConnectionBlockBase), "CreateTopPart")]` · `[EnsureOriginal("439d944c")]`*
+*`public static class MyMechanicalConnectionBlockBase_CreateTopPart` — `[HarmonyPatch(typeof(MyMechanicalConnectionBlockBase), "CreateTopPart")]` · `[EnsureOriginal("dc43452a")]`*
 
 **Patched target:** `MyMechanicalConnectionBlockBase.CreateTopPart`
 
